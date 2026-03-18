@@ -112,9 +112,9 @@ export function ChangeOrdersTab({ projectId }: { projectId: number }) {
   const updateMutation = useUpdateChangeOrder();
   const deleteMutation = useDeleteChangeOrder();
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editItem,   setEditItem]   = useState<ChangeOrder | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [createOpen,    setCreateOpen]    = useState(false);
+  const [editItem,      setEditItem]      = useState<ChangeOrder | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ChangeOrder | null>(null);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: getListChangeOrdersQueryKey(projectId) });
@@ -157,13 +157,13 @@ export function ChangeOrdersTab({ projectId }: { projectId: number }) {
     );
   };
 
-  const onDelete = (id: number) => {
-    setDeletingId(id);
+  const onDeleteConfirmed = () => {
+    if (!confirmDelete) return;
     deleteMutation.mutate(
-      { projectId, id },
+      { projectId, id: confirmDelete.id },
       {
-        onSuccess: () => { toast.success("Deleted"); invalidate(); setDeletingId(null); },
-        onError:   () => { toast.error("Failed to delete"); setDeletingId(null); },
+        onSuccess: () => { toast.success("Deleted"); invalidate(); setConfirmDelete(null); },
+        onError:   () => { toast.error("Failed to delete"); setConfirmDelete(null); },
       }
     );
   };
@@ -269,12 +269,9 @@ export function ChangeOrdersTab({ projectId }: { projectId: number }) {
                         size="sm"
                         variant="ghost"
                         className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => onDelete(o.id)}
-                        disabled={deletingId === o.id}
+                        onClick={() => setConfirmDelete(o)}
                       >
-                        {deletingId === o.id
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <Trash2 className="w-3.5 h-3.5" />}
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -311,6 +308,35 @@ export function ChangeOrdersTab({ projectId }: { projectId: number }) {
             : { status: "draft", amount: 0 }
         }
       />
+
+      <Dialog open={!!confirmDelete} onOpenChange={v => !v && setConfirmDelete(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display font-bold text-lg flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" /> Delete Change Order
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-foreground">"{confirmDelete?.title}"</span>?
+            This cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => setConfirmDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={onDeleteConfirmed}
+              disabled={deleteMutation.isPending}
+              className="gap-2"
+            >
+              {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

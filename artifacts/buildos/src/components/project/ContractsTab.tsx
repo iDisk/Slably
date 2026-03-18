@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, ExternalLink, Trash2, Loader2, FileCheck, FileClock, FileText } from "lucide-react";
+import { Plus, ExternalLink, Trash2, Loader2, FileCheck, FileClock, FileText, Pencil } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,6 +13,7 @@ import {
   useUpdateContract,
   useDeleteContract,
   getListContractsQueryKey,
+  type Contract,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,34 +26,99 @@ const CONTRACT_STATUS = {
   signed: { label: "Signed", color: "bg-emerald-100 text-emerald-700 border-emerald-200",  icon: FileCheck },
 } as const;
 
-const createSchema = z.object({
+const contractSchema = z.object({
   title:   z.string().min(1, "Title is required"),
-  fileUrl: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+  fileUrl: z.string().url("Enter a valid URL (https://...)").optional().or(z.literal("")),
   version: z.string().optional(),
   status:  z.enum(["draft", "sent", "signed"]),
 });
-type CreateForm = z.infer<typeof createSchema>;
+type ContractForm = z.infer<typeof contractSchema>;
+
+function ContractDialog({
+  open,
+  onOpenChange,
+  title,
+  onSubmit,
+  isPending,
+  defaultValues,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  onSubmit: (data: ContractForm) => void;
+  isPending: boolean;
+  defaultValues: Partial<ContractForm>;
+}) {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ContractForm>({
+    resolver: zodResolver(contractSchema),
+    values: defaultValues as ContractForm,
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) reset(); onOpenChange(v); }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display font-bold text-xl">{title}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
+          <div className="space-y-2">
+            <Label>Title *</Label>
+            <Input {...register("title")} placeholder="e.g. Construction Agreement v1" />
+            {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Version</Label>
+              <Input {...register("version")} placeholder="1.0" />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select {...register("status")}>
+                <option value="draft">Draft</option>
+                <option value="sent">Sent</option>
+                <option value="signed">Signed</option>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>PDF URL</Label>
+            <Input {...register("fileUrl")} type="url" placeholder="https://..." />
+            {errors.fileUrl && <p className="text-xs text-destructive">{errors.fileUrl.message}</p>}
+            <p className="text-xs text-muted-foreground">
+              Paste a link to the PDF (Google Drive, Dropbox, S3, etc.)
+            </p>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function ContractsTab({ projectId }: { projectId: number }) {
   const queryClient = useQueryClient();
   const { data: contracts = [], isLoading } = useListContracts(projectId);
-  const createMutation  = useCreateContract();
-  const updateMutation  = useUpdateContract();
-  const deleteMutation  = useDeleteContract();
+  const createMutation = useCreateContract();
+  const updateMutation = useUpdateContract();
+  const deleteMutation = useDeleteContract();
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [signingId,  setSigningId]  = useState<number | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateForm>({
-    resolver: zodResolver(createSchema),
-    defaultValues: { status: "draft" },
-  });
+  const [createOpen,    setCreateOpen]    = useState(false);
+  const [editItem,      setEditItem]      = useState<Contract | null>(null);
+  const [signingId,     setSigningId]     = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Contract | null>(null);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: getListContractsQueryKey(projectId) });
 
-  const onSubmit = (data: CreateForm) => {
+  const onCreate = (data: ContractForm) => {
     createMutation.mutate(
       {
         projectId,
@@ -64,8 +130,28 @@ export function ContractsTab({ projectId }: { projectId: number }) {
         },
       },
       {
-        onSuccess: () => { toast.success("Contract added"); invalidate(); setCreateOpen(false); reset(); },
+        onSuccess: () => { toast.success("Contract added"); invalidate(); setCreateOpen(false); },
         onError:   () => toast.error("Failed to add contract"),
+      }
+    );
+  };
+
+  const onEdit = (data: ContractForm) => {
+    if (!editItem) return;
+    updateMutation.mutate(
+      {
+        projectId,
+        id: editItem.id,
+        data: {
+          title:   data.title,
+          fileUrl: data.fileUrl || null,
+          version: data.version || null,
+          status:  data.status,
+        },
+      },
+      {
+        onSuccess: () => { toast.success("Contract updated"); invalidate(); setEditItem(null); },
+        onError:   () => toast.error("Failed to update contract"),
       }
     );
   };
@@ -81,13 +167,13 @@ export function ContractsTab({ projectId }: { projectId: number }) {
     );
   };
 
-  const onDelete = (id: number) => {
-    setDeletingId(id);
+  const onDeleteConfirmed = () => {
+    if (!confirmDelete) return;
     deleteMutation.mutate(
-      { projectId, id },
+      { projectId, id: confirmDelete.id },
       {
-        onSuccess: () => { toast.success("Contract deleted"); invalidate(); setDeletingId(null); },
-        onError:   () => { toast.error("Failed to delete"); setDeletingId(null); },
+        onSuccess: () => { toast.success("Contract deleted"); invalidate(); setConfirmDelete(null); },
+        onError:   () => { toast.error("Failed to delete"); setConfirmDelete(null); },
       }
     );
   };
@@ -108,7 +194,7 @@ export function ContractsTab({ projectId }: { projectId: number }) {
         </h3>
         <Button
           size="sm"
-          onClick={() => { reset({ status: "draft" }); setCreateOpen(true); }}
+          onClick={() => setCreateOpen(true)}
           className="gap-2"
         >
           <Plus className="w-4 h-4" /> Add Contract
@@ -169,7 +255,7 @@ export function ContractsTab({ projectId }: { projectId: number }) {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                       {c.status !== "signed" && (
                         <Button
                           size="sm"
@@ -187,13 +273,18 @@ export function ContractsTab({ projectId }: { projectId: number }) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => onDelete(c.id)}
-                        disabled={deletingId === c.id}
+                        className="text-muted-foreground hover:text-primary"
+                        onClick={() => setEditItem(c)}
                       >
-                        {deletingId === c.id
-                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          : <Trash2 className="w-3.5 h-3.5" />}
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => setConfirmDelete(c)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -204,49 +295,59 @@ export function ContractsTab({ projectId }: { projectId: number }) {
         </div>
       )}
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-lg">
+      <ContractDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title="Add Contract"
+        onSubmit={onCreate}
+        isPending={createMutation.isPending}
+        defaultValues={{ status: "draft" }}
+      />
+
+      <ContractDialog
+        open={!!editItem}
+        onOpenChange={v => !v && setEditItem(null)}
+        title="Edit Contract"
+        onSubmit={onEdit}
+        isPending={updateMutation.isPending}
+        defaultValues={
+          editItem
+            ? {
+                title:   editItem.title,
+                version: editItem.version ?? "",
+                fileUrl: editItem.fileUrl ?? "",
+                status:  editItem.status as ContractForm["status"],
+              }
+            : { status: "draft" }
+        }
+      />
+
+      <Dialog open={!!confirmDelete} onOpenChange={v => !v && setConfirmDelete(null)}>
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display font-bold text-xl">Add Contract</DialogTitle>
+            <DialogTitle className="font-display font-bold text-lg flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" /> Delete Contract
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input {...register("title")} placeholder="e.g. Construction Agreement v1" />
-              {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Version</Label>
-                <Input {...register("version")} placeholder="1.0" />
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select {...register("status")}>
-                  <option value="draft">Draft</option>
-                  <option value="sent">Sent</option>
-                  <option value="signed">Signed</option>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>PDF URL</Label>
-              <Input {...register("fileUrl")} type="url" placeholder="https://..." />
-              {errors.fileUrl && <p className="text-xs text-destructive">{errors.fileUrl.message}</p>}
-              <p className="text-xs text-muted-foreground">
-                Paste a link to the PDF (Google Drive, Dropbox, S3, etc.)
-              </p>
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Add Contract
-              </Button>
-            </div>
-          </form>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-foreground">"{confirmDelete?.title}"</span>?
+            This cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => setConfirmDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={onDeleteConfirmed}
+              disabled={deleteMutation.isPending}
+              className="gap-2"
+            >
+              {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              Delete
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

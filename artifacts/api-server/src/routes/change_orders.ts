@@ -79,10 +79,19 @@ router.patch("/projects/:projectId/change-orders/:id", requireAuth, async (req: 
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const updateData: Record<string, unknown> = {};
-  if (parsed.data.title != null)        updateData.title       = parsed.data.title;
+  if (parsed.data.title != null)             updateData.title       = parsed.data.title;
   if (parsed.data.description !== undefined) updateData.description = parsed.data.description;
-  if (parsed.data.amount != null)       updateData.amount      = String(parsed.data.amount);
-  if (parsed.data.status != null)       updateData.status      = parsed.data.status;
+  if (parsed.data.amount != null)            updateData.amount      = String(parsed.data.amount);
+  if (parsed.data.status != null) {
+    updateData.status = parsed.data.status;
+    if (parsed.data.status === "approved") {
+      updateData.approvedAt = new Date();
+      updateData.approvedBy = user.id;
+    } else {
+      updateData.approvedAt = null;
+      updateData.approvedBy = null;
+    }
+  }
 
   const [co] = await db.update(changeOrdersTable)
     .set(updateData)

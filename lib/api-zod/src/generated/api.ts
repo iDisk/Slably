@@ -197,8 +197,8 @@ export const CreateContractParams = zod.object({
 });
 
 export const CreateContractBody = zod.object({
-  title: zod.string(),
-  fileUrl: zod.string().nullish(),
+  title: zod.string().min(1),
+  fileUrl: zod.string().url().nullish(),
   version: zod.string().nullish(),
   status: zod.enum(["draft", "sent", "signed"]),
 });
@@ -212,10 +212,10 @@ export const UpdateContractParams = zod.object({
 });
 
 export const UpdateContractBody = zod.object({
-  title: zod.string().nullish(),
-  fileUrl: zod.string().nullish(),
+  title: zod.string().min(1).nullish(),
+  fileUrl: zod.string().url().nullish(),
   version: zod.string().nullish(),
-  status: zod.enum(["draft", "sent", "signed", "null"]).nullish(),
+  status: zod.enum(["draft", "sent", "signed"]).nullish(),
 });
 
 export const UpdateContractResponse = zod.object({
@@ -265,9 +265,9 @@ export const CreateChangeOrderParams = zod.object({
 });
 
 export const CreateChangeOrderBody = zod.object({
-  title: zod.string(),
+  title: zod.string().min(1),
   description: zod.string().nullish(),
-  amount: zod.number(),
+  amount: zod.number().min(0),
   status: zod.enum(["draft", "pending", "approved", "rejected"]),
 });
 
@@ -280,12 +280,10 @@ export const UpdateChangeOrderParams = zod.object({
 });
 
 export const UpdateChangeOrderBody = zod.object({
-  title: zod.string().nullish(),
+  title: zod.string().min(1).nullish(),
   description: zod.string().nullish(),
-  amount: zod.number().nullish(),
-  status: zod
-    .enum(["draft", "pending", "approved", "rejected", "null"])
-    .nullish(),
+  amount: zod.number().min(0).nullish(),
+  status: zod.enum(["draft", "pending", "approved", "rejected"]).nullish(),
 });
 
 export const UpdateChangeOrderResponse = zod.object({
