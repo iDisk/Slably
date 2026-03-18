@@ -10,7 +10,7 @@ import ProjectDetails from "@/pages/builder/ProjectDetails";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NotFound from "@/pages/not-found";
 
-// Patch fetch to automatically inject the JWT token
+// Patch fetch to automatically inject the JWT token and handle 401s
 const originalFetch = window.fetch;
 window.fetch = async (...args) => {
   const [resource, config] = args;
@@ -21,7 +21,13 @@ window.fetch = async (...args) => {
       ...newConfig.headers,
       Authorization: `Bearer ${token}`
     };
-    return originalFetch(resource, newConfig);
+    const response = await originalFetch(resource, newConfig);
+    if (response.status === 401) {
+      localStorage.removeItem("buildos_token");
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      window.location.href = `${base}/login?reason=session_expired`;
+    }
+    return response;
   }
   return originalFetch(resource, config);
 };

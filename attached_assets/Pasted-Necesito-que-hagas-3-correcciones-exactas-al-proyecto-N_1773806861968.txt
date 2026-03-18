@@ -1,0 +1,42 @@
+Necesito que hagas 3 correcciones exactas al proyecto. No agregues funcionalidades nuevas. Solo estos 3 fixes:
+
+---
+
+FIX 1 — Guard contra codegen en api-zod
+
+1. Abre lib/api-zod/package.json y reemplaza el script "codegen" con:
+"codegen": "echo 'ERROR: api-zod/src/generated/api.ts es manual. Lee el comentario en ese archivo antes de modificarlo.' && exit 1"
+
+2. Abre lib/api-zod/src/generated/api.ts y agrega estas líneas al tope del archivo:
+// ⚠️  ARCHIVO MANUAL — NO ejecutar codegen
+// Contiene correcciones manuales: zod.coerce.date() para fechas,
+// organizationId y organizationSlug en LoginResponse y GetMeResponse.
+// Si necesitas regenerar: revisar diff manualmente antes de hacer push.
+
+---
+
+FIX 2 — Nombre real de organización al registrarse
+
+1. Abre artifacts/api-server/src/routes/auth.ts
+2. En el schema de validación del registro, agrega el campo opcional: companyName: z.string().min(2).optional()
+3. Agrega esta función si no existe en el archivo:
+function slugify(text: string): string {
+  return text.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-");
+}
+4. Donde se crea la organización, usa companyName si viene, si no usa el nombre del usuario:
+   - name: companyName || `${name}'s Company`
+   - slug: slugify(companyName || name)
+
+---
+
+FIX 3 — Manejo de token inválido en el frontend
+
+1. Encuentra el archivo donde se hacen las llamadas a la API en el frontend (puede ser api.ts, fetcher.ts, o donde esté el fetch global / interceptor).
+2. Agrega este manejo cuando la respuesta sea 401:
+   - Limpiar el token guardado (localStorage o AsyncStorage según corresponda)
+   - Redirigir a /login?reason=session_expired
+3. En la página de login, si el parámetro reason=session_expired está en la URL, mostrar este mensaje visible: "Tu sesión expiró. Por favor inicia sesión de nuevo."
+
+---
+
+Después de cada fix, confirma qué archivo modificaste y qué cambió exactamente. No toques ningún otro archivo. No cambies el schema de base de datos. No agregues nuevas rutas.

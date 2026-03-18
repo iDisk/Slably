@@ -6,6 +6,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "codegen": "echo 'ERROR: api-zod/src/generated/api.ts es manual. Lee el comentario en ese archivo antes de modificarlo.' && exit 1"
+  },
   "dependencies": {
     "zod": "catalog:"
   }

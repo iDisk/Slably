@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { useLocation, Link } from "wouter";
+import { useLocation, Link, useSearch } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Building2, ArrowRight, Loader2 } from "lucide-react";
+import { Building2, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -19,6 +18,8 @@ const loginSchema = z.object({
 
 export default function Login() {
   const [, setLocation] = useLocation();
+  const search = useSearch();
+  const sessionExpired = new URLSearchParams(search).get("reason") === "session_expired";
   const { login } = useAuth();
   const loginMutation = useLogin();
 
@@ -49,6 +50,13 @@ export default function Login() {
             </div>
             <span className="text-foreground font-display font-extrabold text-3xl tracking-tight">BuildOS</span>
           </div>
+
+          {sessionExpired && (
+            <div className="mb-6 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>Tu sesión expiró. Por favor inicia sesión de nuevo.</span>
+            </div>
+          )}
 
           <h2 className="text-3xl font-display font-bold text-foreground">Sign in to your account</h2>
           <p className="mt-2 text-sm text-muted-foreground mb-8">

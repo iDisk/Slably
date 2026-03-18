@@ -45,8 +45,8 @@ async function fetchUserWithOrg(userId: number) {
 }
 
 // Helper: generate URL-safe slug from a string
-function generateSlug(name: string): string {
-  return name
+function slugify(text: string): string {
+  return text
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -76,7 +76,7 @@ router.post("/auth/register", registerLimiter, async (req, res): Promise<void> =
     return;
   }
 
-  const { name, email, password, role } = parsed.data;
+  const { name, email, password, role, companyName } = parsed.data;
 
   const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (existing.length > 0) {
@@ -90,9 +90,9 @@ router.post("/auth/register", registerLimiter, async (req, res): Promise<void> =
   let organizationSlug: string | null = null;
 
   if (role === "builder") {
-    // Auto-create an org for every new builder
-    const orgName = name;
-    const slug = await uniqueSlug(generateSlug(orgName));
+    // Auto-create an org — use companyName if provided, otherwise fallback to user name
+    const orgName = companyName || `${name}'s Company`;
+    const slug = await uniqueSlug(slugify(orgName));
     const [org] = await db
       .insert(organizationsTable)
       .values({ name: orgName, slug })
