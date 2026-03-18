@@ -28,6 +28,8 @@ import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ContractsTab }    from "@/components/project/ContractsTab";
 import { ChangeOrdersTab } from "@/components/project/ChangeOrdersTab";
+import { PhotosTab }       from "@/components/project/PhotosTab";
+import { ActivityTab }     from "@/components/project/ActivityTab";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   planning:  { label: "Planning",  color: "bg-slate-100 text-slate-700 border-slate-200",       icon: Clock },
@@ -198,10 +200,12 @@ export default function ProjectDetails() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview">
-          <TabsList className="w-full sm:w-auto">
+          <TabsList className="w-full sm:w-auto flex-wrap">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="contracts">Contracts</TabsTrigger>
             <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
+            <TabsTrigger value="photos">Photos</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
@@ -284,6 +288,20 @@ export default function ProjectDetails() {
           <TabsContent value="change-orders">
             <div className="mt-2">
               <ChangeOrdersTab projectId={projectId} />
+            </div>
+          </TabsContent>
+
+          {/* Photos */}
+          <TabsContent value="photos">
+            <div className="mt-2">
+              <PhotosTab projectId={projectId} />
+            </div>
+          </TabsContent>
+
+          {/* Activity */}
+          <TabsContent value="activity">
+            <div className="mt-2">
+              <ActivityTab projectId={projectId} />
             </div>
           </TabsContent>
         </Tabs>

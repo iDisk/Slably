@@ -78,16 +78,19 @@ scripts/src/seed.ts     # Demo data seeder
 | Phase 1 — MVP Core | ✅ Complete | Auth, Projects CRUD, Dashboard, Client portal base |
 | Phase 1 hardening | ✅ Complete | JWT_SECRET, rate limiting, CORS, global error handler |
 | Multi-tenant base | ✅ Complete | organizations table, org isolation, slug auto-gen |
-| Phase 2 — Contracts & Change Orders | ✅ Complete | Full CRUD UI for both modules, tabbed project detail |
-| Phase 3 — Photos, Activity, Client portal | 🔜 Planned | |
+| Phase 2 — Contracts & Change Orders | ✅ Complete | Full CRUD UI, tabbed project detail, backend validation |
+| Phase 3 — Photos, Activity, Client portal | ✅ Complete | Photos tab + grid, Activity timeline, full client portal |
 
-## Phase 2 — Components built
+## MVP Components — All Phases
 
-| Component | Path |
-|-----------|------|
-| ContractsTab | `artifacts/buildos/src/components/project/ContractsTab.tsx` |
-| ChangeOrdersTab | `artifacts/buildos/src/components/project/ChangeOrdersTab.tsx` |
-| ProjectDetails (tabbed) | `artifacts/buildos/src/pages/builder/ProjectDetails.tsx` |
+| Component | Path | Phase |
+|-----------|------|-------|
+| ContractsTab | `artifacts/buildos/src/components/project/ContractsTab.tsx` | 2 |
+| ChangeOrdersTab | `artifacts/buildos/src/components/project/ChangeOrdersTab.tsx` | 2 |
+| PhotosTab | `artifacts/buildos/src/components/project/PhotosTab.tsx` | 3 |
+| ActivityTab | `artifacts/buildos/src/components/project/ActivityTab.tsx` | 3 |
+| ProjectDetails (5 tabs) | `artifacts/buildos/src/pages/builder/ProjectDetails.tsx` | 1-3 |
+| ClientDashboard | `artifacts/buildos/src/pages/client/ClientDashboard.tsx` | 3 |
 
 ## Multi-tenant Architecture
 

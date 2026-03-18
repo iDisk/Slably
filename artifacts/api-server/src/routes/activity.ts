@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db, activityLogsTable } from "@workspace/db";
 import { ListActivityParams, ListActivityResponse } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
@@ -24,7 +24,7 @@ router.get("/projects/:projectId/activity", requireAuth, async (req: AuthRequest
     .select()
     .from(activityLogsTable)
     .where(eq(activityLogsTable.projectId, params.data.projectId))
-    .orderBy(activityLogsTable.createdAt);
+    .orderBy(desc(activityLogsTable.createdAt));
 
   res.json(ListActivityResponse.parse(logs));
 });
