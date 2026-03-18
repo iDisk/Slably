@@ -1,6 +1,7 @@
 import {
   db,
   usersTable,
+  organizationsTable,
   projectsTable,
   contractsTable,
   changeOrdersTable,
@@ -12,29 +13,90 @@ import { eq, and } from "drizzle-orm";
 
 console.log("🌱 Seeding BuildOS database...");
 
+// --- helpers ---
+
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")  // strip accents
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+async function getOrCreateOrg(data: { name: string }): Promise<typeof organizationsTable.$inferSelect> {
+  const baseSlug = generateSlug(data.name);
+
+  const [existing] = await db
+    .select()
+    .from(organizationsTable)
+    .where(eq(organizationsTable.slug, baseSlug));
+
+  if (existing) return existing;
+
+  // Ensure slug uniqueness with numeric suffix if needed
+  let slug = baseSlug;
+  let suffix = 2;
+  while (true) {
+    const [conflict] = await db
+      .select()
+      .from(organizationsTable)
+      .where(eq(organizationsTable.slug, slug));
+    if (!conflict) break;
+    slug = `${baseSlug}-${suffix++}`;
+  }
+
+  const [created] = await db
+    .insert(organizationsTable)
+    .values({ name: data.name, slug })
+    .returning();
+
+  return created;
+}
+
 async function getOrCreateUser(data: {
   name: string;
   email: string;
   password: string;
   role: "builder" | "client";
-}) {
+  organizationId?: number | null;
+}): Promise<typeof usersTable.$inferSelect> {
   const [existing] = await db
     .select()
     .from(usersTable)
     .where(eq(usersTable.email, data.email));
 
-  if (existing) return existing;
+  if (existing) {
+    // Backfill organizationId if not set yet
+    if (data.organizationId != null && existing.organizationId == null) {
+      const [updated] = await db
+        .update(usersTable)
+        .set({ organizationId: data.organizationId })
+        .where(eq(usersTable.id, existing.id))
+        .returning();
+      return updated;
+    }
+    return existing;
+  }
 
   const passwordHash = await bcrypt.hash(data.password, 10);
   const [created] = await db
     .insert(usersTable)
-    .values({ name: data.name, email: data.email, passwordHash, role: data.role })
+    .values({
+      name: data.name,
+      email: data.email,
+      passwordHash,
+      role: data.role,
+      organizationId: data.organizationId ?? null,
+    })
     .returning();
 
   return created;
 }
 
 async function getOrCreateProject(data: {
+  organizationId: number;
   builderId: number;
   clientId?: number | null;
   clientName: string;
@@ -45,7 +107,7 @@ async function getOrCreateProject(data: {
   startDate?: string | null;
   notes?: string | null;
   progress: number;
-}) {
+}): Promise<typeof projectsTable.$inferSelect> {
   const [existing] = await db
     .select()
     .from(projectsTable)
@@ -56,18 +118,40 @@ async function getOrCreateProject(data: {
       )
     );
 
-  if (existing) return existing;
+  if (existing) {
+    // Backfill organizationId if not set yet
+    if (existing.organizationId == null) {
+      const [updated] = await db
+        .update(projectsTable)
+        .set({ organizationId: data.organizationId })
+        .where(eq(projectsTable.id, existing.id))
+        .returning();
+      return updated;
+    }
+    return existing;
+  }
 
   const [created] = await db.insert(projectsTable).values(data).returning();
   return created;
 }
 
+// --- seed ---
+
 async function seed() {
+  // ── Organizations ──────────────────────────────────────────
+  const org1 = await getOrCreateOrg({ name: "Constructora Mendoza" });
+  const org2 = await getOrCreateOrg({ name: "Torres Construcciones" });
+
+  console.log(`  Org 1: "${org1.name}" (slug: ${org1.slug})`);
+  console.log(`  Org 2: "${org2.name}" (slug: ${org2.slug})`);
+
+  // ── Users ──────────────────────────────────────────────────
   const builder1 = await getOrCreateUser({
     name: "Carlos Mendoza",
     email: "builder@buildos.demo",
     password: "demo1234",
     role: "builder",
+    organizationId: org1.id,
   });
 
   const builder2 = await getOrCreateUser({
@@ -75,6 +159,7 @@ async function seed() {
     email: "ana@buildos.demo",
     password: "demo1234",
     role: "builder",
+    organizationId: org2.id,
   });
 
   const client1 = await getOrCreateUser({
@@ -82,6 +167,7 @@ async function seed() {
     email: "client@buildos.demo",
     password: "demo1234",
     role: "client",
+    organizationId: org1.id,
   });
 
   const client2 = await getOrCreateUser({
@@ -89,6 +175,7 @@ async function seed() {
     email: "maria@buildos.demo",
     password: "demo1234",
     role: "client",
+    organizationId: org1.id,
   });
 
   const client3 = await getOrCreateUser({
@@ -96,9 +183,12 @@ async function seed() {
     email: "jorge@buildos.demo",
     password: "demo1234",
     role: "client",
+    organizationId: org1.id,
   });
 
+  // ── Projects ────────────────────────────────────────────────
   const p1 = await getOrCreateProject({
+    organizationId: org1.id,
     builderId: builder1.id,
     clientId: client1.id,
     clientName: "Roberto Silva",
@@ -112,6 +202,7 @@ async function seed() {
   });
 
   const p2 = await getOrCreateProject({
+    organizationId: org1.id,
     builderId: builder1.id,
     clientId: client2.id,
     clientName: "María Gutierrez",
@@ -125,6 +216,7 @@ async function seed() {
   });
 
   const p3 = await getOrCreateProject({
+    organizationId: org1.id,
     builderId: builder1.id,
     clientId: client3.id,
     clientName: "Jorge Ramírez",
@@ -138,6 +230,7 @@ async function seed() {
   });
 
   await getOrCreateProject({
+    organizationId: org2.id,
     builderId: builder2.id,
     clientName: "Familia Hernández",
     clientEmail: "hernandez@email.com",
@@ -149,7 +242,7 @@ async function seed() {
     progress: 100,
   });
 
-  // Contracts — idempotent by project + title
+  // ── Contracts ───────────────────────────────────────────────
   async function getOrCreateContract(data: {
     projectId: number;
     title: string;
@@ -160,50 +253,18 @@ async function seed() {
     const [existing] = await db
       .select()
       .from(contractsTable)
-      .where(
-        and(
-          eq(contractsTable.projectId, data.projectId),
-          eq(contractsTable.title, data.title)
-        )
-      );
+      .where(and(eq(contractsTable.projectId, data.projectId), eq(contractsTable.title, data.title)));
     if (existing) return existing;
     const [created] = await db.insert(contractsTable).values(data).returning();
     return created;
   }
 
-  await getOrCreateContract({
-    projectId: p1.id,
-    title: "Contrato Principal - Casa Silva",
-    fileUrl: "https://example.com/contracts/silva-main-v2.pdf",
-    version: "v2.0",
-    status: "signed",
-  });
+  await getOrCreateContract({ projectId: p1.id, title: "Contrato Principal - Casa Silva", fileUrl: "https://example.com/contracts/silva-main-v2.pdf", version: "v2.0", status: "signed" });
+  await getOrCreateContract({ projectId: p1.id, title: "Addendum Materiales Premium", fileUrl: "https://example.com/contracts/silva-addendum.pdf", version: "v1.0", status: "sent" });
+  await getOrCreateContract({ projectId: p2.id, title: "Contrato de Remodelación Gutierrez", fileUrl: "https://example.com/contracts/gutierrez-main.pdf", version: "v1.0", status: "signed" });
+  await getOrCreateContract({ projectId: p3.id, title: "Propuesta Inicial Oficinas Ramírez", fileUrl: null, version: "v1.0", status: "draft" });
 
-  await getOrCreateContract({
-    projectId: p1.id,
-    title: "Addendum Materiales Premium",
-    fileUrl: "https://example.com/contracts/silva-addendum.pdf",
-    version: "v1.0",
-    status: "sent",
-  });
-
-  await getOrCreateContract({
-    projectId: p2.id,
-    title: "Contrato de Remodelación Gutierrez",
-    fileUrl: "https://example.com/contracts/gutierrez-main.pdf",
-    version: "v1.0",
-    status: "signed",
-  });
-
-  await getOrCreateContract({
-    projectId: p3.id,
-    title: "Propuesta Inicial Oficinas Ramírez",
-    fileUrl: null,
-    version: "v1.0",
-    status: "draft",
-  });
-
-  // Change orders — idempotent by project + title
+  // ── Change orders ───────────────────────────────────────────
   async function getOrCreateChangeOrder(data: {
     projectId: number;
     title: string;
@@ -217,67 +278,19 @@ async function seed() {
     const [existing] = await db
       .select()
       .from(changeOrdersTable)
-      .where(
-        and(
-          eq(changeOrdersTable.projectId, data.projectId),
-          eq(changeOrdersTable.title, data.title)
-        )
-      );
+      .where(and(eq(changeOrdersTable.projectId, data.projectId), eq(changeOrdersTable.title, data.title)));
     if (existing) return existing;
     const [created] = await db.insert(changeOrdersTable).values(data).returning();
     return created;
   }
 
-  await getOrCreateChangeOrder({
-    projectId: p1.id,
-    title: "Upgrade Cocina - Mármol Carrara",
-    description: "El cliente solicitó cambiar el granito original por mármol Carrara importado en todas las áreas de cocina. Incluye backsplash y área de isla.",
-    amount: "45000",
-    status: "approved",
-    createdBy: builder1.id,
-    approvedBy: client1.id,
-    approvedAt: new Date("2026-01-15"),
-  });
+  await getOrCreateChangeOrder({ projectId: p1.id, title: "Upgrade Cocina - Mármol Carrara", description: "El cliente solicitó cambiar el granito original por mármol Carrara importado en todas las áreas de cocina. Incluye backsplash y área de isla.", amount: "45000", status: "approved", createdBy: builder1.id, approvedBy: client1.id, approvedAt: new Date("2026-01-15") });
+  await getOrCreateChangeOrder({ projectId: p1.id, title: "Sistema de Domótica Smart Home", description: "Instalación de sistema de domótica completo: iluminación inteligente, persianas motorizadas, control de clima y sistema de seguridad integrado.", amount: "82000", status: "pending", createdBy: builder1.id });
+  await getOrCreateChangeOrder({ projectId: p1.id, title: "Ampliación Terraza Rooftop", description: "Ampliación del área de terraza en azotea, adición de pérgola metálica con lonas retráctiles y área de BBQ.", amount: "38500", status: "rejected", createdBy: builder1.id });
+  await getOrCreateChangeOrder({ projectId: p2.id, title: "Cambio de Ventanas a Doble Vidrio", description: "Cambio de todas las ventanas actuales por ventanas con doble vidrio templado para mejor aislamiento térmico y acústico.", amount: "28000", status: "approved", createdBy: builder1.id, approvedBy: client2.id, approvedAt: new Date("2026-01-20") });
+  await getOrCreateChangeOrder({ projectId: p2.id, title: "Calefacción de Piso Radiante", description: "Instalación de sistema de piso radiante hidráulico en sala, comedor y habitación principal.", amount: "35000", status: "pending", createdBy: builder1.id });
 
-  await getOrCreateChangeOrder({
-    projectId: p1.id,
-    title: "Sistema de Domótica Smart Home",
-    description: "Instalación de sistema de domótica completo: iluminación inteligente, persianas motorizadas, control de clima y sistema de seguridad integrado.",
-    amount: "82000",
-    status: "pending",
-    createdBy: builder1.id,
-  });
-
-  await getOrCreateChangeOrder({
-    projectId: p1.id,
-    title: "Ampliación Terraza Rooftop",
-    description: "Ampliación del área de terraza en azotea, adición de pérgola metálica con lonas retráctiles y área de BBQ.",
-    amount: "38500",
-    status: "rejected",
-    createdBy: builder1.id,
-  });
-
-  await getOrCreateChangeOrder({
-    projectId: p2.id,
-    title: "Cambio de Ventanas a Doble Vidrio",
-    description: "Cambio de todas las ventanas actuales por ventanas con doble vidrio templado para mejor aislamiento térmico y acústico.",
-    amount: "28000",
-    status: "approved",
-    createdBy: builder1.id,
-    approvedBy: client2.id,
-    approvedAt: new Date("2026-01-20"),
-  });
-
-  await getOrCreateChangeOrder({
-    projectId: p2.id,
-    title: "Calefacción de Piso Radiante",
-    description: "Instalación de sistema de piso radiante hidráulico en sala, comedor y habitación principal.",
-    amount: "35000",
-    status: "pending",
-    createdBy: builder1.id,
-  });
-
-  // Photos — idempotent by project + fileUrl
+  // ── Photos ──────────────────────────────────────────────────
   const photoData = [
     { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1503174971373-b1f69850bded?w=800&q=80", caption: "Cimentación terminada - Semana 3", visibleToClient: true, uploadedBy: builder1.id },
     { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", caption: "Estructura primer piso completada", visibleToClient: true, uploadedBy: builder1.id },
@@ -289,21 +302,11 @@ async function seed() {
   ];
 
   for (const photo of photoData) {
-    const [existing] = await db
-      .select()
-      .from(photosTable)
-      .where(
-        and(
-          eq(photosTable.projectId, photo.projectId),
-          eq(photosTable.fileUrl, photo.fileUrl)
-        )
-      );
-    if (!existing) {
-      await db.insert(photosTable).values(photo);
-    }
+    const [existing] = await db.select().from(photosTable).where(and(eq(photosTable.projectId, photo.projectId), eq(photosTable.fileUrl, photo.fileUrl)));
+    if (!existing) await db.insert(photosTable).values(photo);
   }
 
-  // Activity logs — only insert if no logs exist for the project
+  // ── Activity logs ────────────────────────────────────────────
   const logData = [
     { projectId: p1.id, type: "project_created", description: 'Proyecto "Casa Silva - Residencia Principal" fue creado', createdBy: builder1.id, createdAt: new Date("2025-11-15") },
     { projectId: p1.id, type: "contract_uploaded", description: 'Contrato "Contrato Principal - Casa Silva" fue subido', createdBy: builder1.id, createdAt: new Date("2025-11-16") },
@@ -318,22 +321,14 @@ async function seed() {
   ];
 
   for (const log of logData) {
-    const [existing] = await db
-      .select()
-      .from(activityLogsTable)
-      .where(
-        and(
-          eq(activityLogsTable.projectId, log.projectId),
-          eq(activityLogsTable.type, log.type),
-          eq(activityLogsTable.description, log.description)
-        )
-      );
-    if (!existing) {
-      await db.insert(activityLogsTable).values(log as any);
-    }
+    const [existing] = await db.select().from(activityLogsTable).where(and(eq(activityLogsTable.projectId, log.projectId), eq(activityLogsTable.type, log.type), eq(activityLogsTable.description, log.description)));
+    if (!existing) await db.insert(activityLogsTable).values(log as any);
   }
 
   console.log("✅ Seed complete!");
+  console.log("\n📋 Organizations:");
+  console.log(`  [${org1.id}] ${org1.name} (${org1.slug})`);
+  console.log(`  [${org2.id}] ${org2.name} (${org2.slug})`);
   console.log("\n📋 Demo credentials:");
   console.log("  Builder:  builder@buildos.demo / demo1234");
   console.log("  Client:   client@buildos.demo / demo1234");

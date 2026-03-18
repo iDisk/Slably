@@ -2,14 +2,14 @@ import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { rateLimit } from "express-rate-limit";
-import { db, usersTable } from "@workspace/db";
+import { db, usersTable, organizationsTable } from "@workspace/db";
 import { RegisterBody, LoginBody, LoginResponse, GetMeResponse } from "@workspace/api-zod";
 import { signToken, requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
 
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 10,
   message: { error: "Too many login attempts. Please try again in 15 minutes." },
   standardHeaders: true,
@@ -18,12 +18,56 @@ const loginLimiter = rateLimit({
 });
 
 const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000,
   max: 5,
   message: { error: "Too many registration attempts. Please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Helper: build user+org response shape
+async function fetchUserWithOrg(userId: number) {
+  const [row] = await db
+    .select({
+      id:               usersTable.id,
+      name:             usersTable.name,
+      email:            usersTable.email,
+      role:             usersTable.role,
+      organizationId:   usersTable.organizationId,
+      organizationSlug: organizationsTable.slug,
+      passwordHash:     usersTable.passwordHash,
+      createdAt:        usersTable.createdAt,
+    })
+    .from(usersTable)
+    .leftJoin(organizationsTable, eq(usersTable.organizationId, organizationsTable.id))
+    .where(eq(usersTable.id, userId));
+  return row ?? null;
+}
+
+// Helper: generate URL-safe slug from a string
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+// Helper: ensure slug uniqueness in organizations table
+async function uniqueSlug(base: string): Promise<string> {
+  let slug = base;
+  let suffix = 2;
+  while (true) {
+    const [conflict] = await db
+      .select()
+      .from(organizationsTable)
+      .where(eq(organizationsTable.slug, slug));
+    if (!conflict) return slug;
+    slug = `${base}-${suffix++}`;
+  }
+}
 
 router.post("/auth/register", registerLimiter, async (req, res): Promise<void> => {
   const parsed = RegisterBody.safeParse(req.body);
@@ -41,12 +85,39 @@ router.post("/auth/register", registerLimiter, async (req, res): Promise<void> =
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const [user] = await db.insert(usersTable).values({ name, email, passwordHash, role }).returning();
 
-  const token = signToken({ id: user.id, email: user.email, role: user.role });
+  let organizationId: number | null = null;
+  let organizationSlug: string | null = null;
+
+  if (role === "builder") {
+    // Auto-create an org for every new builder
+    const orgName = name;
+    const slug = await uniqueSlug(generateSlug(orgName));
+    const [org] = await db
+      .insert(organizationsTable)
+      .values({ name: orgName, slug })
+      .returning();
+    organizationId = org.id;
+    organizationSlug = org.slug;
+  }
+
+  const [user] = await db
+    .insert(usersTable)
+    .values({ name, email, passwordHash, role, organizationId })
+    .returning();
+
+  const token = signToken({ id: user.id, email: user.email, role: user.role, organizationId, organizationSlug });
 
   res.status(201).json(LoginResponse.parse({
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      organizationId,
+      organizationSlug,
+      createdAt: user.createdAt,
+    },
     token,
   }));
 });
@@ -59,23 +130,39 @@ router.post("/auth/login", loginLimiter, async (req, res): Promise<void> => {
   }
 
   const { email, password } = parsed.data;
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
-
-  if (!user) {
+  const [rawUser] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+  if (!rawUser) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
 
-  const valid = await bcrypt.compare(password, user.passwordHash);
+  const valid = await bcrypt.compare(password, rawUser.passwordHash);
   if (!valid) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
 
-  const token = signToken({ id: user.id, email: user.email, role: user.role });
+  const user = await fetchUserWithOrg(rawUser.id);
+  if (!user) {
+    res.status(500).json({ error: "User lookup failed" });
+    return;
+  }
+
+  const organizationId = user.organizationId ?? null;
+  const organizationSlug = user.organizationSlug ?? null;
+
+  const token = signToken({ id: user.id, email: user.email, role: user.role, organizationId, organizationSlug });
 
   res.json(LoginResponse.parse({
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, createdAt: user.createdAt },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      organizationId,
+      organizationSlug,
+      createdAt: user.createdAt,
+    },
     token,
   }));
 });
@@ -86,7 +173,7 @@ router.post("/auth/logout", (_req, res): void => {
 
 router.get("/auth/me", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const userId = req.user!.id;
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  const user = await fetchUserWithOrg(userId);
 
   if (!user) {
     res.status(401).json({ error: "User not found" });
@@ -98,6 +185,8 @@ router.get("/auth/me", requireAuth, async (req: AuthRequest, res): Promise<void>
     name: user.name,
     email: user.email,
     role: user.role,
+    organizationId: user.organizationId ?? null,
+    organizationSlug: user.organizationSlug ?? null,
     createdAt: user.createdAt,
   }));
 });

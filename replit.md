@@ -54,8 +54,9 @@ scripts/src/seed.ts     # Demo data seeder
 
 ## Database Tables
 
-- `users` — id, name, email, password_hash, role `pgEnum(user_role)`, indexes: email, role
-- `projects` — id, builder_id, client_id, client_name, client_email, name, address, status `pgEnum(project_status)`, start_date `DATE`, notes, progress; indexes: builder_id, client_id, status
+- `organizations` — id, name, slug(UNIQUE auto-gen), created_at, updated_at
+- `users` — id, organization_id(nullable FK→orgs), name, email, password_hash, role `pgEnum(user_role)`, indexes: email, role, organization_id
+- `projects` — id, organization_id(NOT NULL FK→orgs), builder_id, client_id, client_name, client_email, name, address, status `pgEnum(project_status)`, start_date `DATE`, notes, progress; indexes: organization_id, builder_id, client_id, status
 - `contracts` — id, project_id, title, file_url, version, status `pgEnum(contract_status)`; index: project_id
 - `change_orders` — id, project_id, title, description, amount, status `pgEnum(change_order_status)`, created_by, approved_by, approved_at; indexes: project_id, status
 - `photos` — id, project_id, file_url, caption, visible_to_client, uploaded_by; index: project_id
@@ -69,6 +70,16 @@ scripts/src/seed.ts     # Demo data seeder
 | `project_status` | planning, active, on_hold, completed, cancelled |
 | `contract_status` | draft, sent, signed |
 | `change_order_status` | draft, pending, approved, rejected |
+
+## Multi-tenant Architecture
+
+- **Tenant = Organization** (`organizations` table, slug is unique)
+- `projects.organization_id` — NOT NULL FK. All project queries filter by org.
+- `users.organization_id` — nullable FK. Builders must have one (app-enforced). Clients can be null.
+- **JWT payload**: `{ id, email, role, organizationId, organizationSlug }`
+- **Builder register** → auto-creates org from user name, slug auto-generated (lowercase, hyphenated, unique).
+- **Isolation guard**: `checkProjectAccess` in `api-server/src/lib/project-access.ts` — primary check is org match; secondary is role/clientId.
+- Builder project list = all projects in their org (not just their own `builder_id`).
 
 ## User Roles
 

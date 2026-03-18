@@ -38,6 +38,8 @@ export const LoginResponse = zod.object({
     name: zod.string(),
     email: zod.string(),
     role: zod.enum(["builder", "client"]),
+    organizationId: zod.number().nullable(),
+    organizationSlug: zod.string().nullable(),
     createdAt: zod.coerce.date(),
   }),
   token: zod.string(),
@@ -58,6 +60,8 @@ export const GetMeResponse = zod.object({
   name: zod.string(),
   email: zod.string(),
   role: zod.enum(["builder", "client"]),
+  organizationId: zod.number().nullable(),
+  organizationSlug: zod.string().nullable(),
   createdAt: zod.coerce.date(),
 });
 

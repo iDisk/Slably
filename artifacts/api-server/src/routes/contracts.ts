@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, contractsTable, projectsTable } from "@workspace/db";
+import { db, contractsTable } from "@workspace/db";
 import {
   ListContractsParams,
   ListContractsResponse,
@@ -11,32 +11,18 @@ import {
   UpdateContractResponse,
   DeleteContractParams,
 } from "@workspace/api-zod";
-import { requireAuth, type AuthRequest } from "../lib/auth";
-import { logActivity } from "../lib/activity";
+import { requireAuth, type AuthRequest } from "../lib/auth.js";
+import { checkProjectAccess } from "../lib/project-access.js";
+import { logActivity } from "../lib/activity.js";
 
 const router: IRouter = Router();
 
-async function checkProjectAccess(projectId: number, userId: number, role: string) {
-  const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, projectId));
-  if (!project) return null;
-  if (role === "builder" && project.builderId !== userId) return null;
-  if (role === "client" && project.clientId !== userId) return null;
-  return project;
-}
-
 router.get("/projects/:projectId/contracts", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const params = ListContractsParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
-  const user = req.user!;
-  const project = await checkProjectAccess(params.data.projectId, user.id, user.role);
-  if (!project) {
-    res.status(404).json({ error: "Project not found" });
-    return;
-  }
+  const project = await checkProjectAccess(params.data.projectId, req.user!);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
 
   const contracts = await db.select().from(contractsTable)
     .where(eq(contractsTable.projectId, params.data.projectId));
@@ -46,28 +32,16 @@ router.get("/projects/:projectId/contracts", requireAuth, async (req: AuthReques
 
 router.post("/projects/:projectId/contracts", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const params = CreateContractParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role !== "builder") {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
+  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const project = await checkProjectAccess(params.data.projectId, user.id, user.role);
-  if (!project) {
-    res.status(404).json({ error: "Project not found" });
-    return;
-  }
+  const project = await checkProjectAccess(params.data.projectId, user);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
 
   const parsed = CreateContractBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const [contract] = await db.insert(contractsTable).values({
     projectId: params.data.projectId,
@@ -81,44 +55,29 @@ router.post("/projects/:projectId/contracts", requireAuth, async (req: AuthReque
 
 router.patch("/projects/:projectId/contracts/:id", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const params = UpdateContractParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role !== "builder") {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
+  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const project = await checkProjectAccess(params.data.projectId, user.id, user.role);
-  if (!project) {
-    res.status(404).json({ error: "Project not found" });
-    return;
-  }
+  const project = await checkProjectAccess(params.data.projectId, user);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
 
   const parsed = UpdateContractBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const updateData: Record<string, unknown> = {};
-  if (parsed.data.title !== null && parsed.data.title !== undefined) updateData.title = parsed.data.title;
-  if (parsed.data.fileUrl !== undefined) updateData.fileUrl = parsed.data.fileUrl;
-  if (parsed.data.version !== undefined) updateData.version = parsed.data.version;
-  if (parsed.data.status !== null && parsed.data.status !== undefined) updateData.status = parsed.data.status;
+  if (parsed.data.title != null)   updateData.title   = parsed.data.title;
+  if (parsed.data.fileUrl !== undefined)  updateData.fileUrl  = parsed.data.fileUrl;
+  if (parsed.data.version !== undefined)  updateData.version  = parsed.data.version;
+  if (parsed.data.status != null)  updateData.status  = parsed.data.status;
 
   const [contract] = await db.update(contractsTable)
     .set(updateData)
     .where(and(eq(contractsTable.id, params.data.id), eq(contractsTable.projectId, params.data.projectId)))
     .returning();
 
-  if (!contract) {
-    res.status(404).json({ error: "Contract not found" });
-    return;
-  }
+  if (!contract) { res.status(404).json({ error: "Contract not found" }); return; }
 
   if (parsed.data.status === "signed") {
     await logActivity(params.data.projectId, "contract_signed", `Contract "${contract.title}" was marked as signed`, user.id);
@@ -129,22 +88,13 @@ router.patch("/projects/:projectId/contracts/:id", requireAuth, async (req: Auth
 
 router.delete("/projects/:projectId/contracts/:id", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const params = DeleteContractParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role !== "builder") {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
+  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const project = await checkProjectAccess(params.data.projectId, user.id, user.role);
-  if (!project) {
-    res.status(404).json({ error: "Project not found" });
-    return;
-  }
+  const project = await checkProjectAccess(params.data.projectId, user);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
 
   await db.delete(contractsTable)
     .where(and(eq(contractsTable.id, params.data.id), eq(contractsTable.projectId, params.data.projectId)));

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, or } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, projectsTable } from "@workspace/db";
 import {
   CreateProjectBody,
@@ -11,19 +11,39 @@ import {
   DeleteProjectParams,
   ListProjectsResponse,
 } from "@workspace/api-zod";
-import { requireAuth, type AuthRequest } from "../lib/auth";
-import { logActivity } from "../lib/activity";
+import { requireAuth, type AuthRequest } from "../lib/auth.js";
+import { checkProjectAccess } from "../lib/project-access.js";
+import { logActivity } from "../lib/activity.js";
 
 const router: IRouter = Router();
 
 router.get("/projects", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const user = req.user!;
 
+  // Builders without an org see nothing
+  if (!user.organizationId) {
+    res.json([]);
+    return;
+  }
+
   let projects;
   if (user.role === "builder") {
-    projects = await db.select().from(projectsTable).where(eq(projectsTable.builderId, user.id));
+    // All projects in the org (not just the requesting builder's own)
+    projects = await db
+      .select()
+      .from(projectsTable)
+      .where(eq(projectsTable.organizationId, user.organizationId));
   } else {
-    projects = await db.select().from(projectsTable).where(eq(projectsTable.clientId, user.id));
+    // Clients see only projects they are assigned to within their org
+    projects = await db
+      .select()
+      .from(projectsTable)
+      .where(
+        and(
+          eq(projectsTable.clientId, user.id),
+          eq(projectsTable.organizationId, user.organizationId)
+        )
+      );
   }
 
   res.json(ListProjectsResponse.parse(projects));
@@ -33,6 +53,10 @@ router.post("/projects", requireAuth, async (req: AuthRequest, res): Promise<voi
   const user = req.user!;
   if (user.role !== "builder") {
     res.status(403).json({ error: "Only builders can create projects" });
+    return;
+  }
+  if (!user.organizationId) {
+    res.status(403).json({ error: "Builder must belong to an organization" });
     return;
   }
 
@@ -45,6 +69,7 @@ router.post("/projects", requireAuth, async (req: AuthRequest, res): Promise<voi
   const [project] = await db.insert(projectsTable).values({
     ...parsed.data,
     builderId: user.id,
+    organizationId: user.organizationId,
     progress: parsed.data.progress ?? 0,
   }).returning();
 
@@ -60,20 +85,9 @@ router.get("/projects/:id", requireAuth, async (req: AuthRequest, res): Promise<
     return;
   }
 
-  const user = req.user!;
-  const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, params.data.id));
-
+  const project = await checkProjectAccess(params.data.id, req.user!);
   if (!project) {
     res.status(404).json({ error: "Project not found" });
-    return;
-  }
-
-  if (user.role === "builder" && project.builderId !== user.id) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-  if (user.role === "client" && project.clientId !== user.id) {
-    res.status(403).json({ error: "Forbidden" });
     return;
   }
 
@@ -93,10 +107,8 @@ router.patch("/projects/:id", requireAuth, async (req: AuthRequest, res): Promis
     return;
   }
 
-  const [existing] = await db.select().from(projectsTable).where(
-    and(eq(projectsTable.id, params.data.id), eq(projectsTable.builderId, user.id))
-  );
-  if (!existing) {
+  const project = await checkProjectAccess(params.data.id, user);
+  if (!project) {
     res.status(404).json({ error: "Project not found" });
     return;
   }
@@ -108,21 +120,22 @@ router.patch("/projects/:id", requireAuth, async (req: AuthRequest, res): Promis
   }
 
   const updateData: Record<string, unknown> = {};
-  if (parsed.data.name !== null && parsed.data.name !== undefined) updateData.name = parsed.data.name;
-  if (parsed.data.clientName !== null && parsed.data.clientName !== undefined) updateData.clientName = parsed.data.clientName;
+  if (parsed.data.name != null)         updateData.name         = parsed.data.name;
+  if (parsed.data.clientName != null)   updateData.clientName   = parsed.data.clientName;
   if (parsed.data.clientEmail !== undefined) updateData.clientEmail = parsed.data.clientEmail;
-  if (parsed.data.address !== null && parsed.data.address !== undefined) updateData.address = parsed.data.address;
-  if (parsed.data.status !== null && parsed.data.status !== undefined) updateData.status = parsed.data.status;
-  if (parsed.data.startDate !== undefined) updateData.startDate = parsed.data.startDate;
-  if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
-  if (parsed.data.progress !== null && parsed.data.progress !== undefined) updateData.progress = parsed.data.progress;
+  if (parsed.data.address != null)      updateData.address      = parsed.data.address;
+  if (parsed.data.status != null)       updateData.status       = parsed.data.status;
+  if (parsed.data.startDate !== undefined)   updateData.startDate   = parsed.data.startDate;
+  if (parsed.data.notes !== undefined)  updateData.notes        = parsed.data.notes;
+  if (parsed.data.progress != null)     updateData.progress     = parsed.data.progress;
 
-  const [project] = await db.update(projectsTable)
+  const [updated] = await db
+    .update(projectsTable)
     .set(updateData)
     .where(eq(projectsTable.id, params.data.id))
     .returning();
 
-  res.json(UpdateProjectResponse.parse(project));
+  res.json(UpdateProjectResponse.parse(updated));
 });
 
 router.delete("/projects/:id", requireAuth, async (req: AuthRequest, res): Promise<void> => {
@@ -138,10 +151,8 @@ router.delete("/projects/:id", requireAuth, async (req: AuthRequest, res): Promi
     return;
   }
 
-  const [existing] = await db.select().from(projectsTable).where(
-    and(eq(projectsTable.id, params.data.id), eq(projectsTable.builderId, user.id))
-  );
-  if (!existing) {
+  const project = await checkProjectAccess(params.data.id, user);
+  if (!project) {
     res.status(404).json({ error: "Project not found" });
     return;
   }

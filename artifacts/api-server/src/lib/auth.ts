@@ -3,26 +3,32 @@ import { Request, Response, NextFunction } from "express";
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET environment variable is not set");
-  }
+  if (!secret) throw new Error("JWT_SECRET environment variable is not set");
   return secret;
 }
 
-export function signToken(payload: { id: number; email: string; role: string }): string {
+export interface TokenPayload {
+  id: number;
+  email: string;
+  role: string;
+  organizationId: number | null;
+  organizationSlug: string | null;
+}
+
+export function signToken(payload: TokenPayload): string {
   return jwt.sign(payload, getJwtSecret(), { expiresIn: "7d" });
 }
 
-export function verifyToken(token: string): { id: number; email: string; role: string } | null {
+export function verifyToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, getJwtSecret()) as { id: number; email: string; role: string };
+    return jwt.verify(token, getJwtSecret()) as TokenPayload;
   } catch {
     return null;
   }
 }
 
 export interface AuthRequest extends Request {
-  user?: { id: number; email: string; role: string };
+  user?: TokenPayload;
 }
 
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
