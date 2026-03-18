@@ -71,6 +71,24 @@ scripts/src/seed.ts     # Demo data seeder
 | `contract_status` | draft, sent, signed |
 | `change_order_status` | draft, pending, approved, rejected |
 
+## Phase Status
+
+| Phase | Status | What's included |
+|-------|--------|-----------------|
+| Phase 1 — MVP Core | ✅ Complete | Auth, Projects CRUD, Dashboard, Client portal base |
+| Phase 1 hardening | ✅ Complete | JWT_SECRET, rate limiting, CORS, global error handler |
+| Multi-tenant base | ✅ Complete | organizations table, org isolation, slug auto-gen |
+| Phase 2 — Contracts & Change Orders | ✅ Complete | Full CRUD UI for both modules, tabbed project detail |
+| Phase 3 — Photos, Activity, Client portal | 🔜 Planned | |
+
+## Phase 2 — Components built
+
+| Component | Path |
+|-----------|------|
+| ContractsTab | `artifacts/buildos/src/components/project/ContractsTab.tsx` |
+| ChangeOrdersTab | `artifacts/buildos/src/components/project/ChangeOrdersTab.tsx` |
+| ProjectDetails (tabbed) | `artifacts/buildos/src/pages/builder/ProjectDetails.tsx` |
+
 ## Multi-tenant Architecture
 
 - **Tenant = Organization** (`organizations` table, slug is unique)
