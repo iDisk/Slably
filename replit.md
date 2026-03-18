@@ -54,12 +54,21 @@ scripts/src/seed.ts     # Demo data seeder
 
 ## Database Tables
 
-- `users` — id, name, email, password_hash, role (builder|client)
-- `projects` — id, builder_id, client_id, client_name, client_email, name, address, status, start_date, notes, progress
-- `contracts` — id, project_id, title, file_url, version, status (draft|sent|signed)
-- `change_orders` — id, project_id, title, description, amount, status (draft|pending|approved|rejected), created_by, approved_by, approved_at
-- `photos` — id, project_id, file_url, caption, visible_to_client, uploaded_by
-- `activity_logs` — id, project_id, type, description, created_by
+- `users` — id, name, email, password_hash, role `pgEnum(user_role)`, indexes: email, role
+- `projects` — id, builder_id, client_id, client_name, client_email, name, address, status `pgEnum(project_status)`, start_date `DATE`, notes, progress; indexes: builder_id, client_id, status
+- `contracts` — id, project_id, title, file_url, version, status `pgEnum(contract_status)`; index: project_id
+- `change_orders` — id, project_id, title, description, amount, status `pgEnum(change_order_status)`, created_by, approved_by, approved_at; indexes: project_id, status
+- `photos` — id, project_id, file_url, caption, visible_to_client, uploaded_by; index: project_id
+- `activity_logs` — id, project_id, type, description, created_by; indexes: project_id, created_at
+
+## PostgreSQL Enums (live in DB)
+
+| Enum name | Values |
+|-----------|--------|
+| `user_role` | builder, client |
+| `project_status` | planning, active, on_hold, completed, cancelled |
+| `contract_status` | draft, sent, signed |
+| `change_order_status` | draft, pending, approved, rejected |
 
 ## User Roles
 
@@ -108,6 +117,21 @@ pnpm --filter @workspace/scripts run seed
 pnpm run typecheck
 ```
 
+## Security Hardening (Bloque 1 — complete)
+
+- `JWT_SECRET` set as Replit shared env var (no hardcoded fallback)
+- `express-rate-limit`: 10 req/15min on `/auth/login` (skip success), 5 req/hr on `/auth/register`; 200 req/15min global baseline
+- CORS: Replit dev domains + explicit `ALLOWED_ORIGINS` env var for production
+- Global error handler in `app.ts` (stack traces only in development)
+- Startup env var validation: exits with error if `JWT_SECRET` or `DATABASE_URL` missing
+- Request logging middleware (method + path + status + ms)
+
+## Known Technical Debt
+
+- `lib/api-zod/src/generated/api.ts` is manually edited (codegen would overwrite). Keep timestamps as `zod.coerce.date()` and `startDate` as `zod.string().nullable()`
+- Global fetch monkey-patched in `App.tsx` to inject JWT headers
+- `checkProjectAccess` helper copy-pasted across routes (contracts, change_orders, photos)
+
 ## Project Status (MVP v1)
 
 - [x] Auth (register/login/logout, builder + client roles)
@@ -119,3 +143,5 @@ pnpm run typecheck
 - [x] Client portal (project overview, contracts, change orders, photos)
 - [x] Activity log (auto-recorded events)
 - [x] Demo seed data (3 projects, contracts, change orders, photos)
+- [x] Security hardening (rate limiting, JWT env var, CORS, error handler)
+- [x] Schema hardening (pgEnum x4, 12 DB indexes, start_date as DATE, idempotent seed)

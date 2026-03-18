@@ -1,15 +1,21 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env.JWT_SECRET || "buildos-secret-key-change-in-production";
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is not set");
+  }
+  return secret;
+}
 
 export function signToken(payload: { id: number; email: string; role: string }): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): { id: number; email: string; role: string } | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as { id: number; email: string; role: string };
+    return jwt.verify(token, getJwtSecret()) as { id: number; email: string; role: string };
   } catch {
     return null;
   }
