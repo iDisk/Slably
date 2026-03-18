@@ -1,96 +1,121 @@
-# Workspace
+# BuildOS
 
-## Overview
+**The Client Experience Platform for Construction**
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+A SaaS MVP for small/medium construction companies to centralize project management and improve client experience.
 
 ## Stack
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
+- **Monorepo**: pnpm workspaces
+- **Node.js**: v24
+- **Frontend**: React + Vite + Tailwind CSS + shadcn/ui components (artifacts/buildos)
+- **Backend**: Express 5 API server (artifacts/api-server)
 - **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Auth**: JWT (bcryptjs + jsonwebtoken)
+- **Validation**: Zod (OpenAPI-first with Orval codegen)
+- **UI**: Tailwind CSS, lucide-react icons, framer-motion animations, sonner toasts
 
 ## Structure
 
 ```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+artifacts/
+  api-server/         # Express 5 REST API
+    src/
+      lib/auth.ts     # JWT auth middleware
+      lib/activity.ts # Activity log helper
+      routes/
+        auth.ts       # POST /auth/register, /login, /logout, GET /auth/me
+        projects.ts   # CRUD /projects
+        contracts.ts  # CRUD /projects/:id/contracts
+        change_orders.ts # CRUD + approve/reject
+        photos.ts     # CRUD /projects/:id/photos
+        activity.ts   # GET /projects/:id/activity
+  buildos/            # React SaaS frontend
+    src/
+      hooks/use-auth.tsx        # JWT auth context
+      components/layout/
+        BuilderLayout.tsx       # Sidebar nav for builders
+        ClientLayout.tsx        # Top nav for clients
+      pages/
+        auth/Login.tsx          # Login page
+        auth/Register.tsx       # Register page
+        builder/Dashboard.tsx   # Project grid + stats
+        builder/ProjectDetails.tsx # Tabbed project detail
+        client/ClientDashboard.tsx # Client portal
+
+lib/
+  api-spec/openapi.yaml # OpenAPI 3.1 spec (source of truth)
+  api-zod/              # Generated Zod schemas (server-side validation)
+  api-client-react/     # Generated React Query hooks (frontend)
+  db/src/schema/        # Drizzle ORM table definitions
+
+scripts/src/seed.ts     # Demo data seeder
 ```
 
-## TypeScript & Composite Projects
+## Database Tables
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+- `users` — id, name, email, password_hash, role (builder|client)
+- `projects` — id, builder_id, client_id, client_name, client_email, name, address, status, start_date, notes, progress
+- `contracts` — id, project_id, title, file_url, version, status (draft|sent|signed)
+- `change_orders` — id, project_id, title, description, amount, status (draft|pending|approved|rejected), created_by, approved_by, approved_at
+- `photos` — id, project_id, file_url, caption, visible_to_client, uploaded_by
+- `activity_logs` — id, project_id, type, description, created_by
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## User Roles
 
-## Root Scripts
+**Builder (Admin)**
+- Dashboard with all projects, stats
+- Create/edit/delete projects
+- Upload contracts, mark as signed
+- Create/edit change orders, send to client
+- Upload photos, toggle client visibility
+- View activity log
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+**Client**
+- View their assigned project only
+- View contracts (read-only)
+- Approve/reject pending change orders
+- View photos (only visible_to_client=true)
 
-## Packages
+## Auth
 
-### `artifacts/api-server` (`@workspace/api-server`)
+- JWT stored in `localStorage` as `buildos_token`
+- All API calls send `Authorization: Bearer <token>`
+- `/api/auth/me` checks session on app load
+- Roles enforced on both frontend routing and backend middleware
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+## Demo Credentials
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+- **Builder**: builder@buildos.demo / demo1234
+- **Client**: client@buildos.demo / demo1234
+- **Builder 2**: ana@buildos.demo / demo1234
+- **Client 2**: maria@buildos.demo / demo1234
+- **Client 3**: jorge@buildos.demo / demo1234
 
-### `lib/db` (`@workspace/db`)
+## Dev Commands
 
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
+```bash
+# Run codegen after OpenAPI spec changes
+pnpm --filter @workspace/api-spec run codegen
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
+# Push database schema
+pnpm --filter @workspace/db run push
 
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+# Seed demo data
+pnpm --filter @workspace/scripts run seed
 
-### `lib/api-spec` (`@workspace/api-spec`)
+# Typecheck all
+pnpm run typecheck
+```
 
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
+## Project Status (MVP v1)
 
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+- [x] Auth (register/login/logout, builder + client roles)
+- [x] Builder dashboard (project grid + stats cards)
+- [x] Projects CRUD (create, view, edit, delete)
+- [x] Contracts module (upload, list, mark as signed)
+- [x] Change orders (create, send to client, approve/reject)
+- [x] Photos (upload, grid view, visibility toggle)
+- [x] Client portal (project overview, contracts, change orders, photos)
+- [x] Activity log (auto-recorded events)
+- [x] Demo seed data (3 projects, contracts, change orders, photos)

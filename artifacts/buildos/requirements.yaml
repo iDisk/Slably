@@ -1,0 +1,25 @@
+packages:
+  "framer-motion": "For page transitions and premium micro-interactions"
+  "lucide-react": "For beautiful UI icons"
+  "date-fns": "For formatting timeline and activity dates"
+  "clsx": "For conditional tailwind classes"
+  "tailwind-merge": "For merging tailwind classes without conflicts"
+  "sonner": "For premium toast notifications"
+  "@radix-ui/react-dialog": "For accessible, beautiful modal dialogs"
+  "@radix-ui/react-tabs": "For accessible tabbed interfaces in project details"
+  "@radix-ui/react-slot": "For component composition (button asChild)"
+  "class-variance-authority": "For elegant component variants"
+  "@hookform/resolvers": "For Zod schema validation with forms"
+  "react-hook-form": "For robust form state management"
+
+images:
+  - path: "artifacts/buildos/public/images/auth-bg.png"
+    description: "Architectural blueprint mixed with modern abstract geometric shapes in deep navy blue and gold accents, professional SaaS styling, high contrast, clean"
+    aspect_ratio: "16:9"
+  - path: "artifacts/buildos/public/images/logo.png"
+    description: "Modern minimalist logo mark for a construction tech company, stylized building blocks forming an abstract 'B' in gold and navy on transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - Global window.fetch will be patched in App.tsx to automatically inject the JWT from localStorage ('buildos_token') into all generated API client requests.
+  - Orval generated hooks from @workspace/api-client-react are used for all data access.

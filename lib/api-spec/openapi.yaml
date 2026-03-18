@@ -1,22 +1,33 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: BuildOS API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: projects
+    description: Projects management
+  - name: contracts
+    description: Contracts management
+  - name: changeOrders
+    description: Change orders management
+  - name: photos
+    description: Photos management
+  - name: activity
+    description: Activity logs
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +35,545 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List projects
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectBody"
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectBody"
+      responses:
+        "200":
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /projects/{projectId}/contracts:
+    get:
+      operationId: listContracts
+      tags: [contracts]
+      summary: List contracts for a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of contracts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contract"
+    post:
+      operationId: createContract
+      tags: [contracts]
+      summary: Create a contract
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContractBody"
+      responses:
+        "201":
+          description: Contract created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+
+  /projects/{projectId}/contracts/{id}:
+    patch:
+      operationId: updateContract
+      tags: [contracts]
+      summary: Update a contract
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContractBody"
+      responses:
+        "200":
+          description: Contract updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Contract"
+    delete:
+      operationId: deleteContract
+      tags: [contracts]
+      summary: Delete a contract
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projects/{projectId}/change-orders:
+    get:
+      operationId: listChangeOrders
+      tags: [changeOrders]
+      summary: List change orders for a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of change orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChangeOrder"
+    post:
+      operationId: createChangeOrder
+      tags: [changeOrders]
+      summary: Create a change order
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChangeOrderBody"
+      responses:
+        "201":
+          description: Change order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangeOrder"
+
+  /projects/{projectId}/change-orders/{id}:
+    patch:
+      operationId: updateChangeOrder
+      tags: [changeOrders]
+      summary: Update a change order
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateChangeOrderBody"
+      responses:
+        "200":
+          description: Change order updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangeOrder"
+    delete:
+      operationId: deleteChangeOrder
+      tags: [changeOrders]
+      summary: Delete a change order
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projects/{projectId}/change-orders/{id}/approve:
+    post:
+      operationId: approveChangeOrder
+      tags: [changeOrders]
+      summary: Approve a change order
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Change order approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangeOrder"
+
+  /projects/{projectId}/change-orders/{id}/reject:
+    post:
+      operationId: rejectChangeOrder
+      tags: [changeOrders]
+      summary: Reject a change order
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Change order rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangeOrder"
+
+  /projects/{projectId}/photos:
+    get:
+      operationId: listPhotos
+      tags: [photos]
+      summary: List photos for a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+    post:
+      operationId: createPhoto
+      tags: [photos]
+      summary: Upload a photo (base64)
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePhotoBody"
+      responses:
+        "201":
+          description: Photo uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+
+  /projects/{projectId}/photos/{id}:
+    patch:
+      operationId: updatePhoto
+      tags: [photos]
+      summary: Update a photo
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePhotoBody"
+      responses:
+        "200":
+          description: Photo updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+    delete:
+      operationId: deletePhoto
+      tags: [photos]
+      summary: Delete a photo
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /projects/{projectId}/activity:
+    get:
+      operationId: listActivity
+      tags: [activity]
+      summary: List activity logs for a project
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Activity log
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityLog"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +584,371 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [builder, client]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - createdAt
+
+    RegisterBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [builder, client]
+      required:
+        - name
+        - email
+        - password
+        - role
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        builderId:
+          type: integer
+        clientId:
+          type: ["integer", "null"]
+        clientName:
+          type: string
+        clientEmail:
+          type: ["string", "null"]
+        name:
+          type: string
+        address:
+          type: string
+        status:
+          type: string
+          enum: [planning, active, on_hold, completed, cancelled]
+        startDate:
+          type: ["string", "null"]
+          format: date
+        notes:
+          type: ["string", "null"]
+        progress:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - builderId
+        - clientId
+        - clientName
+        - clientEmail
+        - name
+        - address
+        - status
+        - startDate
+        - notes
+        - progress
+        - createdAt
+        - updatedAt
+
+    CreateProjectBody:
+      type: object
+      properties:
+        clientName:
+          type: string
+        clientEmail:
+          type: ["string", "null"]
+        name:
+          type: string
+        address:
+          type: string
+        status:
+          type: string
+          enum: [planning, active, on_hold, completed, cancelled]
+        startDate:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        progress:
+          type: integer
+      required:
+        - clientName
+        - name
+        - address
+        - status
+
+    UpdateProjectBody:
+      type: object
+      properties:
+        clientName:
+          type: ["string", "null"]
+        clientEmail:
+          type: ["string", "null"]
+        name:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        status:
+          type: ["string", "null"]
+          enum: [planning, active, on_hold, completed, cancelled, "null"]
+        startDate:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        progress:
+          type: ["integer", "null"]
+
+    Contract:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        title:
+          type: string
+        fileUrl:
+          type: ["string", "null"]
+        version:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [draft, sent, signed]
+        uploadedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - projectId
+        - title
+        - fileUrl
+        - version
+        - status
+        - uploadedAt
+
+    CreateContractBody:
+      type: object
+      properties:
+        title:
+          type: string
+        fileUrl:
+          type: ["string", "null"]
+        version:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [draft, sent, signed]
+      required:
+        - title
+        - status
+
+    UpdateContractBody:
+      type: object
+      properties:
+        title:
+          type: ["string", "null"]
+        fileUrl:
+          type: ["string", "null"]
+        version:
+          type: ["string", "null"]
+        status:
+          type: ["string", "null"]
+          enum: [draft, sent, signed, "null"]
+
+    ChangeOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [draft, pending, approved, rejected]
+        createdBy:
+          type: integer
+        approvedBy:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        approvedAt:
+          type: ["string", "null"]
+          format: date-time
+      required:
+        - id
+        - projectId
+        - title
+        - description
+        - amount
+        - status
+        - createdBy
+        - approvedBy
+        - createdAt
+        - approvedAt
+
+    CreateChangeOrderBody:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [draft, pending, approved, rejected]
+      required:
+        - title
+        - amount
+        - status
+
+    UpdateChangeOrderBody:
+      type: object
+      properties:
+        title:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        amount:
+          type: ["number", "null"]
+        status:
+          type: ["string", "null"]
+          enum: [draft, pending, approved, rejected, "null"]
+
+    Photo:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        fileUrl:
+          type: string
+        caption:
+          type: ["string", "null"]
+        visibleToClient:
+          type: boolean
+        uploadedBy:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - projectId
+        - fileUrl
+        - caption
+        - visibleToClient
+        - uploadedBy
+        - createdAt
+
+    CreatePhotoBody:
+      type: object
+      properties:
+        fileUrl:
+          type: string
+        caption:
+          type: ["string", "null"]
+        visibleToClient:
+          type: boolean
+      required:
+        - fileUrl
+
+    UpdatePhotoBody:
+      type: object
+      properties:
+        caption:
+          type: ["string", "null"]
+        visibleToClient:
+          type: ["boolean", "null"]
+
+    ActivityLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        createdBy:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - projectId
+        - type
+        - description
+        - createdBy
+        - createdAt

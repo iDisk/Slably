@@ -1,0 +1,319 @@
+Quiero que construyas una aplicación SaaS web llamada BuildOS.
+
+OBJETIVO DEL PRODUCTO
+BuildOS es una plataforma para pequeñas y medianas constructoras que hoy trabajan con WhatsApp, Excel, llamadas, fotos sueltas y documentos desorganizados. El producto debe ayudarles a centralizar la operación básica de un proyecto de construcción y mejorar la experiencia del cliente.
+
+La idea central del MVP es:
+Contrato + Change Orders + Evidencia + Portal del Cliente
+
+NO quiero una app compleja ni enterprise al inicio.
+Quiero un MVP limpio, funcional, rápido y fácil de usar.
+
+TIPO DE PRODUCTO
+- SaaS web app
+- Multiusuario básico
+- Enfocado en constructor pequeño o mediano
+- Diseño simple, profesional, moderno
+- Mobile responsive
+- Muy fácil de usar para personas no técnicas
+
+USUARIOS DEL MVP
+1. Builder / Admin
+- crea y administra proyectos
+- sube contratos
+- crea change orders
+- sube fotos
+- invita al cliente
+
+2. Cliente
+- entra a un portal privado
+- ve el avance de su proyecto
+- revisa contratos
+- revisa y aprueba change orders
+- ve fotos y actualizaciones
+
+FUNCIONALIDADES DEL MVP
+
+1. AUTENTICACIÓN
+- login
+- registro
+- logout
+- recuperación de contraseña
+- rol builder
+- rol client
+
+2. DASHBOARD DEL BUILDER
+- vista general con lista de proyectos
+- botón “Nuevo Proyecto”
+- cada proyecto debe mostrar:
+  - nombre
+  - cliente
+  - dirección
+  - estado
+  - fecha de creación
+  - progreso simple
+
+3. MÓDULO DE PROYECTOS
+- crear proyecto
+- editar proyecto
+- ver detalle de proyecto
+- campos:
+  - project name
+  - client name
+  - client email
+  - address
+  - status
+  - start date
+  - notes
+
+4. MÓDULO DE CONTRATOS
+- subir contrato PDF
+- almacenar varios contratos por proyecto
+- mostrar lista de contratos
+- campos:
+  - title
+  - file
+  - uploaded date
+  - version
+  - status
+- status ejemplo:
+  - draft
+  - sent
+  - signed
+- por ahora usar una aprobación simple, no integración real con DocuSign
+- permitir marcar contrato como firmado manualmente
+- preparar arquitectura para futura firma digital real
+
+5. MÓDULO DE CHANGE ORDERS
+- crear change order
+- editar change order
+- enviar al cliente
+- cliente puede aprobar o rechazar
+- campos:
+  - title
+  - description
+  - amount
+  - status
+  - created date
+  - approved date
+- status:
+  - draft
+  - pending
+  - approved
+  - rejected
+- al aprobar, debe quedar registrado con fecha y usuario
+- debe verse claramente dentro del proyecto
+
+6. MÓDULO DE FOTOS / EVIDENCIA
+- subir fotos por proyecto
+- mostrar fotos en grid y también en timeline simple
+- campos:
+  - image
+  - caption
+  - upload date
+  - visible to client true/false
+- el builder puede decidir qué fotos ve el cliente
+
+7. PORTAL DEL CLIENTE
+- acceso simple por login
+- solo ve SU proyecto
+- dentro del portal debe poder ver:
+  - resumen del proyecto
+  - contratos
+  - change orders
+  - fotos
+  - estatus general
+- el cliente no puede editar el proyecto
+- el cliente solo puede aprobar o rechazar change orders
+
+8. ACTIVITY LOG SIMPLE
+- registrar eventos automáticos:
+  - project created
+  - contract uploaded
+  - change order created
+  - change order approved/rejected
+  - photo uploaded
+- mostrar esto en el detalle del proyecto como historial
+
+ESTRUCTURA DE NAVEGACIÓN
+BUILDER:
+- Dashboard
+- Projects
+- Project Detail
+- Contracts
+- Change Orders
+- Photos
+- Settings
+
+CLIENT:
+- My Project
+- Contracts
+- Change Orders
+- Photos
+
+ESTRUCTURA DE CADA PROJECT DETAIL
+Crear tabs:
+- Overview
+- Contracts
+- Change Orders
+- Photos
+- Activity
+
+UI / UX
+Quiero una interfaz:
+- moderna
+- limpia
+- profesional
+- simple
+- muy clara
+- estilo SaaS moderno
+
+Inspiración visual:
+- Stripe
+- Notion
+- Linear
+- Vercel
+- Framer
+
+REGLAS DE DISEÑO
+- usar cards limpias
+- tipografía clara
+- navegación lateral para builder
+- top bar simple
+- estados visuales claros
+- formularios sencillos
+- botones primarios muy visibles
+- responsive para tablet y celular
+- no recargar la interfaz
+
+COLORES SUGERIDOS
+- azul oscuro / navy como color principal
+- acento naranja o dorado suave para llamadas a la acción
+- fondo claro
+- look premium pero práctico
+
+STACK RECOMENDADO
+Usa un stack moderno y simple para MVP.
+Preferencia:
+- Frontend: Next.js
+- Backend: Next.js server actions o API routes
+- Base de datos: PostgreSQL
+- ORM: Prisma
+- Auth: NextAuth o auth simple
+- Storage: Supabase Storage o S3 compatible
+- UI: Tailwind CSS + shadcn/ui
+
+Si lo consideras mejor para velocidad MVP, puedes usar Supabase para auth + db + storage.
+
+BASE DE DATOS
+Crea las tablas necesarias para este MVP:
+
+users
+- id
+- name
+- email
+- password hash o auth provider
+- role
+
+projects
+- id
+- builder_id
+- client_id
+- name
+- address
+- status
+- start_date
+- notes
+- created_at
+- updated_at
+
+contracts
+- id
+- project_id
+- title
+- file_url
+- version
+- status
+- uploaded_at
+
+change_orders
+- id
+- project_id
+- title
+- description
+- amount
+- status
+- created_by
+- approved_by
+- created_at
+- approved_at
+
+photos
+- id
+- project_id
+- file_url
+- caption
+- visible_to_client
+- uploaded_by
+- created_at
+
+activity_logs
+- id
+- project_id
+- type
+- description
+- created_by
+- created_at
+
+IMPORTANTE
+- cada cliente solo puede ver su proyecto
+- cada builder solo puede ver sus propios proyectos
+- estructura limpia para crecer en el futuro
+- código ordenado
+- componentes reutilizables
+- no construir marketplace todavía
+- no construir IA todavía
+- no construir contabilidad todavía
+- no construir scheduling complejo todavía
+
+PRIORIDAD DE DESARROLLO
+Fase 1
+- auth
+- dashboard
+- projects
+
+Fase 2
+- contracts
+- change orders
+
+Fase 3
+- photos
+- client portal
+- activity log
+
+ENTREGABLES QUE QUIERO
+1. Estructura completa del proyecto
+2. Base de datos lista
+3. UI funcional
+4. Rutas principales
+5. CRUD completo para proyectos
+6. CRUD para contracts y change orders
+7. subida de fotos
+8. portal cliente funcional
+9. seed data para probar
+10. instrucciones para correr localmente
+
+ADEMÁS
+- crea datos demo realistas de una constructora
+- incluye al menos 3 proyectos demo
+- incluye estados de proyecto realistas
+- incluye algunos contratos, change orders y fotos demo
+
+NOMBRE DE LA APP
+BuildOS
+
+TAGLINE
+The Client Experience Platform for Construction
+
+RESULTADO ESPERADO
+Quiero una primera versión funcional del MVP lista para probar localmente, con buen diseño, arquitectura limpia y preparada para seguir creciendo.

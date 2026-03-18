@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "BuildOS"
+version = "1.0.0"
+id = "artifacts/buildos"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+localPort = 19217
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "pnpm --filter @workspace/buildos run dev"
+
+[services.env]
+PORT = "19217"
+BASE_PATH = "/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/buildos", "run", "build"]
+publicDir = "artifacts/buildos/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
