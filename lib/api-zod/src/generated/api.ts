@@ -38,7 +38,7 @@ export const LoginResponse = zod.object({
     name: zod.string(),
     email: zod.string(),
     role: zod.enum(["builder", "client"]),
-    createdAt: zod.date(),
+    createdAt: zod.coerce.date(),
   }),
   token: zod.string(),
 });
@@ -58,7 +58,7 @@ export const GetMeResponse = zod.object({
   name: zod.string(),
   email: zod.string(),
   role: zod.enum(["builder", "client"]),
-  createdAt: zod.date(),
+  createdAt: zod.coerce.date(),
 });
 
 /**
@@ -73,11 +73,11 @@ export const ListProjectsResponseItem = zod.object({
   name: zod.string(),
   address: zod.string(),
   status: zod.enum(["planning", "active", "on_hold", "completed", "cancelled"]),
-  startDate: zod.date().nullable(),
+  startDate: zod.string().nullable(),
   notes: zod.string().nullable(),
   progress: zod.number(),
-  createdAt: zod.date(),
-  updatedAt: zod.date(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
 });
 export const ListProjectsResponse = zod.array(ListProjectsResponseItem);
 
@@ -111,11 +111,11 @@ export const GetProjectResponse = zod.object({
   name: zod.string(),
   address: zod.string(),
   status: zod.enum(["planning", "active", "on_hold", "completed", "cancelled"]),
-  startDate: zod.date().nullable(),
+  startDate: zod.string().nullable(),
   notes: zod.string().nullable(),
   progress: zod.number(),
-  createdAt: zod.date(),
-  updatedAt: zod.date(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
 });
 
 /**
@@ -147,11 +147,11 @@ export const UpdateProjectResponse = zod.object({
   name: zod.string(),
   address: zod.string(),
   status: zod.enum(["planning", "active", "on_hold", "completed", "cancelled"]),
-  startDate: zod.date().nullable(),
+  startDate: zod.string().nullable(),
   notes: zod.string().nullable(),
   progress: zod.number(),
-  createdAt: zod.date(),
-  updatedAt: zod.date(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
 });
 
 /**
@@ -175,7 +175,7 @@ export const ListContractsResponseItem = zod.object({
   fileUrl: zod.string().nullable(),
   version: zod.string().nullable(),
   status: zod.enum(["draft", "sent", "signed"]),
-  uploadedAt: zod.date(),
+  uploadedAt: zod.coerce.date(),
 });
 export const ListContractsResponse = zod.array(ListContractsResponseItem);
 
@@ -215,7 +215,7 @@ export const UpdateContractResponse = zod.object({
   fileUrl: zod.string().nullable(),
   version: zod.string().nullable(),
   status: zod.enum(["draft", "sent", "signed"]),
-  uploadedAt: zod.date(),
+  uploadedAt: zod.coerce.date(),
 });
 
 /**
@@ -242,8 +242,8 @@ export const ListChangeOrdersResponseItem = zod.object({
   status: zod.enum(["draft", "pending", "approved", "rejected"]),
   createdBy: zod.number(),
   approvedBy: zod.number().nullable(),
-  createdAt: zod.date(),
-  approvedAt: zod.date().nullable(),
+  createdAt: zod.coerce.date(),
+  approvedAt: zod.coerce.date().nullable(),
 });
 export const ListChangeOrdersResponse = zod.array(ListChangeOrdersResponseItem);
 
@@ -287,8 +287,8 @@ export const UpdateChangeOrderResponse = zod.object({
   status: zod.enum(["draft", "pending", "approved", "rejected"]),
   createdBy: zod.number(),
   approvedBy: zod.number().nullable(),
-  createdAt: zod.date(),
-  approvedAt: zod.date().nullable(),
+  createdAt: zod.coerce.date(),
+  approvedAt: zod.coerce.date().nullable(),
 });
 
 /**
@@ -316,8 +316,8 @@ export const ApproveChangeOrderResponse = zod.object({
   status: zod.enum(["draft", "pending", "approved", "rejected"]),
   createdBy: zod.number(),
   approvedBy: zod.number().nullable(),
-  createdAt: zod.date(),
-  approvedAt: zod.date().nullable(),
+  createdAt: zod.coerce.date(),
+  approvedAt: zod.coerce.date().nullable(),
 });
 
 /**
@@ -337,8 +337,8 @@ export const RejectChangeOrderResponse = zod.object({
   status: zod.enum(["draft", "pending", "approved", "rejected"]),
   createdBy: zod.number(),
   approvedBy: zod.number().nullable(),
-  createdAt: zod.date(),
-  approvedAt: zod.date().nullable(),
+  createdAt: zod.coerce.date(),
+  approvedAt: zod.coerce.date().nullable(),
 });
 
 /**
@@ -355,7 +355,7 @@ export const ListPhotosResponseItem = zod.object({
   caption: zod.string().nullable(),
   visibleToClient: zod.boolean(),
   uploadedBy: zod.number(),
-  createdAt: zod.date(),
+  createdAt: zod.coerce.date(),
 });
 export const ListPhotosResponse = zod.array(ListPhotosResponseItem);
 
@@ -392,7 +392,7 @@ export const UpdatePhotoResponse = zod.object({
   caption: zod.string().nullable(),
   visibleToClient: zod.boolean(),
   uploadedBy: zod.number(),
-  createdAt: zod.date(),
+  createdAt: zod.coerce.date(),
 });
 
 /**
@@ -416,6 +416,6 @@ export const ListActivityResponseItem = zod.object({
   type: zod.string(),
   description: zod.string(),
   createdBy: zod.number().nullable(),
-  createdAt: zod.date(),
+  createdAt: zod.coerce.date(),
 });
 export const ListActivityResponse = zod.array(ListActivityResponseItem);
