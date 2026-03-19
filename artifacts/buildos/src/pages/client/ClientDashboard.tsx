@@ -9,14 +9,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Loader2, FileSignature, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, FileSignature, CheckCircle2, XCircle, Image as ImageIcon, DollarSign, FileText } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function ClientDashboard() {
   const { data: projects, isLoading } = useListProjects();
-  const project = projects?.[0]; // Assume first project for simplicity in client portal
+  const project = projects?.[0];
   
   if (isLoading) return <ClientLayout><div className="flex justify-center p-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div></ClientLayout>;
   
@@ -66,15 +66,42 @@ export default function ClientDashboard() {
 }
 
 const ClientPhotos = ({ projectId }: { projectId: number }) => {
-  const { data: photos } = useListPhotos(projectId);
-  // Filter for client visible only
-  const visiblePhotos = photos?.filter(p => p.visibleToClient) || [];
-  
+  const { data: photos, isLoading } = useListPhotos(projectId);
+  const visiblePhotos = photos?.filter(p => p.visibleToClient) ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (visiblePhotos.length === 0) {
+    return (
+      <Card className="border-dashed border-2 shadow-none bg-transparent">
+        <CardContent className="p-10 text-center text-muted-foreground">
+          <ImageIcon className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No updates yet</p>
+          <p className="text-sm mt-1">Your builder will share progress photos here as work advances.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {visiblePhotos.map(p => (
         <div key={p.id} className="rounded-xl overflow-hidden shadow-md border border-border bg-white">
-          <img src={p.fileUrl} alt={p.caption || "Update"} className="w-full h-64 object-cover" />
+          <img
+            src={p.fileUrl}
+            alt={p.caption || "Project update"}
+            className="w-full h-64 object-cover"
+            onError={e => {
+              (e.target as HTMLImageElement).src =
+                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='256' viewBox='0 0 400 256'%3E%3Crect fill='%23f1f5f9' width='400' height='256'/%3E%3Ctext fill='%2394a3b8' font-size='14' font-family='sans-serif' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EImage not available%3C/text%3E%3C/svg%3E";
+            }}
+          />
           {p.caption && (
             <div className="p-4 bg-white border-t border-border">
               <p className="font-medium text-foreground">{p.caption}</p>
@@ -83,13 +110,12 @@ const ClientPhotos = ({ projectId }: { projectId: number }) => {
           )}
         </div>
       ))}
-      {visiblePhotos.length === 0 && <div className="col-span-full p-8 text-center text-muted-foreground bg-white rounded-xl border border-border">No updates available yet.</div>}
     </div>
   );
-}
+};
 
 const ClientChangeOrders = ({ projectId }: { projectId: number }) => {
-  const { data: co } = useListChangeOrders(projectId);
+  const { data: co, isLoading } = useListChangeOrders(projectId);
   const queryClient = useQueryClient();
   const approve = useApproveChangeOrder();
   const reject = useRejectChangeOrder();
@@ -100,13 +126,36 @@ const ClientChangeOrders = ({ projectId }: { projectId: number }) => {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListChangeOrdersQueryKey(projectId) });
         toast.success(`Change order ${action}d successfully`);
-      }
+      },
+      onError: () => {
+        toast.error(`Failed to ${action} change order. Please try again.`);
+      },
     });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!co || co.length === 0) {
+    return (
+      <Card className="border-dashed border-2 shadow-none bg-transparent">
+        <CardContent className="p-10 text-center text-muted-foreground">
+          <DollarSign className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No change orders yet</p>
+          <p className="text-sm mt-1">Any changes to the original scope will appear here for your review.</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
-      {co?.map(item => (
+      {co.map(item => (
         <Card key={item.id} className="overflow-hidden border-border shadow-sm flex flex-col bg-white">
           <div className={`h-1.5 w-full ${item.status === 'approved' ? 'bg-emerald-500' : item.status === 'rejected' ? 'bg-red-500' : 'bg-amber-400'}`} />
           <CardContent className="p-6 flex-1 flex flex-col">
@@ -126,11 +175,22 @@ const ClientChangeOrders = ({ projectId }: { projectId: number }) => {
               
               {item.status === 'pending' && (
                 <div className="grid grid-cols-2 gap-3 mt-2">
-                  <Button variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => handleAction(item.id, 'reject')} disabled={reject.isPending}>
-                    <XCircle className="w-4 h-4 mr-2" /> Reject
+                  <Button
+                    variant="outline"
+                    className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={() => handleAction(item.id, 'reject')}
+                    disabled={reject.isPending || approve.isPending}
+                  >
+                    {reject.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
+                    Reject
                   </Button>
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleAction(item.id, 'approve')} disabled={approve.isPending}>
-                    <CheckCircle2 className="w-4 h-4 mr-2" /> Approve
+                  <Button
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={() => handleAction(item.id, 'approve')}
+                    disabled={approve.isPending || reject.isPending}
+                  >
+                    {approve.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                    Approve
                   </Button>
                 </div>
               )}
@@ -138,19 +198,41 @@ const ClientChangeOrders = ({ projectId }: { projectId: number }) => {
           </CardContent>
         </Card>
       ))}
-      {co?.length === 0 && <div className="col-span-full p-8 text-center text-muted-foreground bg-white rounded-xl border border-border">No change orders found.</div>}
     </div>
   );
-}
+};
 
 const ClientContracts = ({ projectId }: { projectId: number }) => {
-  const { data: contracts } = useListContracts(projectId);
+  const { data: contracts, isLoading } = useListContracts(projectId);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!contracts || contracts.length === 0) {
+    return (
+      <Card className="border-dashed border-2 shadow-none bg-transparent">
+        <CardContent className="p-10 text-center text-muted-foreground">
+          <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No documents yet</p>
+          <p className="text-sm mt-1">Contracts and agreements will appear here once your builder uploads them.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {contracts?.map(c => (
+      {contracts.map(c => (
         <Card key={c.id} className="p-5 flex items-center justify-between bg-white border-border shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary"><FileSignature className="w-6 h-6" /></div>
+            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <FileSignature className="w-6 h-6" />
+            </div>
             <div>
               <p className="font-bold text-lg">{c.title}</p>
               <p className="text-sm text-muted-foreground">Updated {format(new Date(c.uploadedAt), 'MMM d, yyyy')}</p>
@@ -159,7 +241,6 @@ const ClientContracts = ({ projectId }: { projectId: number }) => {
           <Badge variant={c.status === 'signed' ? 'completed' : 'active' as any} className="capitalize">{c.status}</Badge>
         </Card>
       ))}
-      {contracts?.length === 0 && <div className="col-span-full p-8 text-center text-muted-foreground bg-white rounded-xl border border-border">No documents uploaded.</div>}
     </div>
   );
-}
+};

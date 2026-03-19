@@ -375,7 +375,7 @@ export const CreatePhotoParams = zod.object({
 });
 
 export const CreatePhotoBody = zod.object({
-  fileUrl: zod.string(),
+  fileUrl: zod.string().url(),
   caption: zod.string().nullish(),
   visibleToClient: zod.boolean().optional(),
 });
