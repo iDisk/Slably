@@ -1,0 +1,102 @@
+Implementa upload real de fotos usando Cloudflare R2. 
+No agregues funcionalidades fuera de este alcance.
+
+CONTEXTO DEL PROYECTO:
+- Backend: Node.js + TypeScript en artifacts/api-server
+- Frontend builder: React en artifacts/buildos
+- Schema Zod en: lib/api-zod/src/generated/api.ts (archivo manual, NO regenerar)
+- Las fotos hoy se guardan con fileUrl como string de URL manual
+- Necesito reemplazar eso con upload real desde el navegador/celular
+
+LAS VARIABLES DE ENTORNO YA ESTÁN CONFIGURADAS:
+R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL
+
+---
+
+PASO 1 — Instalar dependencia en el backend:
+En artifacts/api-server, instala: @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+
+---
+
+PASO 2 — Crear el módulo R2 en el backend:
+Crea el archivo: artifacts/api-server/src/lib/r2.ts
+
+Debe contener:
+- Un cliente S3 configurado con endpoint https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
+- Credenciales desde process.env
+- Región: "auto"
+- Una función getPresignedUploadUrl(key: string, contentType: string) que:
+  - Genera un PutObjectCommand con el bucket y key
+  - Retorna una presigned URL con expiración de 300 segundos (5 minutos)
+- Una función getPublicUrl(key: string) que:
+  - Retorna ${R2_PUBLIC_URL}/${key}
+
+---
+
+PASO 3 — Nueva ruta en el backend:
+En artifacts/api-server/src/routes/uploads.ts crea:
+
+POST /uploads/presigned-url
+- Requiere autenticación (JWT válido)
+- Body: { fileName: string, contentType: string, projectId: number }
+- Validaciones:
+  - contentType debe ser uno de: image/jpeg, image/png, image/webp, image/heic
+  - fileName no puede estar vacío
+  - projectId debe existir y el usuario debe tener acceso (usar checkProjectAccess)
+- Genera un key único: photos/${projectId}/${Date.now()}-${randomUUID()}.${extension}
+- Retorna: { presignedUrl: string, publicUrl: string, key: string }
+
+Registra esta ruta en app.ts como: app.use('/uploads', uploadsRouter)
+
+---
+
+PASO 4 — Actualizar lib/api-zod/src/generated/api.ts:
+Agrega estos dos schemas nuevos al final, antes del último export:
+
+PresignedUrlBody:
+- fileName: zod.string().min(1)
+- contentType: zod.enum(["image/jpeg", "image/png", "image/webp", "image/heic"])
+- projectId: zod.number()
+
+PresignedUrlResponse:
+- presignedUrl: zod.string().url()
+- publicUrl: zod.string().url()
+- key: zod.string()
+
+---
+
+PASO 5 — Actualizar PhotosTab.tsx en artifacts/buildos/src/components/project/PhotosTab.tsx:
+
+Reemplaza el campo de texto "Photo URL" por un input de tipo file que:
+- Acepta: image/jpeg, image/png, image/webp, image/heic
+- Muestra preview de la imagen seleccionada antes de subir
+- Al hacer submit:
+  1. Llama a POST /uploads/presigned-url con el fileName, contentType y projectId
+  2. Hace un fetch PUT directo a la presignedUrl con el archivo como body y el Content-Type correcto
+  3. Si el upload a R2 es exitoso, usa la publicUrl retornada como fileUrl al crear la foto en POST /projects/:id/photos
+  4. Muestra un indicador de progreso o loading durante el upload
+  5. Si algo falla en cualquier paso, muestra toast.error() con mensaje claro
+- El campo caption sigue igual
+- El toggle visible_to_client sigue igual
+- Mantén el diseño consistente con los otros tabs
+
+---
+
+PASO 6 — Validaciones de integridad:
+- El endpoint POST /projects/:id/photos ya tiene fileUrl: zod.string().url() — no cambies eso
+- Confirma que el nuevo flujo siempre produce una URL pública válida antes de llamar ese endpoint
+- Si el upload a R2 falla, NO llames al endpoint de fotos — aborta con error
+
+---
+
+AL TERMINAR:
+1. Corre TypeScript type check: tsc --noEmit en el backend y frontend
+2. Reinicia el API server
+3. Prueba este flujo completo:
+   - Seleccionar un archivo de imagen local
+   - Confirmar que se genera la presigned URL (200 del backend)
+   - Confirmar que el upload a R2 responde 200
+   - Confirmar que la foto aparece en la lista con la URL pública de R2
+   - Confirmar que la imagen se ve en el grid (no imagen rota)
+4. Dame un resumen de archivos modificados y el resultado de las pruebas
+5. Si hay errores de CORS en R2, indícamelo — necesito configurar el bucket manualmente en Cloudflare
