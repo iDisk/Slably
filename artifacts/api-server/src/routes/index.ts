@@ -7,6 +7,7 @@ import changeOrdersRouter from "./change_orders";
 import photosRouter from "./photos";
 import activityRouter from "./activity";
 import uploadsRouter from "./uploads";
+import expensesRouter from "./expenses";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(changeOrdersRouter);
 router.use(photosRouter);
 router.use(activityRouter);
 router.use("/uploads", uploadsRouter);
+router.use(expensesRouter);
 
 export default router;

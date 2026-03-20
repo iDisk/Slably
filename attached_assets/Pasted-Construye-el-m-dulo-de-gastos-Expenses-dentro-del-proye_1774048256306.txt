@@ -1,0 +1,91 @@
+Construye el módulo de gastos (Expenses) dentro del proyecto.
+No agregues funcionalidades fuera de este alcance.
+
+CONTEXTO:
+- La tabla expenses ya existe en la base de datos con estas columnas:
+  id, project_id, created_by, amount, vendor, description, 
+  category, receipt_url, expense_date, payment_method, approved
+- El upload de fotos a R2 ya está funcionando (usa el mismo flujo de presigned URLs)
+- Mantén consistencia visual con ContractsTab, ChangeOrdersTab y PhotosTab
+
+BASE DE DATOS:
+- NO crear tablas nuevas — expenses ya existe
+- Verifica el schema actual antes de escribir cualquier query
+
+PASO 1 — Rutas del backend:
+Crea artifacts/api-server/src/routes/expenses.ts con:
+
+GET /projects/:id/expenses
+- Requiere autenticación
+- Builder ve todos los gastos del proyecto
+- Retorna lista ordenada por expense_date DESC
+- Incluye suma total al final
+
+POST /projects/:id/expenses
+- Solo builder puede crear
+- Campos requeridos: amount, vendor, category, expense_date
+- Campos opcionales: description, receipt_url, payment_method
+- Registra evento en activity_log: "Expense recorded: $X from vendor"
+
+PATCH /projects/:id/expenses/:eid
+- Solo builder puede editar
+- Puede actualizar: amount, vendor, description, category, 
+  receipt_url, expense_date, payment_method, approved
+
+DELETE /projects/:id/expenses/:eid
+- Solo builder puede eliminar
+- Responde 404 si no existe
+
+Registra las rutas en app.ts como: app.use('/projects', expensesRouter)
+Usa checkProjectAccess para todas las rutas.
+
+PASO 2 — Schemas en lib/api-zod/src/generated/api.ts:
+Agrega manualmente (NO regenerar el archivo):
+
+CreateExpenseBody:
+- amount: zod.number().min(0.01)
+- vendor: zod.string().min(1)
+- category: zod.enum(["materials", "labor", "equipment", "permits", "other"])
+- expense_date: zod.string().min(1)
+- description: zod.string().optional()
+- receipt_url: zod.string().url().optional()
+- payment_method: zod.enum(["cash", "card", "transfer", "check"]).optional()
+
+UpdateExpenseBody: todos los campos de CreateExpenseBody opcionales + 
+- approved: zod.boolean().optional()
+
+ExpenseResponse:
+- id, project_id, created_by, amount, vendor, description
+- category, receipt_url, expense_date, payment_method, approved
+- created_at
+
+PASO 3 — Componente ExpensesTab:
+Crea artifacts/buildos/src/components/project/ExpensesTab.tsx
+
+La UI debe tener:
+
+HEADER:
+- Título "Expenses"
+- Total gastado en verde/rojo según el monto
+- Botón "Add Expense"
+
+LISTA DE GASTOS:
+- Cada gasto muestra:
+  - Monto en grande (formato $X,XXX.XX)
+  - Vendor/proveedor
+  - Categoría con badge de color:
+    * materials → azul
+    * labor → morado  
+    * equipment → naranja
+    * permits → amarillo
+    * other → gris
+  - Fecha del gasto
+  - Método de pago si existe
+  - Miniatura del ticket si tiene receipt_url
+  - Ícono de check verde si approved=true
+  - Botones: editar (lápiz) y eliminar (basura)
+
+FORMULARIO (dialog) para crear y editar:
+- Amount: input numérico
+- Vendor: input texto
+- Category: dropdown con las 5 opc

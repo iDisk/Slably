@@ -428,6 +428,68 @@ export const ListActivityResponseItem = zod.object({
 });
 export const ListActivityResponse = zod.array(ListActivityResponseItem);
 
+/**
+ * @summary Expenses
+ */
+export const ListExpensesParams = zod.object({
+  projectId: zod.coerce.number(),
+});
+
+export const ExpenseResponseItem = zod.object({
+  id:            zod.number(),
+  projectId:     zod.number(),
+  createdBy:     zod.number(),
+  amount:        zod.string(),
+  vendor:        zod.string(),
+  description:   zod.string().nullable(),
+  category:      zod.enum(["materials", "labor", "equipment", "permits", "other"]),
+  receiptUrl:    zod.string().nullable(),
+  expenseDate:   zod.string(),
+  paymentMethod: zod.enum(["cash", "card", "transfer", "check"]).nullable(),
+  approved:      zod.boolean(),
+  createdAt:     zod.coerce.date(),
+});
+
+export const ListExpensesResponse = zod.object({
+  expenses: zod.array(ExpenseResponseItem),
+  total:    zod.number(),
+});
+
+export const CreateExpenseParams = zod.object({
+  projectId: zod.coerce.number(),
+});
+
+export const CreateExpenseBody = zod.object({
+  amount:         zod.coerce.number().min(0.01),
+  vendor:         zod.string().min(1),
+  category:       zod.enum(["materials", "labor", "equipment", "permits", "other"]),
+  expense_date:   zod.string().min(1),
+  description:    zod.string().optional(),
+  receipt_url:    zod.string().url().optional(),
+  payment_method: zod.enum(["cash", "card", "transfer", "check"]).optional(),
+});
+
+export const UpdateExpenseParams = zod.object({
+  projectId: zod.coerce.number(),
+  eid:       zod.coerce.number(),
+});
+
+export const UpdateExpenseBody = zod.object({
+  amount:         zod.coerce.number().min(0.01).optional(),
+  vendor:         zod.string().min(1).optional(),
+  category:       zod.enum(["materials", "labor", "equipment", "permits", "other"]).optional(),
+  expense_date:   zod.string().min(1).optional(),
+  description:    zod.string().optional(),
+  receipt_url:    zod.string().url().optional(),
+  payment_method: zod.enum(["cash", "card", "transfer", "check"]).optional(),
+  approved:       zod.boolean().optional(),
+});
+
+export const DeleteExpenseParams = zod.object({
+  projectId: zod.coerce.number(),
+  eid:       zod.coerce.number(),
+});
+
 export const PresignedUrlBody = zod.object({
   fileName:    zod.string().min(1),
   contentType: zod.enum(["image/jpeg", "image/png", "image/webp", "image/heic"]),

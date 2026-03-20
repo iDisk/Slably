@@ -315,3 +315,50 @@ export interface ActivityLog {
   createdBy: number | null;
   createdAt: string;
 }
+
+export type ExpenseCategory = "materials" | "labor" | "equipment" | "permits" | "other";
+export type ExpensePaymentMethod = "cash" | "card" | "transfer" | "check";
+
+export interface Expense {
+  id: number;
+  projectId: number;
+  createdBy: number;
+  amount: string;
+  vendor: string;
+  /** @nullable */
+  description: string | null;
+  category: ExpenseCategory;
+  /** @nullable */
+  receiptUrl: string | null;
+  expenseDate: string;
+  /** @nullable */
+  paymentMethod: ExpensePaymentMethod | null;
+  approved: boolean;
+  createdAt: string;
+}
+
+export interface ListExpensesResponse {
+  expenses: Expense[];
+  total: number;
+}
+
+export interface CreateExpenseBody {
+  amount: number;
+  vendor: string;
+  category: ExpenseCategory;
+  expense_date: string;
+  description?: string;
+  receipt_url?: string;
+  payment_method?: ExpensePaymentMethod;
+}
+
+export interface UpdateExpenseBody {
+  amount?: number;
+  vendor?: string;
+  category?: ExpenseCategory;
+  expense_date?: string;
+  description?: string;
+  receipt_url?: string;
+  payment_method?: ExpensePaymentMethod;
+  approved?: boolean;
+}
