@@ -148,7 +148,7 @@ async function seed() {
   // ── Users ──────────────────────────────────────────────────
   const builder1 = await getOrCreateUser({
     name: "Carlos Mendoza",
-    email: "builder@buildos.demo",
+    email: "carlos@constructoramendoza.com",
     password: "demo1234",
     role: "builder",
     organizationId: org1.id,
@@ -156,7 +156,7 @@ async function seed() {
 
   const builder2 = await getOrCreateUser({
     name: "Ana Torres",
-    email: "ana@buildos.demo",
+    email: "ana@torresconstrucciones.com",
     password: "demo1234",
     role: "builder",
     organizationId: org2.id,
@@ -164,7 +164,7 @@ async function seed() {
 
   const client1 = await getOrCreateUser({
     name: "Roberto Silva",
-    email: "client@buildos.demo",
+    email: "roberto@gmail.com",
     password: "demo1234",
     role: "client",
     organizationId: org1.id,
@@ -192,12 +192,12 @@ async function seed() {
     builderId: builder1.id,
     clientId: client1.id,
     clientName: "Roberto Silva",
-    clientEmail: "client@buildos.demo",
-    name: "Casa Silva - Residencia Principal",
-    address: "Av. Las Palmas 2340, Colonia San Pedro, CDMX",
+    clientEmail: "roberto@gmail.com",
+    name: "Silva Custom Home - West Houston",
+    address: "4821 Westheimer Rd, Houston, TX 77056",
     status: "active",
     startDate: "2025-11-15",
-    notes: "Construcción de casa habitación de 3 pisos. Cliente requiere acabados premium. Atención especial a los plazos acordados.",
+    notes: "Custom 3-story residence. Client requires premium finishes throughout. Special attention to agreed timelines.",
     progress: 65,
   });
 
@@ -207,11 +207,11 @@ async function seed() {
     clientId: client2.id,
     clientName: "María Gutierrez",
     clientEmail: "maria@buildos.demo",
-    name: "Remodelación Departamento Gutierrez",
-    address: "Calle Roble 87, Int. 4B, Polanco, CDMX",
+    name: "Gutierrez Condo Full Remodel - Austin",
+    address: "1205 Colorado St, Apt 4B, Austin, TX 78701",
     status: "active",
     startDate: "2026-01-08",
-    notes: "Remodelación completa de departamento 120m². Cambio de pisos, cocina integral nueva, baños completos.",
+    notes: "Full remodel of 1,200 sq ft condo. New flooring, custom kitchen, full bathroom renovation.",
     progress: 30,
   });
 
@@ -221,11 +221,11 @@ async function seed() {
     clientId: client3.id,
     clientName: "Jorge Ramírez",
     clientEmail: "jorge@buildos.demo",
-    name: "Oficinas Corporativas Ramírez",
-    address: "Blvd. Reforma 1890 Piso 8, Col. Juárez, CDMX",
+    name: "Ramirez Corporate Build-Out - Houston",
+    address: "2900 N Loop W, Suite 800, Houston, TX 77092",
     status: "planning",
     startDate: "2026-04-01",
-    notes: "Proyecto de acondicionamiento de oficinas corporativas, aproximadamente 400m². Incluye sala de juntas, área abierta y 6 despachos privados.",
+    notes: "Commercial office build-out, approximately 4,000 sq ft. Includes conference room, open workspace, and 6 private offices.",
     progress: 5,
   });
 
@@ -234,11 +234,11 @@ async function seed() {
     builderId: builder2.id,
     clientName: "Familia Hernández",
     clientEmail: "hernandez@email.com",
-    name: "Casa de Playa Hernández",
-    address: "Blvd. Costero 450, Cancún, Q. Roo",
+    name: "Hernandez Beach House - Galveston",
+    address: "1500 Seawall Blvd, Galveston, TX 77550",
     status: "completed",
     startDate: "2024-06-01",
-    notes: "Casa vacacional terminada. Entregada en noviembre 2025.",
+    notes: "Vacation beach house, completed and delivered November 2025.",
     progress: 100,
   });
 
@@ -259,10 +259,10 @@ async function seed() {
     return created;
   }
 
-  await getOrCreateContract({ projectId: p1.id, title: "Contrato Principal - Casa Silva", fileUrl: "https://example.com/contracts/silva-main-v2.pdf", version: "v2.0", status: "signed" });
-  await getOrCreateContract({ projectId: p1.id, title: "Addendum Materiales Premium", fileUrl: "https://example.com/contracts/silva-addendum.pdf", version: "v1.0", status: "sent" });
-  await getOrCreateContract({ projectId: p2.id, title: "Contrato de Remodelación Gutierrez", fileUrl: "https://example.com/contracts/gutierrez-main.pdf", version: "v1.0", status: "signed" });
-  await getOrCreateContract({ projectId: p3.id, title: "Propuesta Inicial Oficinas Ramírez", fileUrl: null, version: "v1.0", status: "draft" });
+  await getOrCreateContract({ projectId: p1.id, title: "Main Contract - Silva Custom Home", fileUrl: "https://example.com/contracts/silva-main-v2.pdf", version: "v2.0", status: "signed" });
+  await getOrCreateContract({ projectId: p1.id, title: "Premium Finishes Addendum", fileUrl: "https://example.com/contracts/silva-addendum.pdf", version: "v1.0", status: "sent" });
+  await getOrCreateContract({ projectId: p2.id, title: "Gutierrez Remodel Contract", fileUrl: "https://example.com/contracts/gutierrez-main.pdf", version: "v1.0", status: "signed" });
+  await getOrCreateContract({ projectId: p3.id, title: "Initial Proposal - Ramirez Build-Out", fileUrl: null, version: "v1.0", status: "draft" });
 
   // ── Change orders ───────────────────────────────────────────
   async function getOrCreateChangeOrder(data: {
@@ -284,21 +284,21 @@ async function seed() {
     return created;
   }
 
-  await getOrCreateChangeOrder({ projectId: p1.id, title: "Upgrade Cocina - Mármol Carrara", description: "El cliente solicitó cambiar el granito original por mármol Carrara importado en todas las áreas de cocina. Incluye backsplash y área de isla.", amount: "45000", status: "approved", createdBy: builder1.id, approvedBy: client1.id, approvedAt: new Date("2026-01-15") });
-  await getOrCreateChangeOrder({ projectId: p1.id, title: "Sistema de Domótica Smart Home", description: "Instalación de sistema de domótica completo: iluminación inteligente, persianas motorizadas, control de clima y sistema de seguridad integrado.", amount: "82000", status: "pending", createdBy: builder1.id });
-  await getOrCreateChangeOrder({ projectId: p1.id, title: "Ampliación Terraza Rooftop", description: "Ampliación del área de terraza en azotea, adición de pérgola metálica con lonas retráctiles y área de BBQ.", amount: "38500", status: "rejected", createdBy: builder1.id });
-  await getOrCreateChangeOrder({ projectId: p2.id, title: "Cambio de Ventanas a Doble Vidrio", description: "Cambio de todas las ventanas actuales por ventanas con doble vidrio templado para mejor aislamiento térmico y acústico.", amount: "28000", status: "approved", createdBy: builder1.id, approvedBy: client2.id, approvedAt: new Date("2026-01-20") });
-  await getOrCreateChangeOrder({ projectId: p2.id, title: "Calefacción de Piso Radiante", description: "Instalación de sistema de piso radiante hidráulico en sala, comedor y habitación principal.", amount: "35000", status: "pending", createdBy: builder1.id });
+  await getOrCreateChangeOrder({ projectId: p1.id, title: "Kitchen Upgrade - Carrara Marble", description: "Client requested switching original granite to imported Carrara marble throughout the kitchen, including backsplash and island.", amount: "45000", status: "approved", createdBy: builder1.id, approvedBy: client1.id, approvedAt: new Date("2026-01-15") });
+  await getOrCreateChangeOrder({ projectId: p1.id, title: "Smart Home Automation System", description: "Full smart home system installation: intelligent lighting, motorized blinds, climate control, and integrated security system.", amount: "82000", status: "pending", createdBy: builder1.id });
+  await getOrCreateChangeOrder({ projectId: p1.id, title: "Rooftop Terrace Expansion", description: "Rooftop terrace expansion with steel pergola, retractable awnings, and BBQ area.", amount: "38500", status: "rejected", createdBy: builder1.id });
+  await getOrCreateChangeOrder({ projectId: p2.id, title: "Double-Pane Window Replacement", description: "Replace all existing windows with double-pane tempered glass for improved thermal and acoustic insulation.", amount: "28000", status: "approved", createdBy: builder1.id, approvedBy: client2.id, approvedAt: new Date("2026-01-20") });
+  await getOrCreateChangeOrder({ projectId: p2.id, title: "Radiant Floor Heating", description: "Install hydronic radiant floor heating system in living room, dining area, and master bedroom.", amount: "35000", status: "pending", createdBy: builder1.id });
 
   // ── Photos ──────────────────────────────────────────────────
   const photoData = [
-    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1503174971373-b1f69850bded?w=800&q=80", caption: "Cimentación terminada - Semana 3", visibleToClient: true, uploadedBy: builder1.id },
-    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", caption: "Estructura primer piso completada", visibleToClient: true, uploadedBy: builder1.id },
-    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80", caption: "Avance instalaciones eléctricas - uso interno", visibleToClient: false, uploadedBy: builder1.id },
-    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80", caption: "Cocina - muestra mármol Carrara aprobado", visibleToClient: true, uploadedBy: builder1.id },
-    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80", caption: "Vista general del proyecto - Semana 8", visibleToClient: true, uploadedBy: builder1.id },
-    { projectId: p2.id, fileUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", caption: "Demolición inicial completada", visibleToClient: true, uploadedBy: builder1.id },
-    { projectId: p2.id, fileUrl: "https://images.unsplash.com/photo-1564540586988-aa4e53c3d799?w=800&q=80", caption: "Nuevas ventanas instaladas - pared sur", visibleToClient: true, uploadedBy: builder1.id },
+    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1503174971373-b1f69850bded?w=800&q=80", caption: "Foundation complete - Week 3", visibleToClient: true, uploadedBy: builder1.id },
+    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&q=80", caption: "First floor framing complete", visibleToClient: true, uploadedBy: builder1.id },
+    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80", caption: "Electrical rough-in progress - internal", visibleToClient: false, uploadedBy: builder1.id },
+    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80", caption: "Kitchen - approved Carrara marble sample", visibleToClient: true, uploadedBy: builder1.id },
+    { projectId: p1.id, fileUrl: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80", caption: "Project overview - Week 8", visibleToClient: true, uploadedBy: builder1.id },
+    { projectId: p2.id, fileUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", caption: "Demo phase complete", visibleToClient: true, uploadedBy: builder1.id },
+    { projectId: p2.id, fileUrl: "https://images.unsplash.com/photo-1564540586988-aa4e53c3d799?w=800&q=80", caption: "New windows installed - south wall", visibleToClient: true, uploadedBy: builder1.id },
   ];
 
   for (const photo of photoData) {
@@ -308,16 +308,16 @@ async function seed() {
 
   // ── Activity logs ────────────────────────────────────────────
   const logData = [
-    { projectId: p1.id, type: "project_created", description: 'Proyecto "Casa Silva - Residencia Principal" fue creado', createdBy: builder1.id, createdAt: new Date("2025-11-15") },
-    { projectId: p1.id, type: "contract_uploaded", description: 'Contrato "Contrato Principal - Casa Silva" fue subido', createdBy: builder1.id, createdAt: new Date("2025-11-16") },
-    { projectId: p1.id, type: "contract_signed", description: 'Contrato "Contrato Principal - Casa Silva" fue firmado', createdBy: builder1.id, createdAt: new Date("2025-11-18") },
-    { projectId: p1.id, type: "change_order_created", description: 'Change order "Upgrade Cocina - Mármol Carrara" fue creado', createdBy: builder1.id, createdAt: new Date("2026-01-10") },
-    { projectId: p1.id, type: "change_order_approved", description: 'Change order "Upgrade Cocina - Mármol Carrara" fue aprobado', createdBy: client1.id, createdAt: new Date("2026-01-15") },
-    { projectId: p1.id, type: "photo_uploaded", description: '"Cimentación terminada - Semana 3" fue subida', createdBy: builder1.id, createdAt: new Date("2025-12-01") },
-    { projectId: p1.id, type: "change_order_created", description: 'Change order "Sistema de Domótica Smart Home" fue creado', createdBy: builder1.id, createdAt: new Date("2026-02-01") },
-    { projectId: p2.id, type: "project_created", description: 'Proyecto "Remodelación Departamento Gutierrez" fue creado', createdBy: builder1.id, createdAt: new Date("2026-01-08") },
-    { projectId: p2.id, type: "contract_signed", description: 'Contrato fue firmado por el cliente', createdBy: client2.id, createdAt: new Date("2026-01-10") },
-    { projectId: p3.id, type: "project_created", description: 'Proyecto "Oficinas Corporativas Ramírez" fue creado', createdBy: builder1.id, createdAt: new Date("2026-03-01") },
+    { projectId: p1.id, type: "project_created", description: 'Project "Silva Custom Home - West Houston" was created', createdBy: builder1.id, createdAt: new Date("2025-11-15") },
+    { projectId: p1.id, type: "contract_uploaded", description: 'Contract "Main Contract - Silva Custom Home" was uploaded', createdBy: builder1.id, createdAt: new Date("2025-11-16") },
+    { projectId: p1.id, type: "contract_signed", description: 'Contract "Main Contract - Silva Custom Home" was signed', createdBy: builder1.id, createdAt: new Date("2025-11-18") },
+    { projectId: p1.id, type: "change_order_created", description: 'Change order "Kitchen Upgrade - Carrara Marble" was created', createdBy: builder1.id, createdAt: new Date("2026-01-10") },
+    { projectId: p1.id, type: "change_order_approved", description: 'Change order "Kitchen Upgrade - Carrara Marble" was approved', createdBy: client1.id, createdAt: new Date("2026-01-15") },
+    { projectId: p1.id, type: "photo_uploaded", description: '"Foundation complete - Week 3" was uploaded', createdBy: builder1.id, createdAt: new Date("2025-12-01") },
+    { projectId: p1.id, type: "change_order_created", description: 'Change order "Smart Home Automation System" was created', createdBy: builder1.id, createdAt: new Date("2026-02-01") },
+    { projectId: p2.id, type: "project_created", description: 'Project "Gutierrez Condo Full Remodel - Austin" was created', createdBy: builder1.id, createdAt: new Date("2026-01-08") },
+    { projectId: p2.id, type: "contract_signed", description: 'Contract was signed by client', createdBy: client2.id, createdAt: new Date("2026-01-10") },
+    { projectId: p3.id, type: "project_created", description: 'Project "Ramirez Corporate Build-Out - Houston" was created', createdBy: builder1.id, createdAt: new Date("2026-03-01") },
   ];
 
   for (const log of logData) {
@@ -330,9 +330,9 @@ async function seed() {
   console.log(`  [${org1.id}] ${org1.name} (${org1.slug})`);
   console.log(`  [${org2.id}] ${org2.name} (${org2.slug})`);
   console.log("\n📋 Demo credentials:");
-  console.log("  Builder:  builder@buildos.demo / demo1234");
-  console.log("  Client:   client@buildos.demo / demo1234");
-  console.log("  Builder2: ana@buildos.demo / demo1234");
+  console.log("  Builder:  carlos@constructoramendoza.com / demo1234");
+  console.log("  Client:   roberto@gmail.com / demo1234");
+  console.log("  Builder2: ana@torresconstrucciones.com / demo1234");
   console.log("  Client2:  maria@buildos.demo / demo1234");
   console.log("  Client3:  jorge@buildos.demo / demo1234");
 }

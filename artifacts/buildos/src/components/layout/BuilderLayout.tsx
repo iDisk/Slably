@@ -20,7 +20,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
             <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
               <Building2 className="text-accent-foreground h-6 w-6" />
             </div>
-            <span className="text-sidebar-foreground font-display font-bold text-xl tracking-tight">BuildOS</span>
+            <span className="text-sidebar-foreground font-display font-bold text-xl tracking-tight">Slably</span>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
       <header className="md:hidden flex items-center justify-between p-4 bg-sidebar border-b border-sidebar-border sticky top-0 z-10">
         <div className="flex items-center gap-2">
           <Building2 className="text-accent h-6 w-6" />
-          <span className="text-sidebar-foreground font-display font-bold text-lg">BuildOS</span>
+          <span className="text-sidebar-foreground font-display font-bold text-lg">Slably</span>
         </div>
         <button onClick={logout} className="p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground">
           <LogOut className="h-5 w-5" />

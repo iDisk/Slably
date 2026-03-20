@@ -44,7 +44,7 @@ const queryClient = new QueryClient({
 function ProtectedRoute({ component: Component, roleRequired }: { component: any, roleRequired?: 'builder' | 'client' }) {
   const { user, isLoading } = useAuth();
   
-  if (isLoading) return <div className="h-screen w-full flex items-center justify-center bg-background"><div className="animate-pulse flex items-center gap-2 font-display font-bold text-xl text-primary">Loading BuildOS...</div></div>;
+  if (isLoading) return <div className="h-screen w-full flex items-center justify-center bg-background"><div className="animate-pulse flex items-center gap-2 font-display font-bold text-xl text-primary">Loading Slably...</div></div>;
   if (!user) return <Redirect to="/login" />;
   if (roleRequired && user.role !== roleRequired) return <Redirect to={user.role === 'builder' ? '/dashboard' : '/client'} />;
   

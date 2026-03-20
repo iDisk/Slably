@@ -15,7 +15,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md">
                 <Building2 className="text-primary-foreground h-6 w-6" />
               </div>
-              <span className="text-foreground font-display font-bold text-2xl tracking-tight">BuildOS <span className="text-accent text-lg">Client Portal</span></span>
+              <span className="text-foreground font-display font-bold text-2xl tracking-tight">Slably <span className="text-accent text-lg">Client Portal</span></span>
             </Link>
             
             <div className="flex items-center gap-6">

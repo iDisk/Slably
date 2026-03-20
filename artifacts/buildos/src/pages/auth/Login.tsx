@@ -48,7 +48,7 @@ export default function Login() {
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
               <Building2 className="text-primary-foreground h-7 w-7" />
             </div>
-            <span className="text-foreground font-display font-extrabold text-3xl tracking-tight">BuildOS</span>
+            <span className="text-foreground font-display font-extrabold text-3xl tracking-tight">Slably</span>
           </div>
 
           {sessionExpired && (
@@ -94,7 +94,7 @@ export default function Login() {
         <div className="absolute bottom-12 left-12 right-12 text-sidebar-foreground">
           <blockquote className="space-y-4">
             <p className="text-3xl font-display font-medium leading-tight">
-              "BuildOS has completely transformed how we manage projects and communicate with our clients. Everything is in one place, beautiful and transparent."
+              "Slably has completely transformed how we manage projects and communicate with our clients. Everything is in one place, beautiful and transparent."
             </p>
             <footer className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-bold text-lg">

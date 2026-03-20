@@ -23,7 +23,7 @@ export default function ClientDashboard() {
   if (!project) return (
     <ClientLayout>
       <div className="text-center p-12 bg-white rounded-2xl shadow-sm border border-border">
-        <h2 className="text-2xl font-bold font-display text-foreground">Welcome to BuildOS!</h2>
+        <h2 className="text-2xl font-bold font-display text-foreground">Welcome to Slably!</h2>
         <p className="text-muted-foreground mt-2">You don't have any active projects assigned to your account yet.</p>
       </div>
     </ClientLayout>
