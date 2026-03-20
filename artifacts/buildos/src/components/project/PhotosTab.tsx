@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Loader2, Image as ImageIcon, Eye, EyeOff } from "lucide-react";
+import { Plus, Trash2, Loader2, Image as ImageIcon, Eye, EyeOff, Upload, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,14 +18,55 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input, Label, Textarea } from "@/components/ui/input";
+import { Label, Textarea } from "@/components/ui/input";
+
+function getToken(): string | null {
+  return localStorage.getItem("buildos_token");
+}
+
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic"] as const;
+type AcceptedType = (typeof ACCEPTED_TYPES)[number];
 
 const photoSchema = z.object({
-  fileUrl:         z.string().url("Enter a valid image URL (https://...)"),
   caption:         z.string().optional(),
   visibleToClient: z.boolean(),
 });
 type PhotoForm = z.infer<typeof photoSchema>;
+
+async function requestPresignedUrl(
+  projectId: number,
+  file: File,
+  token: string
+): Promise<{ presignedUrl: string; publicUrl: string; key: string }> {
+  const res = await fetch("/api/uploads/presigned-url", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      fileName:    file.name,
+      contentType: file.type,
+      projectId,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? "Failed to get upload URL");
+  }
+  return res.json();
+}
+
+async function uploadToR2(presignedUrl: string, file: File): Promise<void> {
+  const res = await fetch(presignedUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!res.ok) {
+    throw new Error(`R2 upload failed (${res.status})`);
+  }
+}
 
 export function PhotosTab({ projectId }: { projectId: number }) {
   const queryClient = useQueryClient();
@@ -36,6 +77,10 @@ export function PhotosTab({ projectId }: { projectId: number }) {
 
   const [addOpen,       setAddOpen]       = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Photo | null>(null);
+  const [selectedFile,  setSelectedFile]  = useState<File | null>(null);
+  const [preview,       setPreview]       = useState<string | null>(null);
+  const [uploading,     setUploading]     = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: getListPhotosQueryKey(projectId) });
@@ -44,38 +89,83 @@ export function PhotosTab({ projectId }: { projectId: number }) {
     resolver: zodResolver(photoSchema),
     defaultValues: { visibleToClient: false },
   });
-
   const visibleToClient = watch("visibleToClient");
 
-  const onAdd = (data: PhotoForm) => {
-    createMutation.mutate(
-      {
-        projectId,
-        data: {
-          fileUrl:         data.fileUrl,
-          caption:         data.caption || null,
-          visibleToClient: data.visibleToClient,
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!ACCEPTED_TYPES.includes(file.type as AcceptedType)) {
+      toast.error("Only JPEG, PNG, WebP, and HEIC images are allowed");
+      return;
+    }
+    setSelectedFile(file);
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+  };
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const closeDialog = () => {
+    clearFile();
+    reset({ visibleToClient: false });
+    setAddOpen(false);
+  };
+
+  const onAdd = async (data: PhotoForm) => {
+    if (!selectedFile) {
+      toast.error("Please select an image to upload");
+      return;
+    }
+    const token = getToken();
+    if (!token) {
+      toast.error("Not authenticated");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const { presignedUrl, publicUrl } = await requestPresignedUrl(projectId, selectedFile, token);
+
+      await uploadToR2(presignedUrl, selectedFile);
+
+      createMutation.mutate(
+        {
+          projectId,
+          data: {
+            fileUrl:         publicUrl,
+            caption:         data.caption || null,
+            visibleToClient: data.visibleToClient,
+          },
         },
-      },
-      {
-        onSuccess: () => {
-          toast.success("Photo added");
-          invalidate();
-          setAddOpen(false);
-          reset({ visibleToClient: false });
-        },
-        onError: () => toast.error("Failed to add photo"),
+        {
+          onSuccess: () => {
+            toast.success("Photo uploaded successfully");
+            invalidate();
+            closeDialog();
+          },
+          onError: () => toast.error("Photo uploaded to storage but failed to save — please try again"),
+        }
+      );
+    } catch (err: any) {
+      const msg = err?.message ?? "Upload failed";
+      if (msg.includes("R2") || msg.includes("CORS") || msg.includes("Failed to fetch")) {
+        toast.error("Upload failed: storage not reachable. Check CORS settings in Cloudflare R2.");
+      } else {
+        toast.error(msg);
       }
-    );
+    } finally {
+      setUploading(false);
+    }
   };
 
   const toggleVisibility = (photo: Photo) => {
     updateMutation.mutate(
-      {
-        projectId,
-        id: photo.id,
-        data: { visibleToClient: !photo.visibleToClient },
-      },
+      { projectId, id: photo.id, data: { visibleToClient: !photo.visibleToClient } },
       {
         onSuccess: () => {
           toast.success(photo.visibleToClient ? "Hidden from client" : "Now visible to client");
@@ -92,7 +182,7 @@ export function PhotosTab({ projectId }: { projectId: number }) {
       { projectId, id: confirmDelete.id },
       {
         onSuccess: () => { toast.success("Photo deleted"); invalidate(); setConfirmDelete(null); },
-        onError:   () => { toast.error("Failed to delete"); setConfirmDelete(null); },
+        onError:   () => { toast.error("Failed to delete photo"); setConfirmDelete(null); },
       }
     );
   };
@@ -104,6 +194,8 @@ export function PhotosTab({ projectId }: { projectId: number }) {
       </div>
     );
   }
+
+  const isPending = uploading || createMutation.isPending;
 
   return (
     <div className="space-y-4">
@@ -128,7 +220,7 @@ export function PhotosTab({ projectId }: { projectId: number }) {
           <CardContent className="p-10 text-center text-muted-foreground">
             <ImageIcon className="w-10 h-10 mx-auto mb-3 opacity-30" />
             <p className="font-medium">No photos yet</p>
-            <p className="text-sm mt-1">Add progress photos and evidence to this project.</p>
+            <p className="text-sm mt-1">Upload progress photos and evidence for this project.</p>
           </CardContent>
         </Card>
       ) : (
@@ -155,9 +247,7 @@ export function PhotosTab({ projectId }: { projectId: number }) {
                     }`}
                     title={p.visibleToClient ? "Click to hide from client" : "Click to show to client"}
                   >
-                    {p.visibleToClient
-                      ? <Eye className="w-3.5 h-3.5" />
-                      : <EyeOff className="w-3.5 h-3.5" />}
+                    {p.visibleToClient ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                   </button>
                   <button
                     onClick={() => setConfirmDelete(p)}
@@ -193,24 +283,52 @@ export function PhotosTab({ projectId }: { projectId: number }) {
       )}
 
       {/* Add photo dialog */}
-      <Dialog open={addOpen} onOpenChange={v => { if (!v) reset({ visibleToClient: false }); setAddOpen(v); }}>
+      <Dialog open={addOpen} onOpenChange={v => { if (!v) closeDialog(); else setAddOpen(true); }}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display font-bold text-xl">Add Photo</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onAdd)} className="space-y-4 mt-2">
+
+            {/* File picker */}
             <div className="space-y-2">
-              <Label>Image URL *</Label>
-              <Input
-                {...register("fileUrl")}
-                type="url"
-                placeholder="https://example.com/photo.jpg"
+              <Label>Image *</Label>
+              {preview ? (
+                <div className="relative rounded-xl overflow-hidden border border-border">
+                  <img src={preview} alt="Preview" className="w-full h-48 object-cover" />
+                  <button
+                    type="button"
+                    onClick={clearFile}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white transition-colors"
+                    title="Remove selected image"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded-full">
+                    {selectedFile?.name}
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-36 rounded-xl border-2 border-dashed border-border bg-slate-50 hover:bg-slate-100 transition-colors flex flex-col items-center justify-center gap-2 text-muted-foreground"
+                >
+                  <Upload className="w-8 h-8 opacity-40" />
+                  <span className="text-sm font-medium">Click to select image</span>
+                  <span className="text-xs opacity-60">JPEG, PNG, WebP, HEIC</span>
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/heic"
+                className="hidden"
+                onChange={handleFileChange}
               />
-              {errors.fileUrl && <p className="text-xs text-destructive">{errors.fileUrl.message}</p>}
-              <p className="text-xs text-muted-foreground">
-                Paste a direct image URL (JPG, PNG, WebP). Works with Google Drive, Imgur, S3, etc.
-              </p>
             </div>
+
+            {/* Caption */}
             <div className="space-y-2">
               <Label>Caption</Label>
               <Textarea
@@ -219,6 +337,8 @@ export function PhotosTab({ projectId }: { projectId: number }) {
                 rows={2}
               />
             </div>
+
+            {/* Visibility toggle */}
             <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-slate-50">
               <button
                 type="button"
@@ -240,13 +360,23 @@ export function PhotosTab({ projectId }: { projectId: number }) {
                 </p>
               </div>
             </div>
+
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
+              <Button type="button" variant="outline" onClick={closeDialog} disabled={isPending}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Add Photo
+              <Button type="submit" disabled={isPending || !selectedFile} className="min-w-[120px]">
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {uploading ? "Uploading…" : "Saving…"}
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Photo
+                  </>
+                )}
               </Button>
             </div>
           </form>

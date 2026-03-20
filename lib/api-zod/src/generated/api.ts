@@ -427,3 +427,15 @@ export const ListActivityResponseItem = zod.object({
   createdAt: zod.coerce.date(),
 });
 export const ListActivityResponse = zod.array(ListActivityResponseItem);
+
+export const PresignedUrlBody = zod.object({
+  fileName:    zod.string().min(1),
+  contentType: zod.enum(["image/jpeg", "image/png", "image/webp", "image/heic"]),
+  projectId:   zod.number(),
+});
+
+export const PresignedUrlResponse = zod.object({
+  presignedUrl: zod.string().url(),
+  publicUrl:    zod.string().url(),
+  key:          zod.string(),
+});
