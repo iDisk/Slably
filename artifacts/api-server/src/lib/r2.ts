@@ -14,6 +14,11 @@ export const r2Client = new S3Client({
     accessKeyId,
     secretAccessKey,
   },
+  // Disable automatic checksum calculation — Cloudflare R2 does not support
+  // the x-amz-checksum-crc32 / x-amz-sdk-checksum-algorithm query params
+  // that AWS SDK v3 adds by default to PutObject presigned URLs.
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
 });
 
 export async function getPresignedUploadUrl(
@@ -25,7 +30,15 @@ export async function getPresignedUploadUrl(
     Key: key,
     ContentType: contentType,
   });
-  return getSignedUrl(r2Client, command, { expiresIn: 300 });
+  return getSignedUrl(r2Client, command, {
+    expiresIn: 300,
+    // Prevent SDK from hoisting checksum headers into the signed query string
+    unhoistableHeaders: new Set([
+      "x-amz-checksum-crc32",
+      "x-amz-sdk-checksum-algorithm",
+      "x-amz-checksum-algorithm",
+    ]),
+  });
 }
 
 export function getPublicUrl(key: string): string {
