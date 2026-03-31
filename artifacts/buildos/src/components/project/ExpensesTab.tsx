@@ -377,7 +377,7 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
         onSubmit={onEdit}
         isPending={updateMutation.isPending}
         defaultValues={
-          editItem
+          (editItem
             ? {
                 amount:         parseFloat(editItem.amount),
                 vendor:         editItem.vendor,
@@ -387,7 +387,7 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
                 receipt_url:    editItem.receiptUrl ?? "",
                 payment_method: (editItem.paymentMethod as ExpenseForm["payment_method"]) ?? "",
               }
-            : {}
+            : {}) as Partial<ExpenseForm>
         }
       />
 
