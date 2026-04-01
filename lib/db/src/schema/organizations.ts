@@ -5,10 +5,14 @@ import { z } from "zod/v4";
 export const organizationsTable = pgTable(
   "organizations",
   {
-    id:        serial("id").primaryKey(),
-    name:      text("name").notNull(),
-    slug:      text("slug").notNull().unique(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    id:            serial("id").primaryKey(),
+    name:          text("name").notNull(),
+    slug:          text("slug").notNull().unique(),
+    companyName:   text("company_name"),
+    licenseNumber: text("license_number"),
+    state:         text("state"),
+    phone:         text("phone"),
+    createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
   (table) => [
