@@ -501,3 +501,44 @@ export const PresignedUrlResponse = zod.object({
   publicUrl:    zod.string().url(),
   key:          zod.string(),
 });
+
+/**
+ * @summary Project Phases
+ */
+export const ListPhasesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const PhaseResponseItem = zod.object({
+  id:           zod.number(),
+  projectId:    zod.number(),
+  phaseTitle:   zod.string(),
+  activityText: zod.string(),
+  activityType: zod.string().nullable(),
+  completed:    zod.boolean(),
+  sortOrder:    zod.number(),
+  createdAt:    zod.coerce.date(),
+});
+
+export const BulkCreatePhasesParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const BulkCreatePhasesBody = zod.object({
+  project_type: zod.enum(["new", "remo"]),
+  phases: zod.array(zod.object({
+    phase_title:   zod.string().min(1),
+    activity_text: zod.string().min(1),
+    activity_type: zod.string().nullable().optional(),
+    sort_order:    zod.number().int(),
+  })).min(1),
+});
+
+export const UpdatePhaseParams = zod.object({
+  id:      zod.coerce.number(),
+  phaseId: zod.coerce.number(),
+});
+
+export const UpdatePhaseBody = zod.object({
+  completed: zod.boolean(),
+});
