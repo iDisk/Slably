@@ -58,7 +58,7 @@ router.post("/projects/:id/phases/bulk", requireAuth, async (req: AuthRequest, r
           phaseTitle:   p.phase_title,
           activityText: p.activity_text,
           activityType: p.activity_type ?? null,
-          included:     true,
+          included:     p.included ?? true,
           sortOrder:    p.sort_order,
         }))
       )

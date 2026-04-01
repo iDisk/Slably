@@ -376,6 +376,7 @@ export interface Phase {
   activityText: string;
   activityType: string | null;
   completed: boolean;
+  included: boolean;
   sortOrder: number;
   createdAt: string;
 }
@@ -387,6 +388,7 @@ export interface BulkCreatePhasesBody {
     activity_text: string;
     activity_type?: string | null;
     sort_order: number;
+    included?: boolean;
   }>;
 }
 

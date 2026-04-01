@@ -531,6 +531,7 @@ export const BulkCreatePhasesBody = zod.object({
     activity_text: zod.string().min(1),
     activity_type: zod.string().nullable().optional(),
     sort_order:    zod.number().int(),
+    included:      zod.boolean().optional().default(true),
   })).min(1),
 });
 
