@@ -6,3 +6,4 @@ export * from "./change_orders";
 export * from "./photos";
 export * from "./activity_logs";
 export * from "./expenses";
+export * from "./project_phases";

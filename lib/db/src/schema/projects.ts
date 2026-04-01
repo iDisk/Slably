@@ -12,6 +12,8 @@ export const projectStatusEnum = pgEnum("project_status", [
   "cancelled",
 ]);
 
+export const projectTypeEnum = pgEnum("project_type", ["new", "remo"]);
+
 export const projectsTable = pgTable(
   "projects",
   {
@@ -27,6 +29,7 @@ export const projectsTable = pgTable(
     startDate:      date("start_date"),
     notes:          text("notes"),
     progress:       integer("progress").notNull().default(0),
+    projectType:    projectTypeEnum("project_type"),
     createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
