@@ -76,7 +76,7 @@ router.post("/auth/register", registerLimiter, async (req, res): Promise<void> =
     return;
   }
 
-  const { name, email, password, role, companyName } = parsed.data;
+  const { name, email, password, role, companyName, state, phone } = parsed.data;
 
   const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (existing.length > 0) {
@@ -95,7 +95,7 @@ router.post("/auth/register", registerLimiter, async (req, res): Promise<void> =
     const slug = await uniqueSlug(slugify(orgName));
     const [org] = await db
       .insert(organizationsTable)
-      .values({ name: orgName, slug })
+      .values({ name: orgName, slug, companyName: companyName || null, state: state || null, phone: phone || null })
       .returning();
     organizationId = org.id;
     organizationSlug = org.slug;

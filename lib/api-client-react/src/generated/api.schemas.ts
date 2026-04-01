@@ -45,6 +45,9 @@ export interface RegisterBody {
   email: string;
   password: string;
   role: RegisterBodyRole;
+  companyName?: string;
+  state?: string;
+  phone?: string;
 }
 
 export interface LoginBody {

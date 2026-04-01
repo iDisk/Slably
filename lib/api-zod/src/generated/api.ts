@@ -28,6 +28,8 @@ export const RegisterBody = zod.object({
   password: zod.string(),
   role: zod.enum(["builder", "client"]),
   companyName: zod.string().min(2).optional(),
+  state: zod.string().optional(),
+  phone: zod.string().optional(),
 });
 
 /**
