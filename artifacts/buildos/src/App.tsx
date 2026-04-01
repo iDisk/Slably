@@ -18,10 +18,12 @@ window.fetch = async (...args) => {
   const token = localStorage.getItem("buildos_token");
   if (token) {
     const newConfig = { ...config };
-    newConfig.headers = {
-      ...newConfig.headers,
-      Authorization: `Bearer ${token}`
-    };
+    // Use new Headers() to correctly handle Headers instances (not plain objects).
+    // Spreading a Headers instance with {...headers} loses all entries because
+    // Headers stores values internally, not as own enumerable properties.
+    const newHeaders = new Headers(newConfig.headers as HeadersInit | undefined);
+    newHeaders.set("Authorization", `Bearer ${token}`);
+    newConfig.headers = newHeaders;
     const response = await originalFetch(resource, newConfig);
     if (response.status === 401) {
       localStorage.removeItem("buildos_token");
