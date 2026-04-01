@@ -7,3 +7,5 @@ export * from "./photos";
 export * from "./activity_logs";
 export * from "./expenses";
 export * from "./project_phases";
+export * from "./contract_templates";
+export * from "./generated_documents";
