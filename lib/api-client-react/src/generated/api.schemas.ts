@@ -86,6 +86,8 @@ export interface Project {
   /** @nullable */
   notes: string | null;
   progress: number;
+  /** @nullable */
+  projectType: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -142,7 +142,7 @@ export function PhasesTab({ projectId, projectType }: PhasesTabProps) {
   }, [projectType]);
 
   const { data: fetchedPhases, isLoading: phasesLoading } = useListPhases(projectId, {
-    query: { enabled: view === "execution" },
+    query: { enabled: view === "execution", queryKey: getListPhasesQueryKey(projectId) },
   });
 
   useEffect(() => {
