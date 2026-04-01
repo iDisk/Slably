@@ -1,0 +1,108 @@
+Crea el archivo:
+artifacts/api-server/src/routes/documents.ts
+
+Con estos 6 endpoints. Antes de escribir, 
+lee los patrones de routes/phases.ts y 
+routes/contracts.ts para seguir exactamente 
+el mismo estilo.
+
+ENDPOINT 1 — GET /api/templates
+Devuelve todos los templates activos.
+Query params opcionales: type, language
+No requiere auth (son templates públicos 
+del sistema)
+Respuesta: array de { id, type, language, 
+title } — sin el campo content para 
+mantener la respuesta liviana.
+
+ENDPOINT 2 — GET /api/templates/:id
+Devuelve un template completo incluyendo 
+content. Sin auth.
+
+ENDPOINT 3 — POST /api/projects/:id/documents
+Crea un documento generado a partir de 
+un template. Solo builders.
+Body:
+{
+  template_id: number,
+  language: 'en' | 'es',
+  title: string,
+  field_values: {
+    effective_date: string,
+    owner_name: string,
+    owner_address: string,
+    contract_amount: string,
+    start_date: string,
+    end_date: string,
+    interest_rate: string,
+    cure_days: string,
+    project_description: string,
+    // para change orders:
+    co_number?: string,
+    change_description?: string,
+    original_amount?: string,
+    change_amount?: string,
+    new_total?: string,
+    additional_days?: string,
+    new_completion_date?: string,
+  }
+}
+
+Lógica:
+1. Verifica acceso al proyecto con 
+   checkProjectAccess
+2. Carga el template de la DB
+3. Reemplaza todas las variables {{variable}} 
+   en el content del template con los valores 
+   de field_values + los datos del constructor 
+   que vienen de la organización:
+   - {{contractor_name}} → req.user.name
+   - {{contractor_company}} → org.companyName
+   - {{contractor_address}} → org.name (fallback)
+   - {{contractor_license}} → org.licenseNumber
+   - {{contractor_state}} → org.state
+   - {{contractor_phone}} → org.phone
+   - {{project_address}} → project.address
+   - {{project_name}} → project.name
+4. Inserta en generated_documents con 
+   status: 'draft'
+5. Devuelve el documento completo creado
+
+ENDPOINT 4 — GET /api/projects/:id/documents
+Lista todos los documentos de un proyecto.
+Builders y clients con acceso.
+Respuesta: array sin el campo content 
+para mantener liviano.
+
+ENDPOINT 5 — GET /api/projects/:id/documents/:docId
+Devuelve un documento completo con content.
+Builders y clients.
+
+ENDPOINT 6 — POST /api/projects/:id/documents/:docId/sign
+Guarda la firma digital de una parte.
+Body: { 
+  role: 'contractor' | 'client',
+  signature: string  (base64 PNG)
+}
+Lógica:
+- Si role === 'contractor':
+  guarda contractor_signature, 
+  contractor_signed_at = now(),
+  contractor_ip = req.ip
+- Si role === 'client':
+  guarda client_signature,
+  client_signed_at = now(),
+  client_ip = req.ip
+- Si ambas firmas existen después de guardar:
+  actualiza signed_at = now() y 
+  status = 'signed'
+- Devuelve el documento actualizado
+
+También agrega los schemas Zod en 
+lib/api-zod/src/generated/api.ts y 
+los tipos en lib/api-client-react.
+
+Registra el router en 
+artifacts/api-server/src/routes/index.ts
+
+Muéstrame el diff completo antes de aplicar.
