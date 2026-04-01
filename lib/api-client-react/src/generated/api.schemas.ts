@@ -362,3 +362,34 @@ export interface UpdateExpenseBody {
   payment_method?: ExpensePaymentMethod;
   approved?: boolean;
 }
+
+export type ProjectTypeEnum = (typeof ProjectTypeEnum)[keyof typeof ProjectTypeEnum];
+export const ProjectTypeEnum = {
+  new: "new",
+  remo: "remo",
+} as const;
+
+export interface Phase {
+  id: number;
+  projectId: number;
+  phaseTitle: string;
+  activityText: string;
+  activityType: string | null;
+  completed: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface BulkCreatePhasesBody {
+  project_type: ProjectTypeEnum;
+  phases: Array<{
+    phase_title: string;
+    activity_text: string;
+    activity_type?: string | null;
+    sort_order: number;
+  }>;
+}
+
+export interface UpdatePhaseBody {
+  completed: boolean;
+}

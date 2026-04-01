@@ -41,6 +41,9 @@ import type {
   UpdatePhotoBody,
   UpdateProjectBody,
   User,
+  Phase,
+  BulkCreatePhasesBody,
+  UpdatePhaseBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -2438,5 +2441,208 @@ export function useDeleteExpense<
   TContext
 > {
   const mutationOptions = getDeleteExpenseMutationOptions(options);
+  return useMutation(mutationOptions);
+}
+
+// ─── Project Phases ───────────────────────────────────────────────────────────
+
+export const getListPhasesUrl = (id: number) => `/api/projects/${id}/phases`;
+
+export const listPhases = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Phase[]> => {
+  return customFetch<Phase[]>(getListPhasesUrl(id), { ...options });
+};
+
+export const getListPhasesQueryKey = (id: number) =>
+  [`/api/projects/${id}/phases`] as const;
+
+export const getListPhasesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPhases>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof listPhases>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getListPhasesQueryKey(id);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listPhases>>> = ({ signal }) =>
+    listPhases(id, { signal, ...requestOptions });
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof listPhases>>, TError, TData> & { queryKey: QueryKey };
+};
+
+export type ListPhasesQueryResult = NonNullable<Awaited<ReturnType<typeof listPhases>>>;
+export type ListPhasesQueryError = ErrorType<unknown>;
+
+export function useListPhases<
+  TData = Awaited<ReturnType<typeof listPhases>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof listPhases>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListPhasesQueryOptions(id, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getBulkCreatePhasesUrl = (id: number) =>
+  `/api/projects/${id}/phases/bulk`;
+
+export const bulkCreatePhases = async (
+  id: number,
+  bulkCreatePhasesBody: BulkCreatePhasesBody,
+  options?: RequestInit,
+): Promise<Phase[]> => {
+  return customFetch<Phase[]>(getBulkCreatePhasesUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(bulkCreatePhasesBody),
+  });
+};
+
+export const getBulkCreatePhasesMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkCreatePhases>>,
+    TError,
+    { id: number; data: BodyType<BulkCreatePhasesBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof bulkCreatePhases>>,
+  TError,
+  { id: number; data: BodyType<BulkCreatePhasesBody> },
+  TContext
+> => {
+  const mutationKey = ["bulkCreatePhases"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof bulkCreatePhases>>,
+    { id: number; data: BodyType<BulkCreatePhasesBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+    return bulkCreatePhases(id, data, requestOptions);
+  };
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BulkCreatePhasesMutationResult = NonNullable<Awaited<ReturnType<typeof bulkCreatePhases>>>;
+export type BulkCreatePhasesMutationBody = BodyType<BulkCreatePhasesBody>;
+export type BulkCreatePhasesMutationError = ErrorType<unknown>;
+
+export function useBulkCreatePhases<
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof bulkCreatePhases>>,
+    TError,
+    { id: number; data: BodyType<BulkCreatePhasesBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof bulkCreatePhases>>,
+  TError,
+  { id: number; data: BodyType<BulkCreatePhasesBody> },
+  TContext
+> {
+  const mutationOptions = getBulkCreatePhasesMutationOptions(options);
+  return useMutation(mutationOptions);
+}
+
+export const getUpdatePhaseUrl = (id: number, phaseId: number) =>
+  `/api/projects/${id}/phases/${phaseId}`;
+
+export const updatePhase = async (
+  id: number,
+  phaseId: number,
+  updatePhaseBody: UpdatePhaseBody,
+  options?: RequestInit,
+): Promise<Phase> => {
+  return customFetch<Phase>(getUpdatePhaseUrl(id, phaseId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updatePhaseBody),
+  });
+};
+
+export const getUpdatePhaseMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePhase>>,
+    TError,
+    { id: number; phaseId: number; data: BodyType<UpdatePhaseBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updatePhase>>,
+  TError,
+  { id: number; phaseId: number; data: BodyType<UpdatePhaseBody> },
+  TContext
+> => {
+  const mutationKey = ["updatePhase"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updatePhase>>,
+    { id: number; phaseId: number; data: BodyType<UpdatePhaseBody> }
+  > = (props) => {
+    const { id, phaseId, data } = props ?? {};
+    return updatePhase(id, phaseId, data, requestOptions);
+  };
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdatePhaseMutationResult = NonNullable<Awaited<ReturnType<typeof updatePhase>>>;
+export type UpdatePhaseMutationBody = BodyType<UpdatePhaseBody>;
+export type UpdatePhaseMutationError = ErrorType<unknown>;
+
+export function useUpdatePhase<
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePhase>>,
+    TError,
+    { id: number; phaseId: number; data: BodyType<UpdatePhaseBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updatePhase>>,
+  TError,
+  { id: number; phaseId: number; data: BodyType<UpdatePhaseBody> },
+  TContext
+> {
+  const mutationOptions = getUpdatePhaseMutationOptions(options);
   return useMutation(mutationOptions);
 }

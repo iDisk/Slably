@@ -1,0 +1,68 @@
+Los endpoints de fases ya funcionan y están 
+verificados. Ahora crea el archivo:
+src/components/project/PhasesTab.tsx
+
+El componente recibe estas props:
+{ projectId: number, projectType: string | null }
+
+Flujo completo:
+
+ESTADO 1 — Sin tipo asignado (projectType === null)
+Muestra las dos cards de selección:
+- "🏗️ Nueva Construcción"  
+- "🔨 Remodelación"
+Con el mismo estilo que Activities.tsx ya existente.
+Al seleccionar una card → llama a 
+POST /api/projects/:id/phases/bulk con TODAS 
+las actividades del catálogo desde 
+src/data/activityCatalog.ts aplanadas así:
+{
+  project_type: 'new' | 'remo',
+  phases: [
+    {
+      phase_title: "Pre-Construcción",
+      activity_text: "Reunión inicial...",
+      activity_type: "milestone",
+      sort_order: 0
+    },
+    ... una entrada por actividad, sort_order 
+    incremental global (0, 1, 2, 3...)
+  ]
+}
+Muestra spinner mientras carga.
+
+ESTADO 2 — Con tipo asignado (projectType existe 
+o acaba de seleccionarse)
+Llama a GET /api/projects/:id/phases
+Muestra las fases agrupadas en acordeón.
+Cada grupo del acordeón = un phase_title único.
+Dentro de cada grupo, lista de actividades con:
+- Checkbox para marcar completed
+- Número global (sort_order + 1)
+- Punto de color según activity_type:
+  inspection → naranja #F97316
+  draw → verde #16A34A
+  contract → azul #2563EB
+  milestone → azul marino #1B3A5C
+  null → gris
+- Texto de la actividad
+- Badge según tipo igual que Activities.tsx
+
+Al marcar/desmarcar checkbox → llama a 
+PATCH /api/projects/:id/phases/:phaseId
+con { completed: true/false }
+Actualiza optimistamente en UI sin esperar 
+respuesta del servidor.
+
+Barra de progreso arriba del acordeón:
+"X de Y actividades completadas" con barra 
+visual proporcional en naranja #F97316.
+
+Botón "Cambiar tipo de proyecto" abajo de todo
+→ vuelve al Estado 1 (selección de tipo)
+→ al confirmar muestra un alert de confirmación:
+  "Esto borrará las actividades actuales. 
+  ¿Continuar?"
+
+Usa Shadcn/UI y Tailwind. No modifiques 
+ProjectDetails.tsx todavía.
