@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Building2, LayoutDashboard, Briefcase, Settings, LogOut, FileText, UserCircle, ListChecks } from "lucide-react";
+import { Building2, LayoutDashboard, Briefcase, Settings, LogOut, FileText, UserCircle } from "lucide-react";
 import { formatInitials } from "@/lib/utils";
 
 export function BuilderLayout({ children }: { children: React.ReactNode }) {
@@ -9,7 +9,6 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/activities", label: "Actividades", icon: ListChecks },
   ];
 
   return (
