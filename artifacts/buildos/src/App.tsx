@@ -9,6 +9,7 @@ import BuilderDashboard from "@/pages/builder/Dashboard";
 import ProjectDetails from "@/pages/builder/ProjectDetails";
 import Activities from "@/pages/builder/Activities";
 import ClientDashboard from "@/pages/client/ClientDashboard";
+import Profile from "@/pages/builder/Profile";
 import NotFound from "@/pages/not-found";
 
 // Patch fetch to automatically inject the JWT token and handle 401s
@@ -69,6 +70,7 @@ function Router() {
       <Route path="/dashboard"><ProtectedRoute component={BuilderDashboard} roleRequired="builder" /></Route>
       <Route path="/projects/:id"><ProtectedRoute component={ProjectDetails} roleRequired="builder" /></Route>
       <Route path="/activities"><ProtectedRoute component={Activities} roleRequired="builder" /></Route>
+      <Route path="/profile"><ProtectedRoute component={Profile} roleRequired="builder" /></Route>
       <Route path="/client"><ProtectedRoute component={ClientDashboard} roleRequired="client" /></Route>
       <Route path="/" component={RootRedirect} />
       <Route component={NotFound} />

@@ -549,3 +549,27 @@ export const UpdatePhaseBody = zod.object({
 export const UpdatePhaseIncludedBody = zod.object({
   included: zod.boolean(),
 });
+
+/**
+ * @summary Get my organization
+ */
+export const GetMyOrgResponse = zod.object({
+  id:            zod.number(),
+  name:          zod.string(),
+  slug:          zod.string(),
+  companyName:   zod.string().nullable(),
+  licenseNumber: zod.string().nullable(),
+  state:         zod.string().nullable(),
+  phone:         zod.string().nullable(),
+  createdAt:     zod.coerce.date(),
+});
+
+/**
+ * @summary Update my organization
+ */
+export const UpdateMyOrgBody = zod.object({
+  companyName:   zod.string().optional(),
+  licenseNumber: zod.string().optional(),
+  state:         zod.string().optional(),
+  phone:         zod.string().optional(),
+});

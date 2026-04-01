@@ -44,6 +44,8 @@ import type {
   Phase,
   BulkCreatePhasesBody,
   UpdatePhaseBody,
+  Organization,
+  UpdateMyOrgBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -2644,5 +2646,115 @@ export function useUpdatePhase<
   TContext
 > {
   const mutationOptions = getUpdatePhaseMutationOptions(options);
+  return useMutation(mutationOptions);
+}
+
+// ─── GET /api/organizations/me ───────────────────────────────────────────────
+
+export const getGetMyOrgUrl = () => `/api/organizations/me`;
+
+export const getMyOrg = async (options?: RequestInit): Promise<Organization> =>
+  customFetch<Organization>(getGetMyOrgUrl(), { ...options, method: "GET" });
+
+export const getGetMyOrgQueryKey = () => [`/api/organizations/me`] as const;
+
+export const getGetMyOrgQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMyOrg>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getMyOrg>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getGetMyOrgQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyOrg>>> = ({ signal }) =>
+    getMyOrg({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyOrg>>, TError, TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMyOrgQueryResult = NonNullable<Awaited<ReturnType<typeof getMyOrg>>>;
+export type GetMyOrgQueryError = ErrorType<unknown>;
+
+export function useGetMyOrg<
+  TData = Awaited<ReturnType<typeof getMyOrg>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getMyOrg>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMyOrgQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+// ─── PATCH /api/organizations/me ─────────────────────────────────────────────
+
+export const updateMyOrgUrl = () => `/api/organizations/me`;
+
+export const updateMyOrg = async (
+  body: UpdateMyOrgBody,
+  options?: RequestInit,
+): Promise<Organization> =>
+  customFetch<Organization>(updateMyOrgUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export const getUpdateMyOrgMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyOrg>>,
+    TError,
+    { data: UpdateMyOrgBody },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMyOrg>>,
+  TError,
+  { data: UpdateMyOrgBody },
+  TContext
+> => {
+  const mutationKey = [updateMyOrgUrl()];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMyOrg>>,
+    { data: UpdateMyOrgBody }
+  > = ({ data }) => updateMyOrg(data, requestOptions);
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyOrgMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyOrg>>>;
+export type UpdateMyOrgMutationBody = UpdateMyOrgBody;
+export type UpdateMyOrgMutationError = ErrorType<unknown>;
+
+export function useUpdateMyOrg<
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyOrg>>,
+    TError,
+    { data: UpdateMyOrgBody },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMyOrg>>,
+  TError,
+  { data: UpdateMyOrgBody },
+  TContext
+> {
+  const mutationOptions = getUpdateMyOrgMutationOptions(options);
   return useMutation(mutationOptions);
 }

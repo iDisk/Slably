@@ -9,6 +9,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/profile",   label: "Perfil",     icon: UserCircle },
   ];
 
   return (

@@ -9,6 +9,7 @@ import activityRouter from "./activity";
 import uploadsRouter from "./uploads";
 import expensesRouter from "./expenses";
 import phasesRouter from "./phases";
+import organizationsRouter from "./organizations";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(activityRouter);
 router.use("/uploads", uploadsRouter);
 router.use(expensesRouter);
 router.use(phasesRouter);
+router.use(organizationsRouter);
 
 export default router;

@@ -397,6 +397,28 @@ export interface BulkCreatePhasesBody {
   }>;
 }
 
+export interface Organization {
+  id: number;
+  name: string;
+  slug: string;
+  /** @nullable */
+  companyName: string | null;
+  /** @nullable */
+  licenseNumber: string | null;
+  /** @nullable */
+  state: string | null;
+  /** @nullable */
+  phone: string | null;
+  createdAt: string;
+}
+
+export interface UpdateMyOrgBody {
+  companyName?: string;
+  licenseNumber?: string;
+  state?: string;
+  phone?: string;
+}
+
 export interface UpdatePhaseBody {
   completed: boolean;
 }
