@@ -1,0 +1,105 @@
+Crea el archivo:
+artifacts/api-server/src/lib/templates/seed-templates.ts
+
+Este archivo exporta una función seedTemplates() 
+que inserta los 6 machotes base en la tabla 
+contract_templates si no existen todavía.
+
+Los 6 machotes son:
+
+1. type: 'construction', language: 'en'
+2. type: 'construction', language: 'es'
+3. type: 'remodeling',   language: 'en'
+4. type: 'remodeling',   language: 'es'
+5. type: 'change_order', language: 'en'
+6. type: 'change_order', language: 'es'
+
+Para el CONTENIDO de cada machote usa 
+exactamente las variables entre dobles 
+llaves que se reemplazarán al generar:
+
+Variables disponibles para contratos:
+{{effective_date}}
+{{owner_name}}
+{{owner_address}}
+{{contractor_name}}
+{{contractor_company}}
+{{contractor_address}}
+{{contractor_license}}
+{{contractor_state}}
+{{contractor_phone}}
+{{project_address}}
+{{project_description}}
+{{contract_amount}}
+{{start_date}}
+{{end_date}}
+{{interest_rate}}
+{{cure_days}}
+
+Variables para change order:
+{{co_number}}
+{{project_name}}
+{{contractor_name}}
+{{contractor_company}}
+{{owner_name}}
+{{change_description}}
+{{original_amount}}
+{{change_amount}}
+{{new_total}}
+{{additional_days}}
+{{new_completion_date}}
+{{effective_date}}
+
+El contenido de cada machote debe ser HTML 
+limpio con estas secciones basadas en los 
+contratos que ya tenemos como referencia:
+
+CONSTRUCTION CONTRACT (EN):
+- Title: "CONSTRUCTION CONTRACT"
+- Parties section con {{owner_name}} y 
+  {{contractor_name}}
+- Description of Services
+- Scope of Work
+- Payment (amount + interest rate)
+- Term (start_date a end_date)
+- Permits
+- Insurance
+- Indemnification
+- Warranty
+- Default y Remedies (cure_days)
+- Force Majeure
+- Alternative Dispute Resolution
+- Governing Law (contractor_state)
+- Signatories section
+
+CONTRATO DE CONSTRUCCIÓN (ES):
+Mismo contenido traducido al español 
+completamente.
+
+HOME IMPROVEMENT CONTRACT (EN):
+Basado en el contrato de remodelación 
+con las 32 cláusulas adaptadas, usando 
+las mismas variables.
+
+CONTRATO DE REMODELACIÓN (ES):
+Mismo contenido traducido.
+
+CHANGE ORDER (EN):
+Formato del Change Order con las 
+variables de CO listadas arriba.
+
+ORDEN DE CAMBIO (ES):
+Mismo contenido traducido.
+
+La función seedTemplates() debe:
+1. Verificar si ya existen registros en 
+   contract_templates
+2. Si la tabla está vacía → insertar los 6
+3. Si ya tiene datos → no hacer nada (idempotente)
+
+También crea un script para ejecutarlo:
+artifacts/api-server/src/scripts/seed.ts
+
+Que llame a seedTemplates() y termine el proceso.
+
+Muéstrame el código completo antes de aplicar.
