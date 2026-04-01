@@ -573,3 +573,76 @@ export const UpdateMyOrgBody = zod.object({
   state:         zod.string().optional(),
   phone:         zod.string().optional(),
 });
+
+// ─── Documents & Templates ───────────────────────────────────────────────────
+
+export const ListTemplatesQuery = zod.object({
+  type:     zod.enum(["construction", "remodeling", "change_order"]).optional(),
+  language: zod.enum(["en", "es"]).optional(),
+});
+
+export const GetTemplateParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const TemplateListItem = zod.object({
+  id:       zod.number(),
+  type:     zod.string(),
+  language: zod.string(),
+  title:    zod.string(),
+});
+
+export const TemplateDetail = zod.object({
+  id:        zod.number(),
+  type:      zod.string(),
+  language:  zod.string(),
+  title:     zod.string(),
+  content:   zod.string(),
+  isActive:  zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+export const DocumentProjectParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DocumentParams = zod.object({
+  id:    zod.coerce.number(),
+  docId: zod.coerce.number(),
+});
+
+export const CreateDocumentBody = zod.object({
+  template_id:  zod.coerce.number(),
+  language:     zod.enum(["en", "es"]),
+  title:        zod.string().min(1),
+  field_values: zod.record(zod.string(), zod.string()),
+});
+
+export const SignDocumentBody = zod.object({
+  role:      zod.enum(["contractor", "client"]),
+  signature: zod.string().min(1),
+});
+
+export const DocumentListItem = zod.object({
+  id:                 zod.number(),
+  projectId:          zod.number(),
+  templateId:         zod.number().nullable(),
+  type:               zod.string(),
+  language:           zod.string(),
+  title:              zod.string(),
+  status:             zod.string(),
+  contractorSignedAt: zod.coerce.date().nullable(),
+  clientSignedAt:     zod.coerce.date().nullable(),
+  signedAt:           zod.coerce.date().nullable(),
+  createdAt:          zod.coerce.date(),
+  updatedAt:          zod.coerce.date(),
+});
+
+export const DocumentDetail = DocumentListItem.extend({
+  content:             zod.string(),
+  fieldValues:         zod.record(zod.string(), zod.string()).nullable(),
+  contractorSignature: zod.string().nullable(),
+  contractorIp:        zod.string().nullable(),
+  clientSignature:     zod.string().nullable(),
+  clientIp:            zod.string().nullable(),
+});

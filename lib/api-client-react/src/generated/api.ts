@@ -2758,3 +2758,317 @@ export function useUpdateMyOrg<
   const mutationOptions = getUpdateMyOrgMutationOptions(options);
   return useMutation(mutationOptions);
 }
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+export type TemplateListItemType = {
+  id: number;
+  type: string;
+  language: string;
+  title: string;
+};
+
+export type TemplateDetailType = TemplateListItemType & {
+  content: string;
+  isActive: boolean;
+  createdAt: string;
+};
+
+export type DocumentListItemType = {
+  id: number;
+  projectId: number;
+  templateId: number | null;
+  type: string;
+  language: string;
+  title: string;
+  status: string;
+  contractorSignedAt: string | null;
+  clientSignedAt: string | null;
+  signedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type DocumentDetailType = DocumentListItemType & {
+  content: string;
+  fieldValues: Record<string, string> | null;
+  contractorSignature: string | null;
+  contractorIp: string | null;
+  clientSignature: string | null;
+  clientIp: string | null;
+};
+
+export type CreateDocumentBody = {
+  template_id: number;
+  language: "en" | "es";
+  title: string;
+  field_values: Record<string, string>;
+};
+
+export type SignDocumentBody = {
+  role: "contractor" | "client";
+  signature: string;
+};
+
+// ─── Templates ───────────────────────────────────────────────────────────────
+
+export const getTemplatesUrl = (params?: { type?: string; language?: string }) => {
+  const q = new URLSearchParams();
+  if (params?.type)     q.set("type", params.type);
+  if (params?.language) q.set("language", params.language);
+  const qs = q.toString();
+  return `/api/templates${qs ? `?${qs}` : ""}`;
+};
+
+export const getTemplates = async (
+  params?: { type?: string; language?: string },
+  options?: RequestInit,
+): Promise<TemplateListItemType[]> =>
+  customFetch<TemplateListItemType[]>(getTemplatesUrl(params), { ...options });
+
+export const getListTemplatesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: { type?: string; language?: string },
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTemplates>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryOptions<Awaited<ReturnType<typeof getTemplates>>, TError, TData> & { queryKey: QueryKey } => ({
+  queryKey: [getTemplatesUrl(params)],
+  queryFn: () => getTemplates(params, options?.request as RequestInit),
+  ...options?.query,
+});
+
+export function useGetTemplates<
+  TData = Awaited<ReturnType<typeof getTemplates>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: { type?: string; language?: string },
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTemplates>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListTemplatesQueryOptions(params, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getTemplateUrl = (id: number) => `/api/templates/${id}`;
+
+export const getTemplate = async (id: number, options?: RequestInit): Promise<TemplateDetailType> =>
+  customFetch<TemplateDetailType>(getTemplateUrl(id), { ...options });
+
+export const getTemplateQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTemplate>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTemplate>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryOptions<Awaited<ReturnType<typeof getTemplate>>, TError, TData> & { queryKey: QueryKey } => ({
+  queryKey: [getTemplateUrl(id)],
+  queryFn: () => getTemplate(id, options?.request as RequestInit),
+  enabled: !!id,
+  ...options?.query,
+});
+
+export function useGetTemplate<
+  TData = Awaited<ReturnType<typeof getTemplate>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTemplate>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getTemplateQueryOptions(id, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+// ─── Project Documents ────────────────────────────────────────────────────────
+
+export const listDocumentsUrl = (projectId: number) => `/api/projects/${projectId}/documents`;
+
+export const listDocuments = async (projectId: number, options?: RequestInit): Promise<DocumentListItemType[]> =>
+  customFetch<DocumentListItemType[]>(listDocumentsUrl(projectId), { ...options });
+
+export const getListDocumentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDocuments>>,
+  TError = ErrorType<unknown>,
+>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof listDocuments>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryOptions<Awaited<ReturnType<typeof listDocuments>>, TError, TData> & { queryKey: QueryKey } => ({
+  queryKey: [listDocumentsUrl(projectId)],
+  queryFn: () => listDocuments(projectId, options?.request as RequestInit),
+  enabled: !!projectId,
+  ...options?.query,
+});
+
+export function useListDocuments<
+  TData = Awaited<ReturnType<typeof listDocuments>>,
+  TError = ErrorType<unknown>,
+>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof listDocuments>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListDocumentsQueryOptions(projectId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getDocumentUrl = (projectId: number, docId: number) =>
+  `/api/projects/${projectId}/documents/${docId}`;
+
+export const getDocument = async (projectId: number, docId: number, options?: RequestInit): Promise<DocumentDetailType> =>
+  customFetch<DocumentDetailType>(getDocumentUrl(projectId, docId), { ...options });
+
+export const getDocumentQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDocument>>,
+  TError = ErrorType<unknown>,
+>(
+  projectId: number,
+  docId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getDocument>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryOptions<Awaited<ReturnType<typeof getDocument>>, TError, TData> & { queryKey: QueryKey } => ({
+  queryKey: [getDocumentUrl(projectId, docId)],
+  queryFn: () => getDocument(projectId, docId, options?.request as RequestInit),
+  enabled: !!(projectId && docId),
+  ...options?.query,
+});
+
+export function useGetDocument<
+  TData = Awaited<ReturnType<typeof getDocument>>,
+  TError = ErrorType<unknown>,
+>(
+  projectId: number,
+  docId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getDocument>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getDocumentQueryOptions(projectId, docId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+// ─── createDocument ───────────────────────────────────────────────────────────
+
+export const createDocumentUrl = (projectId: number) => `/api/projects/${projectId}/documents`;
+
+export const createDocument = async (
+  projectId: number,
+  body: CreateDocumentBody,
+  options?: RequestInit,
+): Promise<DocumentDetailType> =>
+  customFetch<DocumentDetailType>(createDocumentUrl(projectId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export const getCreateDocumentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  projectId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof createDocument>>, TError, { data: CreateDocumentBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationOptions<Awaited<ReturnType<typeof createDocument>>, TError, { data: CreateDocumentBody }, TContext> => {
+  const mutationKey = [createDocumentUrl(projectId)];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDocument>>, { data: CreateDocumentBody }> =
+    (props) => createDocument(projectId, props.data, requestOptions as RequestInit);
+  return { mutationFn, ...mutationOptions };
+};
+
+export function useCreateDocument<
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  projectId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof createDocument>>, TError, { data: CreateDocumentBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof createDocument>>, TError, { data: CreateDocumentBody }, TContext> {
+  return useMutation(getCreateDocumentMutationOptions(projectId, options));
+}
+
+// ─── signDocument ─────────────────────────────────────────────────────────────
+
+export const signDocumentUrl = (projectId: number, docId: number) =>
+  `/api/projects/${projectId}/documents/${docId}/sign`;
+
+export const signDocument = async (
+  projectId: number,
+  docId: number,
+  body: SignDocumentBody,
+  options?: RequestInit,
+): Promise<DocumentDetailType> =>
+  customFetch<DocumentDetailType>(signDocumentUrl(projectId, docId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export const getSignDocumentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  projectId: number,
+  docId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof signDocument>>, TError, { data: SignDocumentBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationOptions<Awaited<ReturnType<typeof signDocument>>, TError, { data: SignDocumentBody }, TContext> => {
+  const mutationKey = [signDocumentUrl(projectId, docId)];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && "mutationKey" in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof signDocument>>, { data: SignDocumentBody }> =
+    (props) => signDocument(projectId, docId, props.data, requestOptions as RequestInit);
+  return { mutationFn, ...mutationOptions };
+};
+
+export function useSignDocument<
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(
+  projectId: number,
+  docId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof signDocument>>, TError, { data: SignDocumentBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof signDocument>>, TError, { data: SignDocumentBody }, TContext> {
+  return useMutation(getSignDocumentMutationOptions(projectId, docId, options));
+}

@@ -10,6 +10,7 @@ import uploadsRouter from "./uploads";
 import expensesRouter from "./expenses";
 import phasesRouter from "./phases";
 import organizationsRouter from "./organizations";
+import documentsRouter from "./documents";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use("/uploads", uploadsRouter);
 router.use(expensesRouter);
 router.use(phasesRouter);
 router.use(organizationsRouter);
+router.use(documentsRouter);
 
 export default router;
