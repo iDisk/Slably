@@ -12,6 +12,7 @@ export const projectPhasesTable = pgTable(
     activityText: text("activity_text").notNull(),
     activityType: text("activity_type"),
     completed:    boolean("completed").notNull().default(false),
+    included:     boolean("included").notNull().default(true),
     sortOrder:    integer("sort_order").notNull().default(0),
     createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
