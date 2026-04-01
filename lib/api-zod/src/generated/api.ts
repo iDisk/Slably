@@ -542,3 +542,7 @@ export const UpdatePhaseParams = zod.object({
 export const UpdatePhaseBody = zod.object({
   completed: zod.boolean(),
 });
+
+export const UpdatePhaseIncludedBody = zod.object({
+  included: zod.boolean(),
+});

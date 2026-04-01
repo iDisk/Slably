@@ -7,6 +7,7 @@ import {
   BulkCreatePhasesBody,
   UpdatePhaseParams,
   UpdatePhaseBody,
+  UpdatePhaseIncludedBody,
 } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { checkProjectAccess } from "../lib/project-access.js";
@@ -57,6 +58,7 @@ router.post("/projects/:id/phases/bulk", requireAuth, async (req: AuthRequest, r
           phaseTitle:   p.phase_title,
           activityText: p.activity_text,
           activityType: p.activity_type ?? null,
+          included:     true,
           sortOrder:    p.sort_order,
         }))
       )
@@ -82,6 +84,33 @@ router.patch("/projects/:id/phases/:phaseId", requireAuth, async (req: AuthReque
   const [phase] = await db
     .update(projectPhasesTable)
     .set({ completed: parsed.data.completed })
+    .where(and(
+      eq(projectPhasesTable.id, params.data.phaseId),
+      eq(projectPhasesTable.projectId, params.data.id)
+    ))
+    .returning();
+
+  if (!phase) { res.status(404).json({ error: "Phase not found" }); return; }
+
+  res.json(phase);
+});
+
+router.patch("/projects/:id/phases/:phaseId/included", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const params = UpdatePhaseParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const user = req.user!;
+  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const project = await checkProjectAccess(params.data.id, user);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+
+  const parsed = UpdatePhaseIncludedBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const [phase] = await db
+    .update(projectPhasesTable)
+    .set({ included: parsed.data.included })
     .where(and(
       eq(projectPhasesTable.id, params.data.phaseId),
       eq(projectPhasesTable.projectId, params.data.id)
