@@ -7,6 +7,7 @@ import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
 import BuilderDashboard from "@/pages/builder/Dashboard";
 import ProjectDetails from "@/pages/builder/ProjectDetails";
+import Activities from "@/pages/builder/Activities";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NotFound from "@/pages/not-found";
 
@@ -65,6 +66,7 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/dashboard"><ProtectedRoute component={BuilderDashboard} roleRequired="builder" /></Route>
       <Route path="/projects/:id"><ProtectedRoute component={ProjectDetails} roleRequired="builder" /></Route>
+      <Route path="/activities"><ProtectedRoute component={Activities} roleRequired="builder" /></Route>
       <Route path="/client"><ProtectedRoute component={ClientDashboard} roleRequired="client" /></Route>
       <Route path="/" component={RootRedirect} />
       <Route component={NotFound} />
