@@ -148,8 +148,19 @@ function SignatureCanvas({
     canvas.getContext("2d")!.clearRect(0, 0, canvas.width, canvas.height);
   };
 
+  const isEmpty = (canvas: HTMLCanvasElement) => {
+    const blank = document.createElement("canvas");
+    blank.width  = canvas.width;
+    blank.height = canvas.height;
+    return canvas.toDataURL() === blank.toDataURL();
+  };
+
   const submit = () => {
     const canvas = canvasRef.current; if (!canvas) return;
+    if (isEmpty(canvas)) {
+      toast.warning("Por favor firme en el recuadro antes de continuar");
+      return;
+    }
     onSign(canvas.toDataURL("image/png"));
   };
 
@@ -218,9 +229,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
   const { data: docs = [], isLoading } = useListDocuments(projectId);
   const { data: templates = [] }       = useGetTemplates({ type: selectedType, language: selectedLang });
   const templateId = templates[0]?.id;
-  const { data: templateDetail }       = useGetTemplate(templateId ?? 0, {
-    query: { enabled: !!templateId && createStep === 2 },
-  });
+  const { data: templateDetail } = useGetTemplate(templateId ?? 0);
 
   // ── mutations ──
   const createMutation = useCreateDocument(projectId);
