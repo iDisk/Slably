@@ -124,8 +124,12 @@ router.post("/projects/:id/documents", requireAuth, async (req: AuthRequest, res
       documentTitle:     parsed.data.title,
       documentId:        doc.id,
       projectId:         project.id,
-    }).catch(err =>
-      console.error("Email notification failed:", err)
+    })
+    .then(() =>
+      console.log("[EMAIL] ✅ Sent OK →", project.clientEmail)
+    )
+    .catch(err =>
+      console.error("[EMAIL] ❌ Failed →", project.clientEmail, err.message)
     );
   }
 
