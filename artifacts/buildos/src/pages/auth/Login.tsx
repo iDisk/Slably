@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Building2, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import { ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -50,9 +50,6 @@ export default function Login() {
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:w-[480px] lg:px-12 xl:px-24 border-r border-border bg-white z-10 shadow-2xl">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mx-auto w-full max-w-sm lg:w-96">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-              <Building2 className="text-primary-foreground h-7 w-7" />
-            </div>
             <img src="/slably-logo.png" alt="Slably" className="h-10 w-auto" />
           </div>
 
