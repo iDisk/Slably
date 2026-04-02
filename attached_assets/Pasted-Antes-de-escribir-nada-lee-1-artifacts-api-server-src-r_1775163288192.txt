@@ -1,0 +1,84 @@
+Antes de escribir nada, lee:
+1. artifacts/api-server/src/routes/phases.ts
+   — para seguir el mismo patrón
+2. artifacts/api-server/src/routes/uploads.ts
+   — para ver cómo se maneja el upload 
+   de archivos a R2
+
+Luego crea artifacts/api-server/src/routes/daily-logs.ts
+con estos 5 endpoints:
+
+ENDPOINT 1 — GET /api/projects/:id/daily-logs
+Lista todos los daily logs del proyecto.
+requireAuth, builder y client con acceso.
+Respuesta: array ordenado por log_date DESC
+sin el campo transcription (para mantener 
+la respuesta liviana)
+
+ENDPOINT 2 — POST /api/projects/:id/daily-logs
+Crea un daily log manual (sin audio).
+Solo builders y supervisors.
+Body:
+{
+  log_date: string (date YYYY-MM-DD),
+  weather?: string,
+  temperature?: number,
+  workers_count?: number,
+  activities: string,
+  materials?: string,
+  problems?: string,
+  notes?: string
+}
+Si ya existe un log para esa fecha → 
+devuelve 409 con mensaje claro.
+
+ENDPOINT 3 — POST /api/projects/:id/daily-logs/from-audio
+Recibe un archivo de audio, lo procesa 
+con Whisper + GPT-4o y crea el daily log.
+Solo builders.
+
+Manejo del archivo de audio:
+- Usa multer con storage en memoria 
+  (memoryStorage) para recibir el archivo
+- Guarda el audio en R2 usando el mismo 
+  patrón de uploads.ts
+- Llama a transcribeAudio() con el archivo
+- Llama a structureDailyLog() con la 
+  transcripción
+- Crea el daily log con ai_processed: true
+- El log_date es hoy si no se especifica
+
+Body: multipart/form-data
+  - audio: file (mp3, mp4, wav, m4a, webm)
+  - log_date?: string
+  - language?: 'es' | 'en' (default 'es')
+
+ENDPOINT 4 — GET /api/projects/:id/daily-logs/:logId
+Devuelve un daily log completo incluyendo 
+transcription.
+requireAuth, builder y client.
+
+ENDPOINT 5 — PATCH /api/projects/:id/daily-logs/:logId
+Actualiza campos del daily log.
+Solo builders.
+Body: cualquier campo editable
+  (weather, temperature, workers_count,
+   activities, materials, problems, notes,
+   status)
+Al confirmar status='confirmed' el log 
+queda como definitivo.
+
+Para el upload de audio a R2 sigue el 
+mismo patrón de uploads.ts pero con 
+key: projects/{projectId}/daily-logs/{date}-{timestamp}.{ext}
+
+Instala multer si no está instalado:
+cd artifacts/api-server && npm install multer
+cd artifacts/api-server && npm install -D @types/multer
+
+Agrega los schemas Zod necesarios en 
+lib/api-zod/src/generated/api.ts
+
+Registra el router en routes/index.ts
+
+Muéstrame el diff completo antes de aplicar.
