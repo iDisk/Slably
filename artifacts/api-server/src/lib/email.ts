@@ -1,6 +1,10 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend(): Resend {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("RESEND_API_KEY is not set — email not sent");
+  return new Resend(key);
+}
 
 export async function sendDocumentSigningRequest({
   to,
@@ -24,7 +28,7 @@ export async function sendDocumentSigningRequest({
   const appUrl = process.env.APP_URL ?? "http://localhost:5173";
   const signingUrl = `${appUrl}/client`;
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: "BuildOS <noreply@buildos.app>",
     to,
     subject: `${contractorCompany} te envió un documento para firmar: ${documentTitle}`,

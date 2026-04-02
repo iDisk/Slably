@@ -11,6 +11,7 @@ import {
 } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { checkProjectAccess } from "../lib/project-access.js";
+import { sendDocumentSigningRequest } from "../lib/email.js";
 
 const router: IRouter = Router();
 
@@ -112,6 +113,21 @@ router.post("/projects/:id/documents", requireAuth, async (req: AuthRequest, res
     status:      "draft",
     fieldValues: parsed.data.field_values,
   }).returning();
+
+  if (project.clientEmail) {
+    sendDocumentSigningRequest({
+      to:                project.clientEmail,
+      clientName:        project.clientName ?? "Cliente",
+      contractorName:    contractorName,
+      contractorCompany: org.companyName ?? org.name,
+      projectName:       project.name,
+      documentTitle:     parsed.data.title,
+      documentId:        doc.id,
+      projectId:         project.id,
+    }).catch(err =>
+      console.error("Email notification failed:", err)
+    );
+  }
 
   res.status(201).json(doc);
 });
