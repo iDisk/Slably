@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, numeric, boolean, index, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, numeric, boolean, index, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { projectsTable } from "./projects";
@@ -26,6 +26,8 @@ export const expensesTable = pgTable(
     expenseDate:   text("expense_date").notNull(),
     paymentMethod: expensePaymentMethodEnum("payment_method"),
     approved:      boolean("approved").notNull().default(false),
+    ocrRaw:        jsonb("ocr_raw"),
+    ocrConfidence: integer("ocr_confidence"),
     createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
