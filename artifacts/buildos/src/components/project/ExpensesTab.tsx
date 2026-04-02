@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Plus, Pencil, Trash2, Loader2,
-  Receipt, CheckCircle2, ExternalLink,
+  Receipt, CheckCircle2, ExternalLink, Camera,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,8 @@ import {
   useDeleteExpense,
   getListExpensesQueryKey,
   type Expense,
+  useCreateExpenseFromReceipt,
+  type ExpenseFromReceiptResponse,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,6 +59,7 @@ function ExpenseDialog({
   onSubmit,
   isPending,
   defaultValues,
+  ocrConfidence,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -64,6 +67,7 @@ function ExpenseDialog({
   onSubmit: (data: ExpenseForm) => void;
   isPending: boolean;
   defaultValues: Partial<ExpenseForm>;
+  ocrConfidence?: number;
 }) {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ExpenseForm>({
     resolver: zodResolver(expenseSchema),
@@ -75,6 +79,22 @@ function ExpenseDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display font-bold text-xl">{title}</DialogTitle>
+          {ocrConfidence !== undefined && (
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold mt-1 w-fit ${
+              ocrConfidence >= 80
+                ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                : ocrConfidence >= 50
+                ? "bg-amber-100 text-amber-700 border border-amber-200"
+                : "bg-red-100 text-red-700 border border-red-200"
+            }`}>
+              {ocrConfidence >= 80 ? "✓" : "⚠"} OCR: {ocrConfidence}%
+              {ocrConfidence < 80 && (
+                <span className="ml-1">
+                  {ocrConfidence >= 50 ? "· Verifica los datos" : "· Verifica manualmente"}
+                </span>
+              )}
+            </span>
+          )}
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-3">
@@ -151,16 +171,40 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
   const expenses = data?.expenses ?? [];
   const total = data?.total ?? 0;
 
-  const createMutation = useCreateExpense();
-  const updateMutation = useUpdateExpense();
-  const deleteMutation = useDeleteExpense();
+  const createMutation  = useCreateExpense();
+  const updateMutation  = useUpdateExpense();
+  const deleteMutation  = useDeleteExpense();
+  const receiptMutation = useCreateExpenseFromReceipt(projectId);
 
   const [createOpen,    setCreateOpen]    = useState(false);
   const [editItem,      setEditItem]      = useState<Expense | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Expense | null>(null);
+  const [ocrResult,     setOcrResult]     = useState<ExpenseFromReceiptResponse | null>(null);
+  const [ocrProcessing, setOcrProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey(projectId) });
+
+  const handleReceiptPhoto = (file: File) => {
+    setOcrProcessing(true);
+    const fd = new FormData();
+    fd.append("receipt", file);
+    receiptMutation.mutate(
+      { data: fd },
+      {
+        onSuccess: (result) => {
+          setOcrResult(result);
+          setOcrProcessing(false);
+          setCreateOpen(true);
+        },
+        onError: () => {
+          toast.error("No se pudo leer el ticket. Ingrésalo manualmente.");
+          setOcrProcessing(false);
+        },
+      }
+    );
+  };
 
   const onCreate = (data: ExpenseForm) => {
     createMutation.mutate(
@@ -179,6 +223,34 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
       {
         onSuccess: () => { toast.success("Expense added"); invalidate(); setCreateOpen(false); },
         onError:   () => toast.error("Failed to add expense"),
+      }
+    );
+  };
+
+  const onOcrSave = (data: ExpenseForm) => {
+    if (!ocrResult) return;
+    updateMutation.mutate(
+      {
+        projectId,
+        eid: ocrResult.id,
+        data: {
+          amount:         data.amount,
+          vendor:         data.vendor,
+          category:       data.category,
+          expense_date:   data.expense_date,
+          description:    data.description  || undefined,
+          receipt_url:    data.receipt_url  || undefined,
+          payment_method: data.payment_method || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Expense saved from receipt");
+          invalidate();
+          setCreateOpen(false);
+          setOcrResult(null);
+        },
+        onError: () => toast.error("Failed to save expense"),
       }
     );
   };
@@ -239,10 +311,53 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
             </p>
           )}
         </div>
-        <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" /> Add Expense
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={ocrProcessing}
+            className="gap-2"
+          >
+            {ocrProcessing
+              ? <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+              : <Camera className="w-4 h-4" />
+            }
+            {ocrProcessing ? "Leyendo..." : "Scan Receipt"}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => { setOcrResult(null); setCreateOpen(true); }}
+            disabled={ocrProcessing}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" /> Add Expense
+          </Button>
+        </div>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: "none" }}
+          ref={fileInputRef}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleReceiptPhoto(file);
+            e.target.value = "";
+          }}
+        />
       </div>
+
+      {/* OCR processing overlay */}
+      {ocrProcessing && (
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-orange-50 border border-orange-200 text-orange-700">
+          <Loader2 className="w-5 h-5 animate-spin shrink-0" />
+          <div>
+            <p className="font-semibold text-sm">Leyendo ticket con IA...</p>
+            <p className="text-xs opacity-75">Esto puede tomar unos segundos</p>
+          </div>
+        </div>
+      )}
 
       {/* Empty state */}
       {expenses.length === 0 ? (
@@ -359,14 +474,27 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
         </div>
       )}
 
-      {/* Create dialog */}
+      {/* Create / OCR-review dialog */}
       <ExpenseDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
-        title="Add Expense"
-        onSubmit={onCreate}
-        isPending={createMutation.isPending}
-        defaultValues={{ category: "materials", expense_date: new Date().toISOString().split("T")[0] }}
+        onOpenChange={v => { if (!v) { setOcrResult(null); } setCreateOpen(v); }}
+        title={ocrResult ? "Review Scanned Expense" : "Add Expense"}
+        onSubmit={ocrResult ? onOcrSave : onCreate}
+        isPending={ocrResult ? updateMutation.isPending : createMutation.isPending}
+        ocrConfidence={ocrResult?.ocr_result.confidence}
+        defaultValues={
+          ocrResult
+            ? {
+                amount:         ocrResult.ocr_result.amount        ?? undefined,
+                vendor:         ocrResult.ocr_result.vendor        ?? "",
+                description:    ocrResult.ocr_result.description   ?? "",
+                category:       (ocrResult.ocr_result.category     ?? "other") as ExpenseForm["category"],
+                expense_date:   ocrResult.ocr_result.date          ?? new Date().toISOString().split("T")[0],
+                payment_method: (ocrResult.ocr_result.payment_method ?? "") as ExpenseForm["payment_method"],
+                receipt_url:    ocrResult.receiptUrl                ?? "",
+              }
+            : { category: "materials", expense_date: new Date().toISOString().split("T")[0] }
+        }
       />
 
       {/* Edit dialog */}
