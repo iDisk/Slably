@@ -26,7 +26,7 @@ export async function sendDocumentSigningRequest({
   projectId: number;
 }) {
   const appUrl = process.env.APP_URL ?? "http://localhost:5173";
-  const signingUrl = `${appUrl}/client`;
+  const signingUrl = `${appUrl}/client?tab=contracts`;
 
   return getResend().emails.send({
     from: "BuildOS <onboarding@resend.dev>",

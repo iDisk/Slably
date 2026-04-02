@@ -21,6 +21,7 @@ import { toast } from "sonner";
 export default function ClientDashboard() {
   const { data: projects, isLoading } = useListProjects();
   const project = projects?.[0];
+  const tabFromUrl = new URLSearchParams(window.location.search).get("tab") ?? "updates";
 
   if (isLoading) return <ClientLayout><div className="flex justify-center p-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div></ClientLayout>;
 
@@ -54,7 +55,7 @@ export default function ClientDashboard() {
         </div>
       </div>
 
-      <Tabs defaultValue="updates" className="w-full">
+      <Tabs defaultValue={tabFromUrl} className="w-full">
         <TabsList className="mb-6 w-full justify-start overflow-x-auto hide-scrollbar bg-transparent h-auto p-0 gap-2">
           <TabsTrigger value="updates" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-transparent data-[state=inactive]:border-border data-[state=inactive]:bg-white rounded-full px-6 py-2.5">Updates & Photos</TabsTrigger>
           <TabsTrigger value="change-orders" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border border-transparent data-[state=inactive]:border-border data-[state=inactive]:bg-white rounded-full px-6 py-2.5">Change Orders</TabsTrigger>
