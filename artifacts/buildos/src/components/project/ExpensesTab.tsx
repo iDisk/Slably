@@ -329,10 +329,7 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
-              console.log("[OCR] Scan button clicked");
-              fileInputRef.current?.click();
-            }}
+            onClick={() => fileInputRef.current?.click()}
             disabled={ocrProcessing}
             className="gap-2"
           >
@@ -358,10 +355,6 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
           style={{ display: "none" }}
           ref={fileInputRef}
           onChange={(e) => {
-            console.log("[OCR] File selected:",
-              e.target.files?.[0]?.name,
-              e.target.files?.[0]?.size,
-            );
             const file = e.target.files?.[0];
             if (file) handleReceiptPhoto(file);
             e.target.value = "";
