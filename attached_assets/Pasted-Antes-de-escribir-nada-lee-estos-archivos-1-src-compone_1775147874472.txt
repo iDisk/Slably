@@ -1,0 +1,128 @@
+Antes de escribir nada, lee estos archivos:
+1. src/components/project/ContractsTab.tsx
+2. src/components/project/ChangeOrdersTab.tsx
+3. src/pages/builder/Profile.tsx (para ver 
+   el patrón de formularios)
+
+Luego crea src/components/project/DocumentsTab.tsx
+
+Este componente reemplazará o coexistirá con 
+ContractsTab. Recibe { projectId, project } 
+como props.
+
+El flujo tiene 4 vistas controladas con useState:
+
+VISTA 1 — Lista de documentos (default)
+- Título "Documentos" con botón naranja 
+  "+ Nuevo Documento" arriba a la derecha
+- Lista de documentos del proyecto usando 
+  useListDocuments(projectId)
+- Cada documento muestra:
+  * Ícono según tipo (FileText para contracts, 
+    ClipboardList para change orders)
+  * Título del documento
+  * Badge de idioma (EN / ES)
+  * Badge de estado con colores:
+    draft → gris "Borrador"
+    sent → azul "Enviado"  
+    signed → verde "Firmado"
+  * Indicadores de firma:
+    "✓ Contratista" en verde si contractor_signed_at
+    "✓ Cliente" en verde si client_signed_at
+  * Botón "Ver y Firmar" que lleva a Vista 3
+- Estado vacío con mensaje y botón de crear
+
+VISTA 2 — Crear nuevo documento
+Paso 1: Selector de tipo y idioma
+  - 3 cards: "Contrato Nueva Construcción", 
+    "Contrato Remodelación", "Orden de Cambio"
+  - Toggle EN / ES
+  - Al seleccionar → carga el template con 
+    useGetTemplate y avanza al Paso 2
+
+Paso 2: Formulario de campos
+  Para contratos (construction / remodeling):
+  - Nombre del cliente (owner_name) — pre-llenado 
+    con project.clientName si existe
+  - Dirección del cliente (owner_address)
+  - Descripción del trabajo (project_description)
+  - Monto del contrato (contract_amount) 
+    — placeholder "$50,000"
+  - Fecha de inicio (start_date) — date input
+  - Fecha de entrega (end_date) — date input
+  - Fecha efectiva (effective_date) — default hoy
+  - Tasa de interés por mora (interest_rate) 
+    — default "1.5"
+  - Días para curar incumplimiento (cure_days) 
+    — default "10"
+
+  Para change orders:
+  - Número de CO (co_number) — ej. "001"
+  - Nombre del cliente (owner_name)
+  - Descripción del cambio (change_description)
+  - Monto original del contrato (original_amount)
+  - Monto del cambio (change_amount)
+  - Nuevo total (new_total) — calculado auto 
+    si original + change están llenos
+  - Días adicionales (additional_days) — default "0"
+  - Nueva fecha de entrega (new_completion_date)
+  - Fecha efectiva (effective_date) — default hoy
+
+  Botón "Generar Documento →" al fondo
+  Botón "← Atrás" secundario
+
+Paso 3: Preview del documento generado
+  Muestra el HTML del documento en un iframe 
+  o div con el contenido renderizado.
+  Dos botones:
+  - "← Editar campos" — regresa al Paso 2
+  - "Guardar y Firmar →" — llama al POST 
+    /documents y avanza a Vista 3
+
+VISTA 3 — Firmar documento
+  Muestra el documento (HTML renderizado) 
+  en la mitad superior de la pantalla 
+  (altura fija con scroll).
+
+  Debajo, dos secciones de firma lado a lado 
+  en desktop, apiladas en móvil:
+
+  SECCIÓN CONTRATISTA:
+  - Título "Firma del Contratista"
+  - Si ya firmó: muestra la imagen de la 
+    firma + fecha y hora
+  - Si no firmó: canvas de firma (400x150px)
+    * Instrucción: "Firme aquí con su dedo 
+      o mouse"
+    * Botón "Limpiar" secundario
+    * Botón naranja "Firmar como Contratista"
+    * Al firmar → llama a POST .../sign con 
+      role: 'contractor'
+
+  SECCIÓN CLIENTE:
+  - Título "Firma del Cliente"  
+  - Si ya firmó: muestra imagen + fecha
+  - Si no firmó: mismo canvas
+    * Botón "Firmar como Cliente"
+    * Al firmar → llama a POST .../sign con 
+      role: 'client'
+
+  Cuando ambas firmas existen → muestra banner 
+  verde "✓ Documento firmado por ambas partes" 
+  con fecha y hora.
+
+  Botón "← Volver a documentos" arriba.
+
+CANVAS DE FIRMA — implementación:
+  Usa useRef en un <canvas> elemento.
+  Eventos: mousedown/mousemove/mouseup + 
+  touchstart/touchmove/touchend para móvil.
+  Al "Firmar": convierte el canvas a base64 
+  PNG con canvas.toDataURL('image/png').
+  Verifica que el canvas no esté vacío antes 
+  de enviar (compara con canvas en blanco).
+
+Usa Shadcn/UI y Tailwind.
+Colores BuildOS: primary #1B3A5C, accent #F97316
+No modifiques ProjectDetails.tsx todavía.
+Muéstrame el diff antes de aplicar.
