@@ -32,7 +32,12 @@ export default function Login() {
       onSuccess: (res) => {
         login(res.token);
         toast.success("Welcome back!");
-        setLocation(res.user.role === 'builder' ? '/dashboard' : '/client');
+        const next = new URLSearchParams(window.location.search).get("next");
+        if (next) {
+          window.location.href = decodeURIComponent(next);
+        } else {
+          setLocation(res.user.role === 'builder' ? '/dashboard' : '/client');
+        }
       },
       onError: (err: any) => {
         toast.error(err.message || "Failed to login. Please check credentials.");

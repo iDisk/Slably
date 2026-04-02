@@ -49,7 +49,10 @@ function ProtectedRoute({ component: Component, roleRequired }: { component: any
   const { user, isLoading } = useAuth();
   
   if (isLoading) return <div className="h-screen w-full flex items-center justify-center bg-background"><div className="animate-pulse flex items-center gap-2 font-display font-bold text-xl text-primary">Loading Slably...</div></div>;
-  if (!user) return <Redirect to="/login" />;
+  if (!user) {
+    const currentPath = window.location.pathname + window.location.search;
+    return <Redirect to={`/login?next=${encodeURIComponent(currentPath)}`} />;
+  }
   if (roleRequired && user.role !== roleRequired) return <Redirect to={user.role === 'builder' ? '/dashboard' : '/client'} />;
   
   return <Component />;
