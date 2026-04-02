@@ -50,7 +50,7 @@ export default function Login() {
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:flex-none lg:w-[480px] lg:px-12 xl:px-24 border-r border-border bg-white z-10 shadow-2xl">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mx-auto w-full max-w-sm lg:w-96">
           <div className="flex items-center gap-3 mb-10">
-            <img src="/slably-logo.png" alt="Slably" className="h-10 w-auto" />
+            <img src="/slably-logo.png" alt="Slably" className="h-12 w-auto" />
           </div>
 
           {sessionExpired && (
