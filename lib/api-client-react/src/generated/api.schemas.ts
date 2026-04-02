@@ -478,3 +478,46 @@ export interface CreateRfqQuoteBodyParams {
 export interface UpdateRfqQuoteStatusBodyParams {
   status: 'pending' | 'accepted' | 'rejected';
 }
+
+export interface DailyLog {
+  id:             number;
+  projectId:      number;
+  organizationId: number;
+  createdBy:      number;
+  logDate:        string;
+  weather:        string | null;
+  temperature:    number | null;
+  workersCount:   number | null;
+  activities:     string | null;
+  materials:      string | null;
+  problems:       string | null;
+  notes:          string | null;
+  audioUrl:       string | null;
+  transcription?: string | null;
+  aiProcessed:    boolean;
+  status:         'draft' | 'confirmed';
+  createdAt:      string;
+  updatedAt:      string;
+}
+
+export interface CreateDailyLogBodyParams {
+  log_date:       string;
+  weather?:       string;
+  temperature?:   number;
+  workers_count?: number;
+  activities:     string;
+  materials?:     string;
+  problems?:      string;
+  notes?:         string;
+}
+
+export interface UpdateDailyLogBodyParams {
+  weather?:       string;
+  temperature?:   number;
+  workers_count?: number;
+  activities?:    string;
+  materials?:     string;
+  problems?:      string;
+  notes?:         string;
+  status?:        'draft' | 'confirmed';
+}

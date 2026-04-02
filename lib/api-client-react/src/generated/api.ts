@@ -52,6 +52,9 @@ import type {
   UpdateRfqStatusBodyParams,
   CreateRfqQuoteBodyParams,
   UpdateRfqQuoteStatusBodyParams,
+  DailyLog,
+  CreateDailyLogBodyParams,
+  UpdateDailyLogBodyParams,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -3319,4 +3322,167 @@ export function useUpdateRfqQuoteStatus<TError = ErrorType<unknown>, TContext = 
   },
 ): UseMutationResult<Awaited<ReturnType<typeof updateRfqQuoteStatus>>, TError, { data: UpdateRfqQuoteStatusBodyParams }, TContext> {
   return useMutation(getUpdateRfqQuoteStatusMutationOptions(rfqId, quoteId, options));
+}
+
+// ─── Daily Logs ───────────────────────────────────────────────────────────────
+
+export const listDailyLogsUrl = (projectId: number) =>
+  `/api/projects/${projectId}/daily-logs`;
+
+export const listDailyLogs = async (projectId: number, options?: RequestInit): Promise<DailyLog[]> =>
+  customFetch<DailyLog[]>(listDailyLogsUrl(projectId), { ...options, method: "GET" });
+
+export const getListDailyLogsQueryKey = (projectId: number) =>
+  [listDailyLogsUrl(projectId)] as const;
+
+export const getListDailyLogsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDailyLogs>>,
+  TError = ErrorType<unknown>,
+>(projectId: number, options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listDailyLogs>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getListDailyLogsQueryKey(projectId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listDailyLogs>>> =
+    ({ signal }) => listDailyLogs(projectId, { signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listDailyLogs>>, TError, TData
+  > & { queryKey: QueryKey };
+};
+
+export function useListDailyLogs<
+  TData = Awaited<ReturnType<typeof listDailyLogs>>,
+  TError = ErrorType<unknown>,
+>(projectId: number, options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listDailyLogs>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListDailyLogsQueryOptions(projectId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+// ─── getDailyLog ──────────────────────────────────────────────────────────────
+
+export const getDailyLogUrl = (projectId: number, logId: number) =>
+  `/api/projects/${projectId}/daily-logs/${logId}`;
+
+export const getDailyLog = async (projectId: number, logId: number, options?: RequestInit): Promise<DailyLog> =>
+  customFetch<DailyLog>(getDailyLogUrl(projectId, logId), { ...options, method: "GET" });
+
+export const getDailyLogQueryKey = (projectId: number, logId: number) =>
+  [getDailyLogUrl(projectId, logId)] as const;
+
+export const getDailyLogQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDailyLog>>,
+  TError = ErrorType<unknown>,
+>(projectId: number, logId: number, options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getDailyLog>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getDailyLogQueryKey(projectId, logId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDailyLog>>> =
+    ({ signal }) => getDailyLog(projectId, logId, { signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDailyLog>>, TError, TData
+  > & { queryKey: QueryKey };
+};
+
+export function useGetDailyLog<
+  TData = Awaited<ReturnType<typeof getDailyLog>>,
+  TError = ErrorType<unknown>,
+>(projectId: number, logId: number, options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getDailyLog>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getDailyLogQueryOptions(projectId, logId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+// ─── createDailyLog ───────────────────────────────────────────────────────────
+
+export const createDailyLog = async (
+  projectId: number,
+  body: CreateDailyLogBodyParams,
+  options?: RequestInit,
+): Promise<DailyLog> =>
+  customFetch<DailyLog>(`/api/projects/${projectId}/daily-logs`, {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export function useCreateDailyLog<TError = ErrorType<unknown>, TContext = unknown>(
+  projectId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof createDailyLog>>, TError, { data: CreateDailyLogBodyParams }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof createDailyLog>>, TError, { data: CreateDailyLogBodyParams }, TContext> {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationKey = [`/api/projects/${projectId}/daily-logs`];
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDailyLog>>, { data: CreateDailyLogBodyParams }> =
+    (props) => createDailyLog(projectId, props.data, requestOptions as RequestInit);
+  return useMutation({ mutationKey, mutationFn, ...mutationOptions });
+}
+
+// ─── createDailyLogFromAudio ──────────────────────────────────────────────────
+
+export const createDailyLogFromAudio = async (
+  projectId: number,
+  body: FormData,
+  options?: RequestInit,
+): Promise<DailyLog> =>
+  customFetch<DailyLog>(`/api/projects/${projectId}/daily-logs/from-audio`, {
+    ...options,
+    method: "POST",
+    body,
+  });
+
+export function useCreateDailyLogFromAudio<TError = ErrorType<unknown>, TContext = unknown>(
+  projectId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof createDailyLogFromAudio>>, TError, { data: FormData }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof createDailyLogFromAudio>>, TError, { data: FormData }, TContext> {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationKey = [`/api/projects/${projectId}/daily-logs/from-audio`];
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createDailyLogFromAudio>>, { data: FormData }> =
+    (props) => createDailyLogFromAudio(projectId, props.data, requestOptions as RequestInit);
+  return useMutation({ mutationKey, mutationFn, ...mutationOptions });
+}
+
+// ─── patchDailyLog ────────────────────────────────────────────────────────────
+
+export const patchDailyLog = async (
+  projectId: number,
+  logId: number,
+  body: UpdateDailyLogBodyParams,
+  options?: RequestInit,
+): Promise<DailyLog> =>
+  customFetch<DailyLog>(`/api/projects/${projectId}/daily-logs/${logId}`, {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export function usePatchDailyLog<TError = ErrorType<unknown>, TContext = unknown>(
+  projectId: number,
+  logId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof patchDailyLog>>, TError, { data: UpdateDailyLogBodyParams }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof patchDailyLog>>, TError, { data: UpdateDailyLogBodyParams }, TContext> {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationKey = [`/api/projects/${projectId}/daily-logs/${logId}`];
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchDailyLog>>, { data: UpdateDailyLogBodyParams }> =
+    (props) => patchDailyLog(projectId, logId, props.data, requestOptions as RequestInit);
+  return useMutation({ mutationKey, mutationFn, ...mutationOptions });
 }
