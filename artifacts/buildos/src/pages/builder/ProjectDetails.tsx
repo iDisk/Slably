@@ -32,6 +32,7 @@ import { PhotosTab }       from "@/components/project/PhotosTab";
 import { ActivityTab }     from "@/components/project/ActivityTab";
 import { ExpensesTab }     from "@/components/project/ExpensesTab";
 import { PhasesTab }       from "@/components/project/PhasesTab";
+import { DocumentsTab }    from "@/components/project/DocumentsTab";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   planning:  { label: "Planning",  color: "bg-slate-100 text-slate-700 border-slate-200",       icon: Clock },
@@ -205,6 +206,7 @@ export default function ProjectDetails() {
           <TabsList className="w-full sm:w-auto flex-wrap">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="phases">Fases</TabsTrigger>
+            <TabsTrigger value="documents">Documentos</TabsTrigger>
             <TabsTrigger value="contracts">Contracts</TabsTrigger>
             <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
@@ -287,6 +289,16 @@ export default function ProjectDetails() {
               <PhasesTab
                 projectId={project.id}
                 projectType={project.projectType ?? null}
+              />
+            </div>
+          </TabsContent>
+
+          {/* Documentos */}
+          <TabsContent value="documents">
+            <div className="mt-2">
+              <DocumentsTab
+                projectId={project.id}
+                project={project}
               />
             </div>
           </TabsContent>
