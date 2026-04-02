@@ -1,0 +1,91 @@
+Antes de escribir nada, lee:
+1. src/pages/builder/Dashboard.tsx 
+   — para seguir el mismo patrón de layout
+2. src/components/layout/BuilderLayout.tsx
+   — para ver cómo agregar al sidebar
+
+Luego crea src/pages/builder/Network.tsx
+
+Esta página tiene dos vistas según el rol 
+del usuario autenticado:
+
+VISTA BUILDER — "Publicar y gestionar RFQs"
+
+Sección superior: botón "+ Nueva Solicitud" 
+arriba a la derecha
+
+Lista de RFQs del builder con cards:
+- Título del RFQ
+- Badge de especialidad (color según trade)
+- Ciudad
+- Presupuesto (si existe): $X,XXX - $X,XXX
+- Fecha de inicio (si existe)
+- Badge de status:
+  open → verde "Abierto"
+  closed → gris "Cerrado"
+  awarded → azul "Adjudicado"
+  cancelled → rojo "Cancelado"
+- Número de cotizaciones recibidas
+- Botón "Ver cotizaciones" → expande inline
+  las cotizaciones con:
+  * Nombre del sub
+  * Categoría
+  * Monto
+  * Mensaje
+  * Botón "Aceptar" → PATCH quote status=accepted
+    + PATCH rfq status=awarded
+  * Botón "Rechazar" → PATCH quote status=rejected
+
+Modal "+ Nueva Solicitud":
+Campos:
+- Título (requerido)
+- Especialidad: mismo selector con optgroups 
+  que el registro
+- Descripción (textarea)
+- Ciudad (requerido)
+- Presupuesto mínimo (opcional)
+- Presupuesto máximo (opcional)
+- Fecha de inicio (opcional, date input)
+
+VISTA SUBCONTRACTOR — "Solicitudes disponibles"
+
+Lista de RFQs abiertos que coinciden con 
+su especialidad y ciudad:
+- Título
+- Badge de especialidad
+- Ciudad + distancia aproximada si es posible
+- Presupuesto estimado
+- Fecha de inicio
+- Quién publica (nombre del builder/empresa)
+- Si ya cotizó → badge "Ya cotizaste" + 
+  mostrar su cotización
+- Si no cotizó → botón "Cotizar"
+  → abre modal con:
+    * Monto (requerido)
+    * Mensaje al contratista (opcional)
+    * Botón "Enviar cotización"
+
+Estado vacío para cada vista:
+- Builder sin RFQs: "No has publicado 
+  solicitudes aún. Publica tu primera 
+  solicitud para encontrar subcontratistas."
+- Sub sin RFQs disponibles: "No hay 
+  solicitudes disponibles en tu área 
+  por ahora. Te notificaremos cuando 
+  llegue una."
+
+Usa hooks — necesitarás crear estos en 
+api-client-react antes de usarlos:
+useGetNetworkRfqs()
+useCreateRfq()
+useUpdateRfqStatus()
+useGetRfqQuotes(rfqId)
+useCreateRfqQuote(rfqId)
+
+Agrega la página a:
+1. src/App.tsx — ruta /network protegida
+   para builder y subcontractor
+2. src/components/layout/BuilderLayout.tsx
+   — link "Network" con ícono Users
+
+Muéstrame el diff completo antes de aplicar.
