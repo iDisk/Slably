@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "BuildOS"
+title = "Slably"
 version = "1.0.0"
 id = "artifacts/buildos"
 router = "path"
