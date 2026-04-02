@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, ilike } from "drizzle-orm";
+import { eq, and, ilike, or } from "drizzle-orm";
 import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable } from "@workspace/db";
 import {
   RfqParams,
@@ -29,6 +29,8 @@ router.get("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise<
       return;
     }
 
+    const baseCity = userData.serviceCity.split(",")[0].trim();
+
     const rfqs = await db
       .select({
         id:            rfqsTable.id,
@@ -47,7 +49,10 @@ router.get("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise<
       .leftJoin(usersTable, eq(rfqsTable.createdBy, usersTable.id))
       .where(and(
         eq(rfqsTable.specialty, userData.category),
-        ilike(rfqsTable.city, `%${userData.serviceCity}%`),
+        or(
+          ilike(rfqsTable.city, `%${baseCity}%`),
+          ilike(rfqsTable.city, `%${userData.serviceCity}%`),
+        ),
         eq(rfqsTable.status, "open"),
       ));
 
