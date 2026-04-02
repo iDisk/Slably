@@ -1,15 +1,19 @@
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { ClientLayout } from "@/components/layout/ClientLayout";
-import { 
-  useListProjects, useListChangeOrders, useListPhotos, useListContracts, 
-  useApproveChangeOrder, useRejectChangeOrder, getListChangeOrdersQueryKey 
+import {
+  useListProjects, useListChangeOrders, useListPhotos, useListContracts,
+  useApproveChangeOrder, useRejectChangeOrder, getListChangeOrdersQueryKey,
+  useListDocuments, useSignDocument, listDocumentsUrl,
+  type DocumentListItemType, type DocumentDetailType,
 } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Loader2, FileSignature, CheckCircle2, XCircle, Image as ImageIcon, DollarSign, FileText } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Loader2, FileSignature, CheckCircle2, XCircle, Image as ImageIcon, DollarSign, FileText, ClipboardList, X, Pencil, ExternalLink } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -17,9 +21,9 @@ import { toast } from "sonner";
 export default function ClientDashboard() {
   const { data: projects, isLoading } = useListProjects();
   const project = projects?.[0];
-  
+
   if (isLoading) return <ClientLayout><div className="flex justify-center p-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div></ClientLayout>;
-  
+
   if (!project) return (
     <ClientLayout>
       <div className="text-center p-12 bg-white rounded-2xl shadow-sm border border-border">
@@ -166,13 +170,13 @@ const ClientChangeOrders = ({ projectId }: { projectId: number }) => {
               </Badge>
             </div>
             <p className="text-muted-foreground mb-6 flex-1 leading-relaxed">{item.description}</p>
-            
+
             <div className="flex flex-col gap-4 pt-4 border-t border-border">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-muted-foreground">Total Amount</span>
                 <span className="font-display font-extrabold text-2xl text-foreground">{formatCurrency(item.amount)}</span>
               </div>
-              
+
               {item.status === 'pending' && (
                 <div className="grid grid-cols-2 gap-3 mt-2">
                   <Button
@@ -202,10 +206,140 @@ const ClientChangeOrders = ({ projectId }: { projectId: number }) => {
   );
 };
 
-const ClientContracts = ({ projectId }: { projectId: number }) => {
-  const { data: contracts, isLoading } = useListContracts(projectId);
+function ClientSignatureCanvas({ onSign, isPending }: { onSign: (url: string) => void; isPending: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawing = useRef(false);
 
-  if (isLoading) {
+  const getPos = (e: MouseEvent | TouchEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect();
+    const src = "touches" in e ? e.touches[0] : e as MouseEvent;
+    return {
+      x: (src.clientX - rect.left) * (canvas.width / rect.width),
+      y: (src.clientY - rect.top) * (canvas.height / rect.height),
+    };
+  };
+
+  const startDraw = useCallback((e: MouseEvent | TouchEvent) => {
+    const c = canvasRef.current; if (!c) return;
+    e.preventDefault(); drawing.current = true;
+    const ctx = c.getContext("2d")!;
+    const { x, y } = getPos(e, c); ctx.beginPath(); ctx.moveTo(x, y);
+  }, []);
+
+  const draw = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!drawing.current) return;
+    const c = canvasRef.current; if (!c) return;
+    e.preventDefault();
+    const ctx = c.getContext("2d")!;
+    ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#1a1a1a";
+    const { x, y } = getPos(e, c); ctx.lineTo(x, y); ctx.stroke();
+  }, []);
+
+  const stopDraw = useCallback(() => { drawing.current = false; }, []);
+
+  useEffect(() => {
+    const c = canvasRef.current; if (!c) return;
+    c.addEventListener("mousedown", startDraw as EventListener);
+    c.addEventListener("mousemove", draw as EventListener);
+    c.addEventListener("mouseup", stopDraw);
+    c.addEventListener("mouseleave", stopDraw);
+    c.addEventListener("touchstart", startDraw as EventListener, { passive: false });
+    c.addEventListener("touchmove", draw as EventListener, { passive: false });
+    c.addEventListener("touchend", stopDraw);
+    return () => {
+      c.removeEventListener("mousedown", startDraw as EventListener);
+      c.removeEventListener("mousemove", draw as EventListener);
+      c.removeEventListener("mouseup", stopDraw);
+      c.removeEventListener("mouseleave", stopDraw);
+      c.removeEventListener("touchstart", startDraw as EventListener);
+      c.removeEventListener("touchmove", draw as EventListener);
+      c.removeEventListener("touchend", stopDraw);
+    };
+  }, [startDraw, draw, stopDraw]);
+
+  const clear = () => {
+    const c = canvasRef.current;
+    if (c) c.getContext("2d")!.clearRect(0, 0, c.width, c.height);
+  };
+
+  const submit = () => {
+    const c = canvasRef.current; if (!c) return;
+    const blank = document.createElement("canvas");
+    blank.width = c.width; blank.height = c.height;
+    if (c.toDataURL() === blank.toDataURL()) {
+      toast.warning("Por favor firme en el recuadro antes de continuar");
+      return;
+    }
+    onSign(c.toDataURL("image/png"));
+  };
+
+  return (
+    <div className="space-y-3">
+      <canvas
+        ref={canvasRef}
+        width={400}
+        height={150}
+        className="w-full border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 touch-none cursor-crosshair"
+        style={{ maxHeight: 150 }}
+      />
+      <p className="text-xs text-muted-foreground text-center">Firme aquí con su dedo o mouse</p>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="sm" onClick={clear} className="gap-1.5">
+          <X className="w-3.5 h-3.5" /> Limpiar
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={submit}
+          disabled={isPending}
+          className="flex-1 gap-1.5 bg-orange-500 hover:bg-orange-600 text-white"
+        >
+          {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pencil className="w-3.5 h-3.5" />}
+          Firmar documento
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+const ClientContracts = ({ projectId }: { projectId: number }) => {
+  const queryClient = useQueryClient();
+  const [signingDoc, setSigningDoc] = useState<DocumentDetailType | null>(null);
+  const [loadingModal, setLoadingModal] = useState(false);
+
+  const { data: docs = [], isLoading: docsLoading } = useListDocuments(projectId);
+  const { data: contracts = [], isLoading: contractsLoading } = useListContracts(projectId);
+  const signMutation = useSignDocument(projectId, signingDoc?.id ?? 0);
+
+  const openDoc = async (doc: DocumentListItemType) => {
+    setLoadingModal(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/documents/${doc.id}`);
+      if (!res.ok) throw new Error("Error al cargar el documento");
+      setSigningDoc(await res.json());
+    } catch {
+      toast.error("Error al cargar el documento");
+    } finally {
+      setLoadingModal(false);
+    }
+  };
+
+  const handleSign = (dataUrl: string) => {
+    if (!signingDoc) return;
+    signMutation.mutate(
+      { data: { role: "client", signature: dataUrl } },
+      {
+        onSuccess: (updated) => {
+          setSigningDoc(updated);
+          queryClient.invalidateQueries({ queryKey: [listDocumentsUrl(projectId)] });
+          toast.success("¡Documento firmado exitosamente!");
+        },
+        onError: () => toast.error("Error al guardar la firma"),
+      }
+    );
+  };
+
+  if (docsLoading || contractsLoading) {
     return (
       <div className="flex justify-center py-16">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -213,34 +347,153 @@ const ClientContracts = ({ projectId }: { projectId: number }) => {
     );
   }
 
-  if (!contracts || contracts.length === 0) {
+  if (docs.length === 0 && contracts.length === 0) {
     return (
       <Card className="border-dashed border-2 shadow-none bg-transparent">
         <CardContent className="p-10 text-center text-muted-foreground">
           <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No documents yet</p>
-          <p className="text-sm mt-1">Contracts and agreements will appear here once your builder uploads them.</p>
+          <p className="font-medium">No hay documentos disponibles aún</p>
+          <p className="text-sm mt-1">Los contratos y documentos de firma aparecerán aquí cuando tu contratista los genere.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {contracts.map(c => (
-        <Card key={c.id} className="p-5 flex items-center justify-between bg-white border-border shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-              <FileSignature className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="font-bold text-lg">{c.title}</p>
-              <p className="text-sm text-muted-foreground">Updated {format(new Date(c.uploadedAt), 'MMM d, yyyy')}</p>
-            </div>
+    <div className="space-y-8">
+
+      {/* ── SECCIÓN 1: Documentos para firmar ── */}
+      {docs.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            <FileText className="w-4 h-4" /> Documentos para firmar
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {docs.map((doc: DocumentListItemType) => {
+              const Icon = doc.type === "change_order" ? ClipboardList : FileText;
+              const isSigned = !!doc.clientSignedAt;
+              return (
+                <Card key={doc.id} className="p-5 bg-white border-border shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-2 rounded-xl shrink-0 ${isSigned ? "bg-emerald-50" : "bg-orange-50"}`}>
+                      <Icon className={`w-6 h-6 ${isSigned ? "text-emerald-600" : "text-orange-500"}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <p className="font-bold text-foreground">{doc.title}</p>
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 uppercase">
+                          {doc.language}
+                        </span>
+                        {doc.status === "signed"
+                          ? <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-emerald-100 text-emerald-700 border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3" /> Firmado ✓
+                            </span>
+                          : <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold border bg-slate-100 text-slate-600 border-slate-200">
+                              Borrador
+                            </span>
+                        }
+                      </div>
+                      {isSigned
+                        ? <p className="text-xs text-emerald-600 font-medium flex items-center gap-1 mt-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Firmaste el {format(new Date(doc.clientSignedAt!), "MMM d, yyyy")}
+                          </p>
+                        : <span className="inline-flex mt-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-200">
+                            Pendiente tu firma
+                          </span>
+                      }
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-4 gap-2"
+                    onClick={() => openDoc(doc)}
+                    disabled={loadingModal}
+                  >
+                    {loadingModal ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pencil className="w-3.5 h-3.5" />}
+                    Ver y Firmar
+                  </Button>
+                </Card>
+              );
+            })}
           </div>
-          <Badge variant={c.status === 'signed' ? 'completed' : 'active' as any} className="capitalize">{c.status}</Badge>
-        </Card>
-      ))}
+        </div>
+      )}
+
+      {/* ── SECCIÓN 2: Contratos externos ── */}
+      {contracts.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            <FileSignature className="w-4 h-4" /> Contratos externos
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {contracts.map(c => (
+              <Card key={c.id} className="p-5 flex items-center justify-between bg-white border-border shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                    <FileSignature className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg">{c.title}</p>
+                    <p className="text-sm text-muted-foreground">Actualizado {format(new Date(c.uploadedAt), "MMM d, yyyy")}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant={c.status === "signed" ? "completed" : "active" as any} className="capitalize">{c.status}</Badge>
+                  {c.fileUrl && (
+                    <Button size="sm" variant="outline" asChild className="gap-1.5">
+                      <a href={c.fileUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-3.5 h-3.5" /> Abrir
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de firma ── */}
+      <Dialog open={!!signingDoc} onOpenChange={v => !v && setSigningDoc(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display font-bold text-xl">{signingDoc?.title}</DialogTitle>
+          </DialogHeader>
+          {signingDoc && (
+            <div className="space-y-6 mt-2">
+              <div
+                className="border rounded-xl bg-white overflow-auto shadow-sm p-4"
+                style={{ maxHeight: "60vh" }}
+                dangerouslySetInnerHTML={{ __html: signingDoc.content }}
+              />
+              {signingDoc.clientSignedAt ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    <span className="font-medium text-sm">
+                      Ya firmaste este documento el {format(new Date(signingDoc.clientSignedAt), "PPp")}
+                    </span>
+                  </div>
+                  {signingDoc.clientSignature && (
+                    <img
+                      src={signingDoc.clientSignature}
+                      alt="Tu firma"
+                      className="border rounded bg-slate-50 max-h-24 object-contain"
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm border-b pb-2">Tu firma</h4>
+                  <ClientSignatureCanvas onSign={handleSign} isPending={signMutation.isPending} />
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
