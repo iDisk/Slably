@@ -1,0 +1,95 @@
+Antes de escribir nada, lee el archivo 
+completo de:
+src/components/project/ExpensesTab.tsx
+
+Luego modifícalo para agregar el flujo 
+de OCR con estos cambios:
+
+CAMBIO 1 — Importar el hook nuevo:
+import { 
+  useCreateExpenseFromReceipt,
+  type ExpenseFromReceiptResponse 
+} from "@workspace/api-client-react";
+
+CAMBIO 2 — Estado nuevo para OCR:
+const [ocrMode, setOcrMode] = useState(false);
+const [ocrResult, setOcrResult] = useState<ExpenseFromReceiptResponse | null>(null);
+const [ocrProcessing, setOcrProcessing] = useState(false);
+
+const receiptMutation = useCreateExpenseFromReceipt(projectId);
+
+CAMBIO 3 — Función para manejar la foto:
+const handleReceiptPhoto = (file: File) => {
+  setOcrProcessing(true);
+  const fd = new FormData();
+  fd.append("receipt", file);
+  receiptMutation.mutate(
+    { data: fd },
+    {
+      onSuccess: (result) => {
+        setOcrResult(result);
+        setOcrProcessing(false);
+        // Pre-llena el formulario de creación con los datos del OCR
+        // Si el form usa react-hook-form, hacer setValue en cada campo
+      },
+      onError: () => {
+        toast.error("No se pudo leer el ticket. Ingrésalo manualmente.");
+        setOcrProcessing(false);
+      },
+    }
+  );
+};
+
+CAMBIO 4 — Botón de cámara junto al botón 
+"+ Nuevo Gasto" existente:
+
+Agrega un segundo botón "📷 Escanear ticket" 
+al lado del botón de crear expense.
+
+Al tocarlo → abre un input tipo file oculto:
+<input
+  type="file"
+  accept="image/*"
+  capture="environment"  ← abre cámara trasera en móvil
+  style={{ display: 'none' }}
+  ref={fileInputRef}
+  onChange={(e) => {
+    const file = e.target.files?.[0];
+    if (file) handleReceiptPhoto(file);
+  }}
+/>
+
+CAMBIO 5 — Mientras procesa el OCR:
+Muestra un overlay o card con:
+- Spinner naranja
+- Texto "Leyendo ticket con IA..."
+- No se puede crear otro gasto mientras procesa
+
+CAMBIO 6 — Cuando OCR termina exitosamente:
+Abre automáticamente el dialog de crear 
+gasto con los campos pre-llenados:
+- amount: ocrResult.ocr_result.amount
+- vendor: ocrResult.ocr_result.vendor
+- description: ocrResult.ocr_result.description
+- category: ocrResult.ocr_result.category
+- expense_date: ocrResult.ocr_result.date
+- payment_method: ocrResult.ocr_result.payment_method
+- receipt_url: ocrResult.receiptUrl
+
+Muestra badge "OCR: X%" con el confidence:
+- confidence >= 80 → badge verde
+- confidence 50-79 → badge amarillo "Verifica los datos"
+- confidence < 50 → badge rojo "Verifica manualmente"
+
+El usuario puede editar cualquier campo 
+antes de guardar.
+
+CAMBIO 7 — El gasto del OCR ya está creado 
+en DB (el endpoint lo insertó).
+Cuando el usuario toca "Guardar" en el 
+dialog pre-llenado, en lugar de crear uno 
+nuevo, hace PATCH al expense ya creado 
+(ocrResult.id) con los valores editados.
+Invalidar el query de lista al guardar.
+
+Muéstrame el diff completo antes de aplicar.
