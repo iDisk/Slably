@@ -1,0 +1,133 @@
+Antes de escribir nada, lee:
+1. src/components/project/PhasesTab.tsx
+   — para ver el patrón de acordeón
+2. src/components/project/DocumentsTab.tsx
+   — para ver el patrón de modales y forms
+3. src/pages/builder/ProjectDetails.tsx
+   — para ver cómo están organizados los tabs
+
+Luego crea src/components/project/DailyLogTab.tsx
+
+El componente recibe { projectId } como prop.
+
+VISTA 1 — Lista de daily logs (default)
+Header: "Daily Log" + botón naranja 
+"+ Nuevo Log" arriba a la derecha
+
+Lista de logs ordenados por fecha DESC.
+Cada card muestra:
+- Fecha del log (formato: "Lunes, 2 de abril")
+- Badge de status:
+  draft → gris "Borrador"
+  confirmed → verde "Confirmado"
+- Badge azul "IA" si aiProcessed === true
+- Resumen de actividades (máximo 2 líneas)
+- Chips informativos si existen:
+  "☀️ {weather}" 
+  "👷 {workersCount} trabajadores"
+  "⚠️ Problemas reportados" si problems existe
+- Botón "Ver detalle" → abre Vista 3
+
+Estado vacío: 
+"No hay logs todavía. Registra el primer 
+daily log del proyecto."
+
+VISTA 2 — Crear nuevo log
+Dos opciones presentadas como cards:
+
+Card 1: "🎤 Grabar audio"
+"Habla 30-60 segundos describiendo 
+el día de trabajo. La IA lo estructurará 
+automáticamente."
+Botón "Grabar audio" → abre Vista 4
+
+Card 2: "✏️ Escribir manualmente"
+"Llena los campos del log manualmente."
+Botón "Llenar formulario" → abre Vista 5
+
+Botón "← Volver" arriba
+
+VISTA 3 — Detalle del log
+Muestra todos los campos del log:
+- Fecha + badges (status, IA)
+- Si tiene audioUrl: reproductor de audio
+  <audio controls src={audioUrl} />
+- Secciones con ícono + label + contenido:
+  🌤️ Clima: {weather} {temperature}°F
+  👷 Trabajadores: {workersCount}
+  ✅ Actividades: {activities}
+  📦 Materiales: {materials}
+  ⚠️ Problemas: {problems}
+  📝 Notas: {notes}
+- Si status === 'draft' y el usuario 
+  es builder: botón naranja "Confirmar log"
+  → PATCH status='confirmed'
+- Botón "← Volver a lista"
+
+VISTA 4 — Grabar audio
+Pantalla de grabación:
+- Botón circular grande de micrófono (80px)
+- Estados del botón:
+  idle → gris, texto "Toca para grabar"
+  recording → rojo pulsante, texto "Grabando... toca para detener"
+  processing → spinner naranja, 
+    texto "Procesando con IA..."
+  done → verde, texto "¡Listo!"
+
+- Contador de tiempo durante grabación
+- Máximo 3 minutos (180 segundos)
+- Usa MediaRecorder API del browser
+- Al detener → convierte a blob
+- Llama al endpoint POST .../from-audio
+  con FormData:
+  formData.append('audio', blob, 'recording.webm')
+  formData.append('log_date', fecha de hoy)
+  formData.append('language', 'es')
+- Al completar → muestra el log generado
+  y botón "Ver log generado" → Vista 3
+- Botón "← Cancelar" siempre visible
+
+VISTA 5 — Formulario manual
+Campos:
+- Fecha (date input, default hoy)
+- Clima (text input, placeholder 
+  "Soleado, nublado, lluvioso...")
+- Temperatura °F (number input)
+- Número de trabajadores (number input)
+- Actividades realizadas (textarea requerido)
+- Materiales recibidos (textarea)
+- Problemas o issues (textarea)
+- Notas adicionales (textarea)
+
+Botón naranja "Guardar log"
+Botón "← Volver" secundario
+
+Para los hooks necesitas crearlos en 
+lib/api-client-react. Antes de usarlos 
+verifica cuáles existen buscando 
+"DailyLog" en api-client-react/src/generated/api.ts
+Si no existen, agrégalos:
+
+useListDailyLogs(projectId)
+useGetDailyLog(projectId, logId)
+useCreateDailyLog(projectId)
+useCreateDailyLogFromAudio(projectId)
+usePatchDailyLog(projectId, logId)
+
+Para useCreateDailyLogFromAudio el fetch 
+debe enviar FormData, no JSON:
+fetch('/api/projects/:id/daily-logs/from-audio', {
+  method: 'POST',
+  body: formData  ← sin Content-Type header
+                    (el browser lo pone automático
+                    con el boundary correcto)
+})
+
+Conecta el tab en ProjectDetails.tsx:
+- Import DailyLogTab
+- Agrega TabsTrigger "Daily Log" entre 
+  "Fases" y "Documentos"
+- Agrega TabsContent con 
+  <DailyLogTab projectId={project.id} />
+
+Muéstrame el diff completo antes de aplicar.
