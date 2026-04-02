@@ -6,6 +6,8 @@ import {
   CreateRfqBody,
   UpdateRfqStatusBody,
   CreateRfqQuoteBody,
+  QuoteParams,
+  UpdateRfqQuoteStatusBody,
 } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { sendRfqNotification } from "../lib/email.js";
@@ -183,8 +185,19 @@ router.get("/network/rfqs/:rfqId/quotes", requireAuth, async (req: AuthRequest, 
       return;
     }
     const quotes = await db
-      .select()
+      .select({
+        id:              rfqQuotesTable.id,
+        rfqId:           rfqQuotesTable.rfqId,
+        subcontractorId: rfqQuotesTable.subcontractorId,
+        amount:          rfqQuotesTable.amount,
+        message:         rfqQuotesTable.message,
+        status:          rfqQuotesTable.status,
+        createdAt:       rfqQuotesTable.createdAt,
+        subName:         usersTable.name,
+        subCategory:     usersTable.category,
+      })
       .from(rfqQuotesTable)
+      .leftJoin(usersTable, eq(rfqQuotesTable.subcontractorId, usersTable.id))
       .where(eq(rfqQuotesTable.rfqId, params.data.rfqId));
     res.json(quotes);
     return;
@@ -192,8 +205,19 @@ router.get("/network/rfqs/:rfqId/quotes", requireAuth, async (req: AuthRequest, 
 
   if (user.role === "subcontractor") {
     const quotes = await db
-      .select()
+      .select({
+        id:              rfqQuotesTable.id,
+        rfqId:           rfqQuotesTable.rfqId,
+        subcontractorId: rfqQuotesTable.subcontractorId,
+        amount:          rfqQuotesTable.amount,
+        message:         rfqQuotesTable.message,
+        status:          rfqQuotesTable.status,
+        createdAt:       rfqQuotesTable.createdAt,
+        subName:         usersTable.name,
+        subCategory:     usersTable.category,
+      })
       .from(rfqQuotesTable)
+      .leftJoin(usersTable, eq(rfqQuotesTable.subcontractorId, usersTable.id))
       .where(and(
         eq(rfqQuotesTable.rfqId, params.data.rfqId),
         eq(rfqQuotesTable.subcontractorId, user.id),
@@ -241,6 +265,34 @@ router.post("/network/rfqs/:rfqId/quotes", requireAuth, async (req: AuthRequest,
     .returning();
 
   res.status(201).json(quote);
+});
+
+// ─── PATCH /api/network/rfqs/:rfqId/quotes/:quoteId ──────────────────────────
+router.patch("/network/rfqs/:rfqId/quotes/:quoteId", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const user = req.user!;
+  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const params = QuoteParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const parsed = UpdateRfqQuoteStatusBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const [rfq] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, params.data.rfqId));
+  if (!rfq) { res.status(404).json({ error: "RFQ not found" }); return; }
+  if (rfq.organizationId !== user.organizationId) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const [updated] = await db
+    .update(rfqQuotesTable)
+    .set({ status: parsed.data.status })
+    .where(and(
+      eq(rfqQuotesTable.id, params.data.quoteId),
+      eq(rfqQuotesTable.rfqId, params.data.rfqId),
+    ))
+    .returning();
+
+  if (!updated) { res.status(404).json({ error: "Quote not found" }); return; }
+  res.json(updated);
 });
 
 export default router;

@@ -673,3 +673,12 @@ export const CreateRfqQuoteBody = zod.object({
   amount:  zod.coerce.number(),
   message: zod.string().optional(),
 });
+
+export const QuoteParams = zod.object({
+  rfqId:   zod.coerce.number(),
+  quoteId: zod.coerce.number(),
+});
+
+export const UpdateRfqQuoteStatusBody = zod.object({
+  status: zod.enum(["pending", "accepted", "rejected"]),
+});

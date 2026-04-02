@@ -8,6 +8,7 @@ import Register from "@/pages/auth/Register";
 import BuilderDashboard from "@/pages/builder/Dashboard";
 import ProjectDetails from "@/pages/builder/ProjectDetails";
 import Activities from "@/pages/builder/Activities";
+import Network from "@/pages/builder/Network";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import Profile from "@/pages/builder/Profile";
 import NotFound from "@/pages/not-found";
@@ -45,7 +46,7 @@ const queryClient = new QueryClient({
   }
 });
 
-function ProtectedRoute({ component: Component, roleRequired }: { component: any, roleRequired?: 'builder' | 'client' }) {
+function ProtectedRoute({ component: Component, roleRequired }: { component: any, roleRequired?: string | string[] }) {
   const { user, isLoading } = useAuth();
   
   if (isLoading) return <div className="h-screen w-full flex items-center justify-center bg-background"><div className="animate-pulse flex items-center gap-2 font-display font-bold text-xl text-primary">Loading Slably...</div></div>;
@@ -53,7 +54,13 @@ function ProtectedRoute({ component: Component, roleRequired }: { component: any
     const currentPath = window.location.pathname + window.location.search;
     return <Redirect to={`/login?next=${encodeURIComponent(currentPath)}`} />;
   }
-  if (roleRequired && user.role !== roleRequired) return <Redirect to={user.role === 'builder' ? '/dashboard' : '/client'} />;
+  if (roleRequired) {
+    const allowed = Array.isArray(roleRequired) ? roleRequired : [roleRequired];
+    if (!allowed.includes(user.role)) {
+      const fallback = user.role === 'builder' ? '/dashboard' : user.role === 'subcontractor' ? '/network' : '/client';
+      return <Redirect to={fallback} />;
+    }
+  }
   
   return <Component />;
 }
@@ -62,7 +69,7 @@ function RootRedirect() {
   const { user, isLoading } = useAuth();
   if (isLoading) return <div className="h-screen w-full flex items-center justify-center bg-background"><div className="animate-pulse font-display font-bold text-xl text-primary">Loading...</div></div>;
   if (!user) return <Redirect to="/login" />;
-  return <Redirect to={user.role === 'builder' ? '/dashboard' : '/client'} />;
+  return <Redirect to={user.role === 'builder' ? '/dashboard' : user.role === 'subcontractor' ? '/network' : '/client'} />;
 }
 
 function Router() {
@@ -74,6 +81,7 @@ function Router() {
       <Route path="/projects/:id"><ProtectedRoute component={ProjectDetails} roleRequired="builder" /></Route>
       <Route path="/activities"><ProtectedRoute component={Activities} roleRequired="builder" /></Route>
       <Route path="/profile"><ProtectedRoute component={Profile} roleRequired="builder" /></Route>
+      <Route path="/network"><ProtectedRoute component={Network} roleRequired={['builder', 'subcontractor']} /></Route>
       <Route path="/client"><ProtectedRoute component={ClientDashboard} roleRequired="client" /></Route>
       <Route path="/" component={RootRedirect} />
       <Route component={NotFound} />

@@ -427,3 +427,54 @@ export interface UpdateMyOrgBody {
 export interface UpdatePhaseBody {
   completed: boolean;
 }
+
+export interface Rfq {
+  id:             number;
+  organizationId: number | null;
+  createdBy:      number | null;
+  title:          string;
+  description:    string | null;
+  specialty:      string;
+  city:           string;
+  budgetMin:      string | null;
+  budgetMax:      string | null;
+  startDate:      string | null;
+  status:         'open' | 'closed' | 'awarded' | 'cancelled';
+  createdAt:      string;
+  createdByName:  string | null;
+}
+
+export interface RfqQuote {
+  id:              number;
+  rfqId:           number;
+  subcontractorId: number;
+  amount:          string;
+  message:         string | null;
+  status:          'pending' | 'accepted' | 'rejected';
+  createdAt:       string;
+  subName:         string | null;
+  subCategory:     string | null;
+}
+
+export interface CreateRfqBodyParams {
+  title:       string;
+  description: string;
+  specialty:   string;
+  city:        string;
+  budget_min?: number;
+  budget_max?: number;
+  start_date?: string;
+}
+
+export interface UpdateRfqStatusBodyParams {
+  status: 'open' | 'closed' | 'awarded' | 'cancelled';
+}
+
+export interface CreateRfqQuoteBodyParams {
+  amount:   number;
+  message?: string;
+}
+
+export interface UpdateRfqQuoteStatusBodyParams {
+  status: 'pending' | 'accepted' | 'rejected';
+}
