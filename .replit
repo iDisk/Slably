@@ -29,7 +29,7 @@ timeoutMs = 20000
 
 [userenv.shared]
 JWT_SECRET = "656fab3424cfa6e67088e6a3029f9f929caebaf07580394e3d6dedb8e6ec7da195dbee38c6f2f0d40c96e8ed983c21f9"
-APP_URL = "http://localhost:5173"
+APP_URL = "https://2f1b5587-4fee-4c3e-8b9d-caf19f813122-00-tmk7uh90cebk.kirk.replit.dev"
 
 [nix]
 channel = "stable-25_05"
