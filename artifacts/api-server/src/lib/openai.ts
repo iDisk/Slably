@@ -1,0 +1,80 @@
+import OpenAI from "openai";
+import fs from "fs";
+
+function getOpenAI(): OpenAI {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error("OPENAI_API_KEY is not set");
+  return new OpenAI({ apiKey: key });
+}
+
+// Transcribe audio file using Whisper
+export async function transcribeAudio(
+  filePath: string,
+  language: "es" | "en" = "es"
+): Promise<string> {
+  const openai = getOpenAI();
+  const transcription = await openai.audio.transcriptions.create({
+    file: fs.createReadStream(filePath),
+    model: "whisper-1",
+    language,
+    prompt: "construcción, obra, framing, plomería, electricidad, concreto, drywall, inspección, subcontratista, materiales, Home Depot, work site, building",
+  });
+  return transcription.text;
+}
+
+// Structure transcription into daily log fields
+export async function structureDailyLog(
+  transcription: string
+): Promise<{
+  weather: string | null;
+  temperature: number | null;
+  workers_count: number | null;
+  activities: string;
+  materials: string | null;
+  problems: string | null;
+  notes: string | null;
+}> {
+  const openai = getOpenAI();
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.2,
+    messages: [
+      {
+        role: "system",
+        content: `Eres un asistente para supervisores de construcción. 
+Extrae información de la transcripción del daily log y devuelve 
+SOLO un objeto JSON válido sin markdown ni backticks con estos campos:
+{
+  "weather": "string o null (soleado, nublado, lluvioso, etc.)",
+  "temperature": número en Fahrenheit o null,
+  "workers_count": número de trabajadores o null,
+  "activities": "resumen de actividades realizadas (requerido)",
+  "materials": "materiales recibidos o usados, o null",
+  "problems": "problemas o issues encontrados, o null",
+  "notes": "notas adicionales, o null"
+}
+Si no se menciona algún campo, usa null.
+Responde SOLO con el JSON, sin explicación.`,
+      },
+      {
+        role: "user",
+        content: transcription,
+      },
+    ],
+  });
+
+  const raw = completion.choices[0]?.message?.content ?? "{}";
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return {
+      weather: null,
+      temperature: null,
+      workers_count: null,
+      activities: transcription,
+      materials: null,
+      problems: null,
+      notes: null,
+    };
+  }
+}
