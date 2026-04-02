@@ -412,15 +412,23 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
     const startRecording = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mr = new MediaRecorder(stream);
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : MediaRecorder.isTypeSupported('audio/mp4')
+          ? 'audio/mp4'
+          : '';
+        const mr = mimeType
+          ? new MediaRecorder(stream, { mimeType })
+          : new MediaRecorder(stream);
+        const ext = mimeType.includes('mp4') ? 'm4a' : 'webm';
         chunksRef.current = [];
         mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
         mr.onstop = () => {
           stream.getTracks().forEach((t) => t.stop());
-          const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+          const blob = new Blob(chunksRef.current, { type: mimeType || "audio/webm" });
           setRecState("processing");
           const fd = new FormData();
-          fd.append("audio", blob, "recording.webm");
+          fd.append("audio", blob, `recording.${ext}`);
           fd.append("log_date", todayStr());
           fd.append("language", "es");
           audioMutation.mutate(

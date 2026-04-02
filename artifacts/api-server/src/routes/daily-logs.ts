@@ -133,6 +133,12 @@ router.post("/projects/:id/daily-logs/from-audio", requireAuth, upload.single("a
   const logDate  = (req.body.log_date as string | undefined) ?? new Date().toISOString().split("T")[0]!;
   const language = (req.body.language as "es" | "en" | undefined) ?? "es";
 
+  console.log("[AUDIO] File received:", {
+    mimetype: req.file?.mimetype,
+    size: req.file?.buffer.length,
+    originalname: req.file?.originalname,
+  });
+
   const [existing] = await db
     .select({ id: dailyLogsTable.id })
     .from(dailyLogsTable)
