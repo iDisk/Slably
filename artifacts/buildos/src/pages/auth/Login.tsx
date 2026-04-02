@@ -53,7 +53,7 @@ export default function Login() {
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
               <Building2 className="text-primary-foreground h-7 w-7" />
             </div>
-            <span className="text-foreground font-display font-extrabold text-3xl tracking-tight">Slably</span>
+            <img src="/slably-logo.png" alt="Slably" className="h-10 w-auto" />
           </div>
 
           {sessionExpired && (
