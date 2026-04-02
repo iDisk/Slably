@@ -77,10 +77,10 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      <Route path="/dashboard"><ProtectedRoute component={BuilderDashboard} roleRequired="builder" /></Route>
+      <Route path="/dashboard"><ProtectedRoute component={BuilderDashboard} roleRequired={['builder', 'subcontractor']} /></Route>
       <Route path="/projects/:id"><ProtectedRoute component={ProjectDetails} roleRequired="builder" /></Route>
       <Route path="/activities"><ProtectedRoute component={Activities} roleRequired="builder" /></Route>
-      <Route path="/profile"><ProtectedRoute component={Profile} roleRequired="builder" /></Route>
+      <Route path="/profile"><ProtectedRoute component={Profile} roleRequired={['builder', 'subcontractor']} /></Route>
       <Route path="/network"><ProtectedRoute component={Network} roleRequired={['builder', 'subcontractor']} /></Route>
       <Route path="/client"><ProtectedRoute component={ClientDashboard} roleRequired="client" /></Route>
       <Route path="/" component={RootRedirect} />
