@@ -351,7 +351,6 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
         <input
           type="file"
           accept="image/*"
-          capture="environment"
           style={{ display: "none" }}
           ref={fileInputRef}
           onChange={(e) => {
