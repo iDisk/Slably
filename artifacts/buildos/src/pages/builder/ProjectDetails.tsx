@@ -203,13 +203,13 @@ export default function ProjectDetails() {
 
         {/* Tabs */}
         <Tabs defaultValue="overview">
-          <TabsList className="w-full sm:w-auto flex-wrap">
+          <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="phases">Fases</TabsTrigger>
             <TabsTrigger value="daily-log">Daily Log</TabsTrigger>
             <TabsTrigger value="documents">Documentos</TabsTrigger>
-            <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
+            <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
             <TabsTrigger value="photos">Photos</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
@@ -310,17 +310,17 @@ export default function ProjectDetails() {
             </div>
           </TabsContent>
 
-          {/* Change Orders */}
-          <TabsContent value="change-orders">
-            <div className="mt-2">
-              <ChangeOrdersTab projectId={projectId} />
-            </div>
-          </TabsContent>
-
           {/* Expenses */}
           <TabsContent value="expenses">
             <div className="mt-2">
               <ExpensesTab projectId={projectId} />
+            </div>
+          </TabsContent>
+
+          {/* Change Orders */}
+          <TabsContent value="change-orders">
+            <div className="mt-2">
+              <ChangeOrdersTab projectId={projectId} />
             </div>
           </TabsContent>
 
