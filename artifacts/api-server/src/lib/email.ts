@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-console.log("[EMAIL CONFIG] APP_URL:", process.env.APP_URL);
-
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY;
   if (!key) throw new Error("RESEND_API_KEY is not set — email not sent");
