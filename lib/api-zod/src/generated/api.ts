@@ -682,3 +682,35 @@ export const QuoteParams = zod.object({
 export const UpdateRfqQuoteStatusBody = zod.object({
   status: zod.enum(["pending", "accepted", "rejected"]),
 });
+
+// ─── Daily Logs ─────────────────────────────────────────────────────────────
+export const DailyLogParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DailyLogIdParams = zod.object({
+  id:    zod.coerce.number(),
+  logId: zod.coerce.number(),
+});
+
+export const CreateDailyLogBody = zod.object({
+  log_date:      zod.string(),
+  weather:       zod.string().optional(),
+  temperature:   zod.coerce.number().int().optional(),
+  workers_count: zod.coerce.number().int().optional(),
+  activities:    zod.string().min(1),
+  materials:     zod.string().optional(),
+  problems:      zod.string().optional(),
+  notes:         zod.string().optional(),
+});
+
+export const UpdateDailyLogBody = zod.object({
+  weather:       zod.string().optional(),
+  temperature:   zod.coerce.number().int().optional(),
+  workers_count: zod.coerce.number().int().optional(),
+  activities:    zod.string().min(1).optional(),
+  materials:     zod.string().optional(),
+  problems:      zod.string().optional(),
+  notes:         zod.string().optional(),
+  status:        zod.enum(["draft", "confirmed"]).optional(),
+});

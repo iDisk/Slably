@@ -12,6 +12,7 @@ import phasesRouter from "./phases";
 import organizationsRouter from "./organizations";
 import documentsRouter from "./documents";
 import networkRouter from "./network";
+import dailyLogsRouter from "./daily-logs";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(phasesRouter);
 router.use(organizationsRouter);
 router.use(documentsRouter);
 router.use(networkRouter);
+router.use(dailyLogsRouter);
 
 export default router;
