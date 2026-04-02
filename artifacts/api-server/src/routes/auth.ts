@@ -76,7 +76,8 @@ router.post("/auth/register", registerLimiter, async (req, res): Promise<void> =
     return;
   }
 
-  const { name, email, password, role, companyName, state, phone } = parsed.data;
+  const { name, email, password, role, companyName, state, phone,
+          category, serviceCity, serviceRadius } = parsed.data;
 
   const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (existing.length > 0) {
@@ -103,7 +104,12 @@ router.post("/auth/register", registerLimiter, async (req, res): Promise<void> =
 
   const [user] = await db
     .insert(usersTable)
-    .values({ name, email, passwordHash, role, organizationId })
+    .values({
+      name, email, passwordHash, role, organizationId,
+      category:      category      || null,
+      serviceCity:   serviceCity   || null,
+      serviceRadius: serviceRadius || null,
+    })
     .returning();
 
   const token = signToken({ id: user.id, email: user.email, role: user.role, organizationId, organizationSlug });

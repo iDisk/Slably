@@ -26,10 +26,13 @@ export const RegisterBody = zod.object({
   name: zod.string(),
   email: zod.string(),
   password: zod.string(),
-  role: zod.enum(["builder", "client"]),
+  role: zod.enum(["builder", "client", "subcontractor"]),
   companyName: zod.string().min(2).optional(),
   state: zod.string().optional(),
   phone: zod.string().optional(),
+  category: zod.string().optional(),
+  serviceCity: zod.string().optional(),
+  serviceRadius: zod.coerce.number().optional(),
 });
 
 /**

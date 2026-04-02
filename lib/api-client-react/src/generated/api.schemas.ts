@@ -38,6 +38,7 @@ export type RegisterBodyRole =
 export const RegisterBodyRole = {
   builder: "builder",
   client: "client",
+  subcontractor: "subcontractor",
 } as const;
 
 export interface RegisterBody {
@@ -48,6 +49,9 @@ export interface RegisterBody {
   companyName?: string;
   state?: string;
   phone?: string;
+  category?: string;
+  serviceCity?: string;
+  serviceRadius?: number;
 }
 
 export interface LoginBody {

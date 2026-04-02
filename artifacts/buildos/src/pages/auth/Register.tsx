@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Building2, ArrowRight, Loader2, User, HardHat } from "lucide-react";
+import { Building2, ArrowRight, Loader2, User, HardHat, Wrench } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -12,13 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 
 const registerSchema = z.object({
-  name:        z.string().min(2, "Name is required"),
-  email:       z.string().email("Please enter a valid email"),
-  password:    z.string().min(6, "Password must be at least 6 characters"),
-  role:        z.enum(["builder", "client"]),
-  companyName: z.string().optional(),
-  state:       z.string().optional(),
-  phone:       z.string().optional(),
+  name:          z.string().min(2, "Name is required"),
+  email:         z.string().email("Please enter a valid email"),
+  password:      z.string().min(6, "Password must be at least 6 characters"),
+  role:          z.enum(["builder", "client", "subcontractor"]),
+  companyName:   z.string().optional(),
+  state:         z.string().optional(),
+  phone:         z.string().optional(),
+  category:      z.string().optional(),
+  serviceCity:   z.string().optional(),
+  serviceRadius: z.coerce.number().optional(),
 }).superRefine((data, ctx) => {
   if (data.role === "builder") {
     if (!data.companyName || data.companyName.trim().length < 2) {
@@ -26,6 +29,14 @@ const registerSchema = z.object({
     }
     if (!data.state) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "State is required", path: ["state"] });
+    }
+  }
+  if (data.role === "subcontractor") {
+    if (!data.category) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Category is required", path: ["category"] });
+    }
+    if (!data.serviceCity || data.serviceCity.trim().length < 2) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Service city is required", path: ["serviceCity"] });
     }
   }
 });
@@ -39,7 +50,7 @@ export default function Register() {
 
   const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { role: "builder" },
+    defaultValues: { role: "builder", serviceRadius: 25 },
   });
 
   const selectedRole = watch("role");
@@ -51,10 +62,13 @@ export default function Register() {
           name:        data.name,
           email:       data.email,
           password:    data.password,
-          role:        data.role,
-          companyName: data.companyName || undefined,
-          state:       data.state       || undefined,
-          phone:       data.phone       || undefined,
+          role:          data.role,
+          companyName:   data.companyName   || undefined,
+          state:         data.state         || undefined,
+          phone:         data.phone         || undefined,
+          category:      data.category      || undefined,
+          serviceCity:   data.serviceCity   || undefined,
+          serviceRadius: data.serviceRadius || undefined,
         },
       },
       {
@@ -91,7 +105,7 @@ export default function Register() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Role selector */}
-            <div className="grid grid-cols-2 gap-4 mb-2">
+            <div className="grid grid-cols-3 gap-3 mb-2">
               <div
                 onClick={() => setValue("role", "builder")}
                 className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${
@@ -114,7 +128,71 @@ export default function Register() {
                 <User className="h-6 w-6" />
                 <span className="font-semibold text-sm">Client</span>
               </div>
+              <div
+                onClick={() => setValue("role", "subcontractor")}
+                className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${
+                  selectedRole === "subcontractor"
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-border hover:border-primary/30 text-muted-foreground"
+                }`}
+              >
+                <Wrench className="h-6 w-6" />
+                <span className="font-semibold text-sm">Sub</span>
+              </div>
             </div>
+
+            {/* Subcontractor-only fields */}
+            {selectedRole === "subcontractor" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Trade / Category *</Label>
+                  <Select id="category" {...register("category")}>
+                    <option value="">Seleccionar categoría...</option>
+                    <optgroup label="General Contractors">
+                      <option value="general_contractor">General Contractor</option>
+                      <option value="commercial">Commercial Builder</option>
+                      <option value="pool">Pool Builder</option>
+                      <option value="remodeler">Remodeler</option>
+                    </optgroup>
+                    <optgroup label="Trade Specialists">
+                      <option value="framer">Framer</option>
+                      <option value="electrician">Electrician</option>
+                      <option value="plumber">Plumber</option>
+                      <option value="hvac">HVAC</option>
+                      <option value="painter">Painter</option>
+                      <option value="concrete">Concrete</option>
+                      <option value="roofer">Roofer</option>
+                      <option value="drywall">Drywall</option>
+                      <option value="tile">Tile / Flooring</option>
+                      <option value="carpenter">Carpenter</option>
+                      <option value="landscaper">Landscaper</option>
+                      <option value="other">Other</option>
+                    </optgroup>
+                  </Select>
+                  {errors.category && <p className="text-sm text-destructive font-medium">{errors.category.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="serviceCity">Service City *</Label>
+                  <Input
+                    id="serviceCity"
+                    placeholder="Ciudad donde trabajas (ej. Houston, TX)"
+                    {...register("serviceCity")}
+                  />
+                  {errors.serviceCity && <p className="text-sm text-destructive font-medium">{errors.serviceCity.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="serviceRadius">Service Radius</Label>
+                  <Select id="serviceRadius" {...register("serviceRadius", { valueAsNumber: true })}>
+                    <option value={10}>10 miles</option>
+                    <option value={25}>25 miles</option>
+                    <option value={50}>50 miles</option>
+                    <option value={100}>100 miles</option>
+                  </Select>
+                </div>
+              </>
+            )}
 
             {/* Full Name */}
             <div className="space-y-2">
