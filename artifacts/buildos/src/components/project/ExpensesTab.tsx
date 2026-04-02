@@ -43,6 +43,7 @@ const expenseSchema = z.object({
   category:       z.enum(["materials", "labor", "equipment", "permits", "other"]),
   expense_date:   z.string().min(1, "Date is required"),
   description:    z.string().optional(),
+  note:           z.string().optional(),
   receipt_url:    z.string().url("Enter a valid URL").optional().or(z.literal("")),
   payment_method: z.enum(["cash", "card", "transfer", "check"]).optional().or(z.literal("")).transform(v => v || undefined),
 });
@@ -146,6 +147,17 @@ function ExpenseDialog({
             <Textarea {...register("description")} placeholder="Notes about this expense..." rows={2} />
           </div>
 
+          {ocrConfidence !== undefined && (
+            <div className="space-y-2">
+              <Label htmlFor="note">Note</Label>
+              <Input
+                id="note"
+                placeholder="Lunch meeting, PO #1234, proyecto Lopez..."
+                {...register("note")}
+              />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>Receipt URL</Label>
             <Input {...register("receipt_url")} type="url" placeholder="https://..." />
@@ -238,7 +250,9 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
           vendor:         data.vendor,
           category:       data.category,
           expense_date:   data.expense_date,
-          description:    data.description  || undefined,
+          description:    data.note
+            ? `${data.description ?? ""}${data.description ? " | " : ""}Note: ${data.note}`.trim()
+            : data.description || undefined,
           receipt_url:    data.receipt_url  || undefined,
           payment_method: data.payment_method || undefined,
         },
