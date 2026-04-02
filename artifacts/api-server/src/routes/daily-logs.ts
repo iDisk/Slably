@@ -86,35 +86,50 @@ router.post("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, re
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const [existing] = await db
-    .select({ id: dailyLogsTable.id })
+    .select({ id: dailyLogsTable.id, status: dailyLogsTable.status })
     .from(dailyLogsTable)
     .where(and(
       eq(dailyLogsTable.projectId, params.data.id),
       eq(dailyLogsTable.logDate, parsed.data.log_date),
     ));
 
-  if (existing) {
-    res.status(409).json({ error: `Ya existe un daily log para el ${parsed.data.log_date}` });
+  if (existing?.status === "confirmed") {
+    res.status(409).json({ error: "Ya existe un log confirmado para esta fecha. No se puede sobreescribir." });
     return;
   }
 
-  const [log] = await db.insert(dailyLogsTable).values({
-    projectId:      params.data.id,
-    organizationId: project.organizationId,
-    createdBy:      user.id,
-    logDate:        parsed.data.log_date,
-    weather:        parsed.data.weather       ?? null,
-    temperature:    parsed.data.temperature   ?? null,
-    workersCount:   parsed.data.workers_count ?? null,
-    activities:     parsed.data.activities,
-    materials:      parsed.data.materials     ?? null,
-    problems:       parsed.data.problems      ?? null,
-    notes:          parsed.data.notes         ?? null,
-    aiProcessed:    false,
-    status:         "draft",
-  }).returning();
+  let log;
+  if (existing) {
+    [log] = await db.update(dailyLogsTable).set({
+      weather:      parsed.data.weather       ?? null,
+      temperature:  parsed.data.temperature   ?? null,
+      workersCount: parsed.data.workers_count ?? null,
+      activities:   parsed.data.activities,
+      materials:    parsed.data.materials     ?? null,
+      problems:     parsed.data.problems      ?? null,
+      notes:        parsed.data.notes         ?? null,
+      aiProcessed:  false,
+      status:       "draft",
+    }).where(eq(dailyLogsTable.id, existing.id)).returning();
+  } else {
+    [log] = await db.insert(dailyLogsTable).values({
+      projectId:      params.data.id,
+      organizationId: project.organizationId,
+      createdBy:      user.id,
+      logDate:        parsed.data.log_date,
+      weather:        parsed.data.weather       ?? null,
+      temperature:    parsed.data.temperature   ?? null,
+      workersCount:   parsed.data.workers_count ?? null,
+      activities:     parsed.data.activities,
+      materials:      parsed.data.materials     ?? null,
+      problems:       parsed.data.problems      ?? null,
+      notes:          parsed.data.notes         ?? null,
+      aiProcessed:    false,
+      status:         "draft",
+    }).returning();
+  }
 
-  res.status(201).json(log);
+  res.status(existing ? 200 : 201).json(log);
 });
 
 // POST /api/projects/:id/daily-logs/from-audio
@@ -140,15 +155,15 @@ router.post("/projects/:id/daily-logs/from-audio", requireAuth, upload.single("a
   });
 
   const [existing] = await db
-    .select({ id: dailyLogsTable.id })
+    .select({ id: dailyLogsTable.id, status: dailyLogsTable.status })
     .from(dailyLogsTable)
     .where(and(
       eq(dailyLogsTable.projectId, params.data.id),
       eq(dailyLogsTable.logDate, logDate),
     ));
 
-  if (existing) {
-    res.status(409).json({ error: `Ya existe un daily log para el ${logDate}` });
+  if (existing?.status === "confirmed") {
+    res.status(409).json({ error: "Ya existe un log confirmado para esta fecha. No se puede sobreescribir." });
     return;
   }
 
@@ -190,25 +205,42 @@ router.post("/projects/:id/daily-logs/from-audio", requireAuth, upload.single("a
     fs.unlink(tmpPath, () => {});
   }
 
-  const [log] = await db.insert(dailyLogsTable).values({
-    projectId:      params.data.id,
-    organizationId: project.organizationId,
-    createdBy:      user.id,
-    logDate,
-    weather:        structured.weather       ?? null,
-    temperature:    structured.temperature   ?? null,
-    workersCount:   structured.workers_count ?? null,
-    activities:     structured.activities,
-    materials:      structured.materials     ?? null,
-    problems:       structured.problems      ?? null,
-    notes:          structured.notes         ?? null,
-    audioUrl,
-    transcription,
-    aiProcessed:    true,
-    status:         "draft",
-  }).returning();
+  let log;
+  if (existing) {
+    [log] = await db.update(dailyLogsTable).set({
+      weather:      structured.weather       ?? null,
+      temperature:  structured.temperature   ?? null,
+      workersCount: structured.workers_count ?? null,
+      activities:   structured.activities,
+      materials:    structured.materials     ?? null,
+      problems:     structured.problems      ?? null,
+      notes:        structured.notes         ?? null,
+      audioUrl,
+      transcription,
+      aiProcessed:  true,
+      status:       "draft",
+    }).where(eq(dailyLogsTable.id, existing.id)).returning();
+  } else {
+    [log] = await db.insert(dailyLogsTable).values({
+      projectId:      params.data.id,
+      organizationId: project.organizationId,
+      createdBy:      user.id,
+      logDate,
+      weather:        structured.weather       ?? null,
+      temperature:    structured.temperature   ?? null,
+      workersCount:   structured.workers_count ?? null,
+      activities:     structured.activities,
+      materials:      structured.materials     ?? null,
+      problems:       structured.problems      ?? null,
+      notes:          structured.notes         ?? null,
+      audioUrl,
+      transcription,
+      aiProcessed:    true,
+      status:         "draft",
+    }).returning();
+  }
 
-  res.status(201).json(log);
+  res.status(existing ? 200 : 201).json(log);
 });
 
 // GET /api/projects/:id/daily-logs/:logId
