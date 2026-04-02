@@ -193,7 +193,8 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
   const [confirmDelete, setConfirmDelete] = useState<Expense | null>(null);
   const [ocrResult,     setOcrResult]     = useState<ExpenseFromReceiptResponse | null>(null);
   const [ocrProcessing, setOcrProcessing] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef  = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey(projectId) });
@@ -329,7 +330,7 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => cameraInputRef.current?.click()}
             disabled={ocrProcessing}
             className="gap-2"
           >
@@ -337,7 +338,16 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
               ? <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
               : <Camera className="w-4 h-4" />
             }
-            {ocrProcessing ? "Leyendo..." : "Scan Receipt"}
+            {ocrProcessing ? "Leyendo..." : "Cámara"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => galleryInputRef.current?.click()}
+            disabled={ocrProcessing}
+            className="gap-2"
+          >
+            🖼️ Galería
           </Button>
           <Button
             size="sm"
@@ -351,8 +361,20 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
         <input
           type="file"
           accept="image/*"
+          capture="environment"
           style={{ display: "none" }}
-          ref={fileInputRef}
+          ref={cameraInputRef}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleReceiptPhoto(file);
+            e.target.value = "";
+          }}
+        />
+        <input
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          ref={galleryInputRef}
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) handleReceiptPhoto(file);
