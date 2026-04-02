@@ -5,11 +5,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   Plus, FileText, ClipboardList, Loader2,
   ArrowLeft, ArrowRight, CheckCircle2, Pencil, X,
+  ExternalLink, FileCheck, FileClock, Trash2, Link2,
 } from "lucide-react";
 import { useForm, useWatch, type Control } from "react-hook-form";
 
 import {
   useListDocuments,
+  useListContracts,
+  useCreateContract,
+  useUpdateContract,
+  useDeleteContract,
+  getListContractsQueryKey,
   useGetTemplates,
   useGetTemplate,
   useCreateDocument,
@@ -17,11 +23,13 @@ import {
   listDocumentsUrl,
   type DocumentListItemType,
   type DocumentDetailType,
+  type Contract,
 } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input, Label, Textarea } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input, Label, Select, Textarea } from "@/components/ui/input";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DocType  = "construction" | "remodeling" | "change_order";
@@ -58,6 +66,71 @@ type ChangeOrderFields = {
   new_completion_date: string;
   effective_date: string;
 };
+
+type ExtContractForm = {
+  title: string;
+  fileUrl: string;
+  version: string;
+  status: "draft" | "sent" | "signed";
+};
+
+const CONTRACT_STATUS = {
+  draft:  { label: "Borrador", className: "bg-slate-100 text-slate-600 border-slate-200", icon: FileClock },
+  sent:   { label: "Enviado",  className: "bg-blue-100 text-blue-700 border-blue-200",    icon: FileText },
+  signed: { label: "Firmado",  className: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: FileCheck },
+} as const;
+
+function ExtContractDialog({
+  open, onOpenChange, onSubmit, isPending,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSubmit: (d: ExtContractForm) => void;
+  isPending: boolean;
+}) {
+  const { register, handleSubmit, reset } = useForm<ExtContractForm>({
+    defaultValues: { title: "", fileUrl: "", version: "", status: "draft" },
+  });
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) reset(); onOpenChange(v); }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display font-bold text-xl">Subir contrato externo</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(d => { onSubmit(d); reset(); })} className="space-y-4 mt-2">
+          <div className="space-y-2">
+            <Label>Título *</Label>
+            <Input {...register("title", { required: true })} placeholder="Contrato principal v1" />
+          </div>
+          <div className="space-y-2">
+            <Label>URL del archivo *</Label>
+            <Input {...register("fileUrl", { required: true })} type="url" placeholder="https://drive.google.com/..." />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Versión</Label>
+              <Input {...register("version")} placeholder="1.0" />
+            </div>
+            <div className="space-y-2">
+              <Label>Estado</Label>
+              <Select {...register("status")}>
+                <option value="draft">Borrador</option>
+                <option value="sent">Enviado</option>
+                <option value="signed">Firmado</option>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button type="submit" disabled={isPending} className="gap-2 bg-orange-500 hover:bg-orange-600 text-white">
+              {isPending && <Loader2 className="w-4 h-4 animate-spin" />} Guardar
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const DOC_STATUS: Record<string, { label: string; className: string }> = {
@@ -225,18 +298,57 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
   // ── signing state ──
   const [signingDoc, setSigningDoc] = useState<DocumentDetailType | null>(null);
 
+  // ── external contracts state ──
+  const [extDialogOpen,     setExtDialogOpen]     = useState(false);
+  const [signingContractId, setSigningContractId] = useState<number | null>(null);
+  const [confirmDeleteCtr,  setConfirmDeleteCtr]  = useState<Contract | null>(null);
+
   // ── queries ──
   const { data: docs = [], isLoading } = useListDocuments(projectId);
+  const { data: contracts = [] }       = useListContracts(projectId);
   const { data: templates = [] }       = useGetTemplates({ type: selectedType, language: selectedLang });
   const templateId = templates[0]?.id;
   const { data: templateDetail } = useGetTemplate(templateId ?? 0);
 
   // ── mutations ──
-  const createMutation = useCreateDocument(projectId);
-  const signMutation   = useSignDocument(signingDoc?.projectId ?? projectId, signingDoc?.id ?? 0);
+  const createMutation          = useCreateDocument(projectId);
+  const signMutation            = useSignDocument(signingDoc?.projectId ?? projectId, signingDoc?.id ?? 0);
+  const createContractMutation  = useCreateContract();
+  const updateContractMutation  = useUpdateContract();
+  const deleteContractMutation  = useDeleteContract();
 
   const invalidateDocs = () =>
     queryClient.invalidateQueries({ queryKey: [listDocumentsUrl(projectId)] });
+
+  const invalidateContracts = () =>
+    queryClient.invalidateQueries({ queryKey: getListContractsQueryKey(projectId) });
+
+  const onCreateContract = (data: ExtContractForm) => {
+    createContractMutation.mutate(
+      { projectId, data: { title: data.title, fileUrl: data.fileUrl || null,
+          version: data.version || null, status: data.status } },
+      { onSuccess: () => { toast.success("Contrato guardado"); invalidateContracts(); setExtDialogOpen(false); },
+        onError:   () => toast.error("Error al guardar el contrato") }
+    );
+  };
+
+  const markContractSigned = (id: number) => {
+    setSigningContractId(id);
+    updateContractMutation.mutate(
+      { projectId, id, data: { status: "signed" } },
+      { onSuccess: () => { toast.success("Contrato marcado como firmado"); invalidateContracts(); setSigningContractId(null); },
+        onError:   () => { toast.error("Error al actualizar"); setSigningContractId(null); } }
+    );
+  };
+
+  const onDeleteContract = () => {
+    if (!confirmDeleteCtr) return;
+    deleteContractMutation.mutate(
+      { projectId, id: confirmDeleteCtr.id },
+      { onSuccess: () => { toast.success("Contrato eliminado"); invalidateContracts(); setConfirmDeleteCtr(null); },
+        onError:   () => { toast.error("Error al eliminar"); setConfirmDeleteCtr(null); } }
+    );
+  };
 
   // ── forms ──
   const contractForm = useForm<ContractFields>({
@@ -842,6 +954,145 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
           })}
         </div>
       )}
+
+      {/* ── Contratos externos ─────────────────────────────────────────── */}
+      <div className="pt-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <Link2 className="w-3.5 h-3.5" /> Contratos externos
+          </span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <div className="flex justify-end mb-3">
+          {user?.role === "builder" && (
+            <Button size="sm" variant="outline" onClick={() => setExtDialogOpen(true)} className="gap-2">
+              <Plus className="w-4 h-4" /> Subir contrato externo
+            </Button>
+          )}
+        </div>
+
+        {contracts.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-6 italic">
+            No hay contratos externos vinculados.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {contracts.map((c: Contract) => {
+              const cfg  = CONTRACT_STATUS[c.status as keyof typeof CONTRACT_STATUS] ?? CONTRACT_STATUS.draft;
+              const Icon = cfg.icon;
+              return (
+                <Card key={c.id} className="border-none shadow-sm bg-white">
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className={`mt-0.5 p-2 rounded-lg ${
+                        c.status === "signed" ? "bg-emerald-50" :
+                        c.status === "sent"   ? "bg-blue-50" : "bg-slate-50"
+                      }`}>
+                        <Icon className={`w-5 h-5 ${
+                          c.status === "signed" ? "text-emerald-600" :
+                          c.status === "sent"   ? "text-blue-600" : "text-slate-400"
+                        }`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="font-semibold text-foreground">{c.title}</span>
+                          {c.version && (
+                            <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                              v{c.version}
+                            </span>
+                          )}
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${cfg.className}`}>
+                            <Icon className="w-3 h-3" /> {cfg.label}
+                          </span>
+                        </div>
+                        {c.fileUrl && (
+                          <a
+                            href={c.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                          >
+                            <ExternalLink className="w-3 h-3" /> Abrir archivo
+                          </a>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {c.fileUrl && (
+                          <Button size="sm" variant="outline" asChild className="gap-1.5">
+                            <a href={c.fileUrl} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="w-3.5 h-3.5" /> Abrir
+                            </a>
+                          </Button>
+                        )}
+                        {c.status !== "signed" && user?.role === "builder" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50"
+                            onClick={() => markContractSigned(c.id)}
+                            disabled={signingContractId === c.id}
+                          >
+                            {signingContractId === c.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <FileCheck className="w-3.5 h-3.5" />}
+                            Firmar
+                          </Button>
+                        )}
+                        {user?.role === "builder" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => setConfirmDeleteCtr(c)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <ExtContractDialog
+        open={extDialogOpen}
+        onOpenChange={setExtDialogOpen}
+        onSubmit={onCreateContract}
+        isPending={createContractMutation.isPending}
+      />
+
+      <Dialog open={!!confirmDeleteCtr} onOpenChange={v => !v && setConfirmDeleteCtr(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display font-bold text-lg flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" /> Eliminar contrato
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            ¿Eliminar{" "}
+            <span className="font-semibold text-foreground">"{confirmDeleteCtr?.title}"</span>?
+            Esta acción no se puede deshacer.
+          </p>
+          <div className="flex justify-end gap-3 pt-2">
+            <Button variant="outline" onClick={() => setConfirmDeleteCtr(null)}>Cancelar</Button>
+            <Button
+              variant="destructive"
+              onClick={onDeleteContract}
+              disabled={deleteContractMutation.isPending}
+              className="gap-2"
+            >
+              {deleteContractMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              Eliminar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

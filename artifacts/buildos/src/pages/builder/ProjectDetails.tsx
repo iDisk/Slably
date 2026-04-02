@@ -26,7 +26,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ContractsTab }    from "@/components/project/ContractsTab";
 import { ChangeOrdersTab } from "@/components/project/ChangeOrdersTab";
 import { PhotosTab }       from "@/components/project/PhotosTab";
 import { ActivityTab }     from "@/components/project/ActivityTab";
@@ -207,7 +206,6 @@ export default function ProjectDetails() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="phases">Fases</TabsTrigger>
             <TabsTrigger value="documents">Documentos</TabsTrigger>
-            <TabsTrigger value="contracts">Contracts</TabsTrigger>
             <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
             <TabsTrigger value="photos">Photos</TabsTrigger>
@@ -300,13 +298,6 @@ export default function ProjectDetails() {
                 projectId={project.id}
                 project={project}
               />
-            </div>
-          </TabsContent>
-
-          {/* Contracts */}
-          <TabsContent value="contracts">
-            <div className="mt-2">
-              <ContractsTab projectId={projectId} />
             </div>
           </TabsContent>
 
