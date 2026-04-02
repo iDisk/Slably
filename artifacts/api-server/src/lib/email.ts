@@ -29,7 +29,7 @@ export async function sendDocumentSigningRequest({
   const signingUrl = `${appUrl}/client`;
 
   return getResend().emails.send({
-    from: "BuildOS <noreply@buildos.app>",
+    from: "BuildOS <onboarding@resend.dev>",
     to,
     subject: `${contractorCompany} te envió un documento para firmar: ${documentTitle}`,
     html: buildEmailHtml({
