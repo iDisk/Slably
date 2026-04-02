@@ -495,6 +495,10 @@ export const DeleteExpenseParams = zod.object({
   eid:       zod.coerce.number(),
 });
 
+export const CreateExpenseFromReceiptParams = zod.object({
+  projectId: zod.coerce.number(),
+});
+
 export const PresignedUrlBody = zod.object({
   fileName:    zod.string().min(1),
   contentType: zod.enum(["image/jpeg", "image/png", "image/webp", "image/heic"]),

@@ -347,6 +347,20 @@ export interface Expense {
   createdAt: string;
 }
 
+export interface OcrResult {
+  vendor:         string | null;
+  amount:         number | null;
+  date:           string | null;
+  description:    string | null;
+  category:       ExpenseCategory | null;
+  payment_method: ExpensePaymentMethod | null;
+  confidence:     number;
+}
+
+export interface ExpenseFromReceiptResponse extends Expense {
+  ocr_result: OcrResult;
+}
+
 export interface ListExpensesResponse {
   expenses: Expense[];
   total: number;

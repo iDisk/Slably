@@ -30,6 +30,7 @@ import type {
   CreateExpenseBody,
   UpdateExpenseBody,
   ListExpensesResponse,
+  ExpenseFromReceiptResponse,
   HealthStatus,
   LoginBody,
   MessageResponse,
@@ -3484,5 +3485,31 @@ export function usePatchDailyLog<TError = ErrorType<unknown>, TContext = unknown
   const mutationKey = [`/api/projects/${projectId}/daily-logs/${logId}`];
   const mutationFn: MutationFunction<Awaited<ReturnType<typeof patchDailyLog>>, { data: UpdateDailyLogBodyParams }> =
     (props) => patchDailyLog(projectId, logId, props.data, requestOptions as RequestInit);
+  return useMutation({ mutationKey, mutationFn, ...mutationOptions });
+}
+
+// ─── createExpenseFromReceipt ─────────────────────────────────────────────────
+
+export const createExpenseFromReceipt = async (
+  projectId: number,
+  body: FormData,
+  options?: RequestInit,
+): Promise<ExpenseFromReceiptResponse> =>
+  customFetch<ExpenseFromReceiptResponse>(
+    `/api/projects/${projectId}/expenses/from-receipt`,
+    { ...options, method: "POST", body },
+  );
+
+export function useCreateExpenseFromReceipt<TError = ErrorType<unknown>, TContext = unknown>(
+  projectId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof createExpenseFromReceipt>>, TError, { data: FormData }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof createExpenseFromReceipt>>, TError, { data: FormData }, TContext> {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationKey = [`/api/projects/${projectId}/expenses/from-receipt`];
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createExpenseFromReceipt>>, { data: FormData }> =
+    (props) => createExpenseFromReceipt(projectId, props.data, requestOptions as RequestInit);
   return useMutation({ mutationKey, mutationFn, ...mutationOptions });
 }
