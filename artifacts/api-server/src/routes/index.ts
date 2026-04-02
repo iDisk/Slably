@@ -11,6 +11,7 @@ import expensesRouter from "./expenses";
 import phasesRouter from "./phases";
 import organizationsRouter from "./organizations";
 import documentsRouter from "./documents";
+import networkRouter from "./network";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(expensesRouter);
 router.use(phasesRouter);
 router.use(organizationsRouter);
 router.use(documentsRouter);
+router.use(networkRouter);
 
 export default router;

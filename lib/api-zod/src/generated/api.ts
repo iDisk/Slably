@@ -649,3 +649,27 @@ export const DocumentDetail = DocumentListItem.extend({
   clientSignature:     zod.string().nullable(),
   clientIp:            zod.string().nullable(),
 });
+
+// ─── Network / RFQ ──────────────────────────────────────────────────────────
+export const RfqParams = zod.object({
+  rfqId: zod.coerce.number(),
+});
+
+export const CreateRfqBody = zod.object({
+  title:       zod.string().min(1),
+  description: zod.string().min(1),
+  specialty:   zod.string().min(1),
+  city:        zod.string().min(1),
+  budget_min:  zod.coerce.number().optional(),
+  budget_max:  zod.coerce.number().optional(),
+  start_date:  zod.string().optional(),
+});
+
+export const UpdateRfqStatusBody = zod.object({
+  status: zod.enum(["open", "closed", "awarded", "cancelled"]),
+});
+
+export const CreateRfqQuoteBody = zod.object({
+  amount:  zod.coerce.number(),
+  message: zod.string().optional(),
+});
