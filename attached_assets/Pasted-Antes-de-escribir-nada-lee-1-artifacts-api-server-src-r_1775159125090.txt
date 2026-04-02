@@ -1,0 +1,72 @@
+Antes de escribir nada, lee:
+1. artifacts/api-server/src/routes/phases.ts 
+   — para seguir el mismo patrón
+2. lib/api-zod/src/generated/api.ts 
+   — las últimas líneas para agregar al final
+
+Luego crea artifacts/api-server/src/routes/network.ts
+con estos 5 endpoints:
+
+ENDPOINT 1 — GET /api/network/rfqs
+Lista RFQs disponibles.
+- requireAuth
+- Si role === 'subcontractor':
+  filtra por specialty === user.category
+  y city coincide con user.service_city
+  (case insensitive, contains)
+  solo status === 'open'
+- Si role === 'builder':
+  devuelve solo los RFQs de su organización
+- Respuesta: array de RFQs con campos:
+  id, title, description, specialty, city,
+  budget_min, budget_max, start_date, status,
+  created_at, createdBy (nombre del creador)
+
+ENDPOINT 2 — POST /api/network/rfqs
+Crea un nuevo RFQ. Solo builders.
+Body:
+{
+  title: string,
+  description: string,
+  specialty: string,
+  city: string,
+  budget_min?: number,
+  budget_max?: number,
+  start_date?: string (date)
+}
+Después de crear → notifica por email a todos 
+los subcontractors que tienen:
+  category === specialty
+  service_city contiene city (case insensitive)
+Usa sendRfqNotification (nueva función en email.ts)
+Fire and forget con .catch()
+
+ENDPOINT 3 — PATCH /api/network/rfqs/:rfqId
+Actualiza status del RFQ. Solo el creador.
+Body: { status: 'open'|'closed'|'awarded'|'cancelled' }
+
+ENDPOINT 4 — GET /api/network/rfqs/:rfqId/quotes
+Lista cotizaciones de un RFQ.
+- Builder: solo si es su RFQ
+- Sub: solo sus propias cotizaciones
+
+ENDPOINT 5 — POST /api/network/rfqs/:rfqId/quotes
+Crea una cotización. Solo subcontractors.
+No puede cotizar si ya cotizó el mismo RFQ.
+Body:
+{
+  amount: number,
+  message?: string
+}
+
+También agrega en artifacts/api-server/src/lib/email.ts
+la función sendRfqNotification:
+- Envía email a cada sub notificado
+- Asunto: "Nueva solicitud de trabajo: {title}"
+- Cuerpo similar al de firma pero para RFQ
+- Link: APP_URL/network
+
+Agrega los schemas Zod necesarios en api-zod
+y registra el router en routes/index.ts
+
+Muéstrame el diff completo antes de aplicar.
