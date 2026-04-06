@@ -933,7 +933,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                       className="shrink-0 gap-1.5"
                       onClick={async () => {
                         try {
-                          const token = localStorage.getItem("buildos_token");
+                          const token = localStorage.getItem("slably_token");
                           const res = await fetch(`/api/projects/${projectId}/documents/${doc.id}`, {
                             headers: { Authorization: `Bearer ${token}` },
                           });

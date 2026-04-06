@@ -17,7 +17,7 @@ import NotFound from "@/pages/not-found";
 const originalFetch = window.fetch;
 window.fetch = async (...args) => {
   const [resource, config] = args;
-  const token = localStorage.getItem("buildos_token");
+  const token = localStorage.getItem("slably_token");
   if (token) {
     const newConfig = { ...config };
     // Use new Headers() to correctly handle Headers instances (not plain objects).
@@ -28,7 +28,7 @@ window.fetch = async (...args) => {
     newConfig.headers = newHeaders;
     const response = await originalFetch(resource, newConfig);
     if (response.status === 401) {
-      localStorage.removeItem("buildos_token");
+      localStorage.removeItem("slably_token");
       const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       window.location.href = `${base}/login?reason=session_expired`;
     }

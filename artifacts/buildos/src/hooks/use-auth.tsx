@@ -13,7 +13,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(localStorage.getItem("buildos_token"));
+  const [token, setToken] = useState<string | null>(localStorage.getItem("slably_token"));
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
@@ -25,13 +25,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const handleLogin = (newToken: string) => {
-    localStorage.setItem("buildos_token", newToken);
+    localStorage.setItem("slably_token", newToken);
     setToken(newToken);
     queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("buildos_token");
+    localStorage.removeItem("slably_token");
     setToken(null);
     queryClient.clear();
     setLocation("/login");

@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label, Textarea } from "@/components/ui/input";
 
 function getToken(): string | null {
-  return localStorage.getItem("buildos_token");
+  return localStorage.getItem("slably_token");
 }
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic"] as const;
