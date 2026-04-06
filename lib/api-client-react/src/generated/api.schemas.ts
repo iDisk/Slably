@@ -556,3 +556,20 @@ export interface CreateRatingBodyParams {
   communication: number;
   comment?:      string;
 }
+
+export interface SubProfile {
+  id:            number;
+  name:          string;
+  category:      string | null;
+  serviceCity:   string | null;
+  serviceRadius: number | null;
+  createdAt:     string;
+  ratings:       Rating[];
+  averages: {
+    quality:       number;
+    punctuality:   number;
+    communication: number;
+    overall:       number;
+    total:         number;
+  };
+}

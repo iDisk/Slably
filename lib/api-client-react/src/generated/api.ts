@@ -55,6 +55,7 @@ import type {
   UpdateRfqQuoteStatusBodyParams,
   Rating,
   CreateRatingBodyParams,
+  SubProfile,
   DailyLog,
   CreateDailyLogBodyParams,
   UpdateDailyLogBodyParams,
@@ -3592,5 +3593,29 @@ export function useGetRfqRatings<TError = ErrorType<unknown>>(
   const queryKey = queryOptions?.queryKey ?? [`/api/network/rfqs/${rfqId}/ratings`];
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getRfqRatings>>> =
     () => getRfqRatings(rfqId, requestOptions as RequestInit);
+  return useQuery({ queryKey, queryFn, ...queryOptions });
+}
+
+// ─── getSubProfile ────────────────────────────────────────────────────────────
+
+export const getSubProfile = async (
+  subId: number,
+  options?: RequestInit,
+): Promise<SubProfile> =>
+  customFetch<SubProfile>(`/api/subs/${subId}`, { ...options, method: "GET" });
+
+export const getSubProfileQueryKey = (subId: number) => [`/api/subs/${subId}`];
+
+export function useGetSubProfile<TError = ErrorType<unknown>>(
+  subId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getSubProfile>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getSubProfile>>, TError> {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getSubProfileQueryKey(subId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSubProfile>>> =
+    () => getSubProfile(subId, requestOptions as RequestInit);
   return useQuery({ queryKey, queryFn, ...queryOptions });
 }

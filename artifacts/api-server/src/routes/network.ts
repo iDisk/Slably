@@ -9,6 +9,7 @@ import {
   QuoteParams,
   UpdateRfqQuoteStatusBody,
   CreateRatingBody,
+  SubProfileParams,
 } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { sendRfqNotification } from "../lib/email.js";
@@ -430,6 +431,54 @@ router.get("/network/rfqs/:rfqId/ratings", requireAuth, async (req: AuthRequest,
 
   const ratings = await db.select().from(ratingsTable).where(eq(ratingsTable.rfqId, params.data.rfqId));
   res.json(ratings);
+});
+
+// ─── GET /api/subs/:subId (público, sin auth) ────────────────────────────────
+router.get("/subs/:subId", async (req, res): Promise<void> => {
+  const parsed = SubProfileParams.safeParse(req.params);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const [sub] = await db
+    .select({
+      id:            usersTable.id,
+      name:          usersTable.name,
+      category:      usersTable.category,
+      serviceCity:   usersTable.serviceCity,
+      serviceRadius: usersTable.serviceRadius,
+      createdAt:     usersTable.createdAt,
+    })
+    .from(usersTable)
+    .where(and(
+      eq(usersTable.id, parsed.data.subId),
+      eq(usersTable.role, "subcontractor"),
+    ));
+
+  if (!sub) { res.status(404).json({ error: "Subcontractor not found" }); return; }
+
+  const ratings = await db
+    .select({
+      quality:       ratingsTable.quality,
+      punctuality:   ratingsTable.punctuality,
+      communication: ratingsTable.communication,
+      comment:       ratingsTable.comment,
+      createdAt:     ratingsTable.createdAt,
+    })
+    .from(ratingsTable)
+    .where(eq(ratingsTable.ratedId, sub.id));
+
+  const total = ratings.length;
+  const avg = (fn: (r: (typeof ratings)[0]) => number) =>
+    total > 0 ? Math.round((ratings.reduce((s, r) => s + fn(r), 0) / total) * 10) / 10 : 0;
+
+  const averages = {
+    quality:       avg(r => r.quality),
+    punctuality:   avg(r => r.punctuality),
+    communication: avg(r => r.communication),
+    overall:       avg(r => (r.quality + r.punctuality + r.communication) / 3),
+    total,
+  };
+
+  res.json({ ...sub, ratings, averages });
 });
 
 export default router;

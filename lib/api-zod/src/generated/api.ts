@@ -694,6 +694,11 @@ export const CreateRatingBody = zod.object({
   comment:       zod.string().optional(),
 });
 
+// ─── Sub Profile ─────────────────────────────────────────────────────────────
+export const SubProfileParams = zod.object({
+  subId: zod.coerce.number(),
+});
+
 // ─── Daily Logs ─────────────────────────────────────────────────────────────
 export const DailyLogParams = zod.object({
   id: zod.coerce.number(),
