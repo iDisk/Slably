@@ -20,6 +20,7 @@ export const rfqsTable = pgTable(
     status:         text("status").notNull().default("open"),
     createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+    completedAt:    timestamp("completed_at", { withTimezone: true }),
   },
   (table) => [
     index("rfqs_organization_id_idx").on(table.organizationId),

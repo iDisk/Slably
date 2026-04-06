@@ -12,3 +12,4 @@ export * from "./generated_documents";
 export * from "./rfqs";
 export * from "./rfq_quotes";
 export * from "./daily_logs";
+export * from "./ratings";
