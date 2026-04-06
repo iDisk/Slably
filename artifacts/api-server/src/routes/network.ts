@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, ilike, or } from "drizzle-orm";
+import { eq, and, ilike, or, inArray } from "drizzle-orm";
 import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable, ratingsTable } from "@workspace/db";
 import {
   RfqParams,
@@ -32,7 +32,8 @@ router.get("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise<
 
     const baseCity = userData.serviceCity.split(",")[0].trim();
 
-    const rfqs = await db
+    // 1. Open RFQs matching specialty + city
+    const openRfqs = await db
       .select({
         id:            rfqsTable.id,
         title:         rfqsTable.title,
@@ -43,6 +44,7 @@ router.get("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise<
         budgetMax:     rfqsTable.budgetMax,
         startDate:     rfqsTable.startDate,
         status:        rfqsTable.status,
+        completedAt:   rfqsTable.completedAt,
         createdAt:     rfqsTable.createdAt,
         createdByName: usersTable.name,
       })
@@ -56,6 +58,44 @@ router.get("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise<
         ),
         eq(rfqsTable.status, "open"),
       ));
+
+    // 2. Awarded RFQs where this sub has an accepted quote
+    const acceptedQuotes = await db
+      .select({ rfqId: rfqQuotesTable.rfqId })
+      .from(rfqQuotesTable)
+      .where(and(
+        eq(rfqQuotesTable.subcontractorId, user.id),
+        eq(rfqQuotesTable.status, "accepted"),
+      ));
+
+    const awardedRfqs =
+      acceptedQuotes.length > 0
+        ? await db
+            .select({
+              id:            rfqsTable.id,
+              title:         rfqsTable.title,
+              description:   rfqsTable.description,
+              specialty:     rfqsTable.specialty,
+              city:          rfqsTable.city,
+              budgetMin:     rfqsTable.budgetMin,
+              budgetMax:     rfqsTable.budgetMax,
+              startDate:     rfqsTable.startDate,
+              status:        rfqsTable.status,
+              completedAt:   rfqsTable.completedAt,
+              createdAt:     rfqsTable.createdAt,
+              createdByName: usersTable.name,
+            })
+            .from(rfqsTable)
+            .leftJoin(usersTable, eq(rfqsTable.createdBy, usersTable.id))
+            .where(inArray(rfqsTable.id, acceptedQuotes.map(q => q.rfqId)))
+        : [];
+
+    // Combine, deduplicate by id
+    const seenIds = new Set<number>();
+    const rfqs = [];
+    for (const rfq of [...openRfqs, ...awardedRfqs]) {
+      if (!seenIds.has(rfq.id)) { seenIds.add(rfq.id); rfqs.push(rfq); }
+    }
 
     res.json(rfqs);
     return;
@@ -75,6 +115,7 @@ router.get("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise<
         budgetMax:     rfqsTable.budgetMax,
         startDate:     rfqsTable.startDate,
         status:        rfqsTable.status,
+        completedAt:   rfqsTable.completedAt,
         createdAt:     rfqsTable.createdAt,
         createdByName: usersTable.name,
       })

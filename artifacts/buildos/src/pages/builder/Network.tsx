@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import {
   Plus, MapPin, Calendar, DollarSign, ChevronDown, ChevronUp,
-  Loader2, Users, Send, CheckCircle, XCircle, Briefcase, Wrench,
+  Loader2, Users, Send, CheckCircle, XCircle, Briefcase, Wrench, Trophy,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetNetworkRfqs, useCreateRfq, useUpdateRfqStatus,
   useGetRfqQuotes, useCreateRfqQuote, useUpdateRfqQuoteStatus,
+  useCompleteRfq, useCreateRating, useGetRfqRatings,
   getNetworkRfqsQueryKey, getRfqQuotesQueryKey,
   type Rfq, type RfqQuote,
 } from "@workspace/api-client-react";
@@ -96,6 +97,24 @@ function fmt(n: string | null | undefined) {
   return Number(n).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
+// ─── StarRating ───────────────────────────────────────────────────────────────
+function StarRating({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button
+          key={n}
+          type="button"
+          onClick={() => onChange(n)}
+          className={`text-2xl leading-none transition-colors ${n <= value ? "text-amber-400" : "text-gray-300"}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── QuoteRow (builder view — inline) ────────────────────────────────────────
 function QuoteRow({ quote, rfqId, onAction }: { quote: RfqQuote; rfqId: number; onAction: () => void }) {
   const qc = useQueryClient();
@@ -158,14 +177,59 @@ function QuoteRow({ quote, rfqId, onAction }: { quote: RfqQuote; rfqId: number; 
   );
 }
 
-// ─── RfqCard (builder view) ───────────────────────────────────────────────────
+// ─── BuilderRfqCard ───────────────────────────────────────────────────────────
 function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded,      setExpanded]      = useState(false);
+  const [ratingOpen,    setRatingOpen]    = useState(false);
+  const [quality,       setQuality]       = useState(0);
+  const [punctuality,   setPunctuality]   = useState(0);
+  const [communication, setCommunication] = useState(0);
+  const [comment,       setComment]       = useState("");
+
+  const qc = useQueryClient();
+
   const { data: quotes, isLoading: quotesLoading } = useGetRfqQuotes(rfq.id, {
     query: { enabled: expanded, queryKey: getRfqQuotesQueryKey(rfq.id) },
   });
+  const { data: ratings } = useGetRfqRatings(rfq.id, {
+    query: { enabled: !!rfq.completedAt, queryKey: [`/api/network/rfqs/${rfq.id}/ratings`] },
+  });
 
-  const st      = RFQ_STATUS[rfq.status] ?? RFQ_STATUS.open;
+  const completeRfqMut = useCompleteRfq(rfq.id);
+  const createRatingMut = useCreateRating(rfq.id);
+
+  const hasRated = ratings?.some(r => r.role === "builder_rating_sub");
+  const acceptedSub = quotes?.find(q => q.status === "accepted");
+
+  const handleComplete = () => {
+    completeRfqMut.mutate(undefined, {
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: getNetworkRfqsQueryKey() });
+        toast.success("Trabajo marcado como completado");
+      },
+      onError: (e: any) => toast.error(e.message || "Error al completar"),
+    });
+  };
+
+  const handleRate = () => {
+    if (!quality || !punctuality || !communication) {
+      toast.error("Completa todas las calificaciones");
+      return;
+    }
+    createRatingMut.mutate(
+      { data: { quality, punctuality, communication, comment: comment || undefined } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: [`/api/network/rfqs/${rfq.id}/ratings`] });
+          toast.success("Calificación enviada");
+          setRatingOpen(false);
+        },
+        onError: (e: any) => toast.error(e.message || "Error al enviar calificación"),
+      },
+    );
+  };
+
+  const st       = RFQ_STATUS[rfq.status] ?? RFQ_STATUS.open;
   const tradeCls = TRADE_COLORS[rfq.specialty] ?? TRADE_COLORS.other;
 
   return (
@@ -180,6 +244,11 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
                 {TRADE_LABELS[rfq.specialty] ?? rfq.specialty}
               </span>
               <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>
+              {rfq.completedAt && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                  ✓ Completado
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -202,6 +271,79 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
             </p>
           )}
         </div>
+
+        {/* Complete / Rate actions */}
+        {rfq.status === "awarded" && !rfq.completedAt && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            onClick={handleComplete}
+            disabled={completeRfqMut.isPending}
+          >
+            {completeRfqMut.isPending
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <Trophy className="w-3.5 h-3.5" />}
+            Marcar completado
+          </Button>
+        )}
+
+        {rfq.completedAt && !hasRated && (
+          <Dialog open={ratingOpen} onOpenChange={open => {
+            setRatingOpen(open);
+            if (!open) { setQuality(0); setPunctuality(0); setCommunication(0); setComment(""); }
+          }}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="w-full gap-2 bg-amber-500 hover:bg-amber-600 text-white">
+                ★ Calificar subcontratista
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="font-display font-bold text-xl">Califica el trabajo</DialogTitle>
+              </DialogHeader>
+              {acceptedSub && (
+                <p className="text-sm text-muted-foreground -mt-1">{acceptedSub.subName ?? "Subcontratista"}</p>
+              )}
+              <div className="space-y-4 mt-2">
+                {([
+                  { label: "⭐ Calidad del trabajo", val: quality,       set: setQuality },
+                  { label: "⭐ Puntualidad",          val: punctuality,   set: setPunctuality },
+                  { label: "⭐ Comunicación",         val: communication, set: setCommunication },
+                ] as const).map(({ label, val, set }) => (
+                  <div key={label} className="space-y-1">
+                    <p className="text-sm font-medium text-foreground">{label}</p>
+                    <StarRating value={val} onChange={set as (n: number) => void} />
+                  </div>
+                ))}
+                <div className="space-y-1">
+                  <Label>Comentario (opcional)</Label>
+                  <Textarea
+                    value={comment}
+                    onChange={e => setComment(e.target.value)}
+                    placeholder="Describe tu experiencia con el trabajo..."
+                    rows={2}
+                  />
+                </div>
+                <div className="flex justify-end gap-3 pt-1">
+                  <Button type="button" variant="outline" onClick={() => setRatingOpen(false)}>Cancelar</Button>
+                  <Button
+                    onClick={handleRate}
+                    disabled={createRatingMut.isPending}
+                    className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+                  >
+                    {createRatingMut.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Enviar calificación
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {rfq.completedAt && hasRated && (
+          <p className="text-xs text-center text-emerald-600 font-medium py-1">✓ Ya calificaste este trabajo</p>
+        )}
 
         {/* Expand quotes */}
         <button
@@ -243,6 +385,100 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
   );
 }
 
+// ─── SubRatingSection ─────────────────────────────────────────────────────────
+function SubRatingSection({ rfqId, userId, rfq }: { rfqId: number; userId: number; rfq: Rfq }) {
+  const [open,          setOpen]          = useState(false);
+  const [quality,       setQuality]       = useState(0);
+  const [punctuality,   setPunctuality]   = useState(0);
+  const [communication, setCommunication] = useState(0);
+  const [comment,       setComment]       = useState("");
+  const qc = useQueryClient();
+
+  const { data: ratings } = useGetRfqRatings(rfqId, {
+    query: { enabled: !!rfq.completedAt, queryKey: [`/api/network/rfqs/${rfqId}/ratings`] },
+  });
+  const createRatingMut = useCreateRating(rfqId);
+
+  const hasRated = ratings?.some(r => r.raterId === userId && r.role === "sub_rating_builder");
+
+  if (!rfq.completedAt) return null;
+
+  const handleRate = () => {
+    if (!quality || !punctuality || !communication) {
+      toast.error("Completa todas las calificaciones");
+      return;
+    }
+    createRatingMut.mutate(
+      { data: { quality, punctuality, communication, comment: comment || undefined } },
+      {
+        onSuccess: () => {
+          qc.invalidateQueries({ queryKey: [`/api/network/rfqs/${rfqId}/ratings`] });
+          toast.success("Calificación enviada");
+          setOpen(false);
+        },
+        onError: (e: any) => toast.error(e.message || "Error al enviar calificación"),
+      },
+    );
+  };
+
+  if (hasRated) {
+    return <p className="text-xs text-center text-emerald-600 font-medium py-1">✓ Ya calificaste al builder</p>;
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={o => {
+      setOpen(o);
+      if (!o) { setQuality(0); setPunctuality(0); setCommunication(0); setComment(""); }
+    }}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="w-full gap-2 bg-amber-500 hover:bg-amber-600 text-white">
+          ★ Calificar al builder
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-display font-bold text-xl">Califica al contratista</DialogTitle>
+        </DialogHeader>
+        {rfq.createdByName && (
+          <p className="text-sm text-muted-foreground -mt-1">{rfq.createdByName}</p>
+        )}
+        <div className="space-y-4 mt-2">
+          {([
+            { label: "⭐ Claridad del trabajo", val: quality,       set: setQuality },
+            { label: "⭐ Pago a tiempo",         val: punctuality,   set: setPunctuality },
+            { label: "⭐ Comunicación",          val: communication, set: setCommunication },
+          ] as const).map(({ label, val, set }) => (
+            <div key={label} className="space-y-1">
+              <p className="text-sm font-medium text-foreground">{label}</p>
+              <StarRating value={val} onChange={set as (n: number) => void} />
+            </div>
+          ))}
+          <div className="space-y-1">
+            <Label>Comentario (opcional)</Label>
+            <Textarea
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              placeholder="Describe tu experiencia trabajando con este contratista..."
+              rows={2}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-1">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={handleRate}
+              disabled={createRatingMut.isPending}
+              className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
+            >
+              {createRatingMut.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              Enviar calificación
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── SubRfqCard (subcontractor view) ─────────────────────────────────────────
 function SubRfqCard({ rfq, userId }: { rfq: Rfq; userId: number }) {
   const [quoteOpen, setQuoteOpen] = useState(false);
@@ -277,9 +513,16 @@ function SubRfqCard({ rfq, userId }: { rfq: Rfq; userId: number }) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-foreground font-display text-base line-clamp-1">{rfq.title}</h3>
-            <span className={`inline-block mt-1.5 text-xs font-medium px-2 py-0.5 rounded-full ${tradeCls}`}>
-              {TRADE_LABELS[rfq.specialty] ?? rfq.specialty}
-            </span>
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${tradeCls}`}>
+                {TRADE_LABELS[rfq.specialty] ?? rfq.specialty}
+              </span>
+              {rfq.completedAt && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                  ✓ Completado
+                </span>
+              )}
+            </div>
           </div>
           {myQuote && (
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${QUOTE_STATUS[myQuote.status]?.cls ?? ""}`}>
@@ -321,7 +564,7 @@ function SubRfqCard({ rfq, userId }: { rfq: Rfq; userId: number }) {
             <p className="text-sm font-bold text-primary">{fmt(myQuote.amount)}</p>
             {myQuote.message && <p className="text-xs text-muted-foreground italic">"{myQuote.message}"</p>}
           </div>
-        ) : (
+        ) : rfq.status === "open" ? (
           <Dialog open={quoteOpen} onOpenChange={setQuoteOpen}>
             <DialogTrigger asChild>
               <Button className="w-full gap-2" size="sm">
@@ -362,7 +605,10 @@ function SubRfqCard({ rfq, userId }: { rfq: Rfq; userId: number }) {
               </form>
             </DialogContent>
           </Dialog>
-        )}
+        ) : null}
+
+        {/* Rating section for completed RFQs */}
+        <SubRatingSection rfqId={rfq.id} userId={userId} rfq={rfq} />
       </CardContent>
     </Card>
   );

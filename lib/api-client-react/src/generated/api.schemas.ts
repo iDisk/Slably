@@ -456,6 +456,7 @@ export interface Rfq {
   status:         'open' | 'closed' | 'awarded' | 'cancelled';
   createdAt:      string;
   createdByName:  string | null;
+  completedAt:    string | null;
 }
 
 export interface RfqQuote {
