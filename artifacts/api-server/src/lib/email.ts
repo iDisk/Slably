@@ -29,7 +29,7 @@ export async function sendDocumentSigningRequest({
   const signingUrl = `${appUrl}/client?tab=contracts`;
 
   return getResend().emails.send({
-    from: "BuildOS <onboarding@resend.dev>",
+    from: "Slably <onboarding@resend.dev>",
     to,
     subject: `${contractorCompany} te envió un documento para firmar: ${documentTitle}`,
     html: buildEmailHtml({
@@ -60,7 +60,7 @@ export async function sendRfqNotification({
 }) {
   const appUrl = process.env.APP_URL ?? "http://localhost:5173";
   const { data, error } = await getResend().emails.send({
-    from: "BuildOS <onboarding@resend.dev>",
+    from: "Slably <onboarding@resend.dev>",
     to,
     subject: `Nueva solicitud de trabajo: ${rfqTitle}`,
     html: buildRfqEmailHtml({
@@ -138,7 +138,7 @@ function buildRfqEmailHtml(p: {
 
     <div style="background:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;">
       <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
-        Este email fue enviado por BuildOS en nombre de ${p.builderCompany}.
+        Este email fue enviado por Slably en nombre de ${p.builderCompany}.
       </p>
     </div>
   </div>
@@ -214,7 +214,7 @@ function buildEmailHtml(params: {
     <div style="background:#f9fafb;padding:20px 40px;
                 border-top:1px solid #e5e7eb;">
       <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
-        Este email fue enviado por BuildOS en nombre de 
+        Este email fue enviado por Slably en nombre de 
         ${params.contractorCompany}.
       </p>
     </div>
