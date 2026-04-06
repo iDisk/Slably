@@ -53,6 +53,8 @@ import type {
   UpdateRfqStatusBodyParams,
   CreateRfqQuoteBodyParams,
   UpdateRfqQuoteStatusBodyParams,
+  Rating,
+  CreateRatingBodyParams,
   DailyLog,
   CreateDailyLogBodyParams,
   UpdateDailyLogBodyParams,
@@ -3512,4 +3514,83 @@ export function useCreateExpenseFromReceipt<TError = ErrorType<unknown>, TContex
   const mutationFn: MutationFunction<Awaited<ReturnType<typeof createExpenseFromReceipt>>, { data: FormData }> =
     (props) => createExpenseFromReceipt(projectId, props.data, requestOptions as RequestInit);
   return useMutation({ mutationKey, mutationFn, ...mutationOptions });
+}
+
+// ─── completeRfq ──────────────────────────────────────────────────────────────
+
+export const completeRfq = async (
+  rfqId: number,
+  options?: RequestInit,
+): Promise<Rfq> =>
+  customFetch<Rfq>(`/api/network/rfqs/${rfqId}/complete`, {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+  });
+
+export function useCompleteRfq<TError = ErrorType<unknown>, TContext = unknown>(
+  rfqId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof completeRfq>>, TError, void, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof completeRfq>>, TError, void, TContext> {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationKey = [`/api/network/rfqs/${rfqId}/complete`];
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeRfq>>, void> =
+    () => completeRfq(rfqId, requestOptions as RequestInit);
+  return useMutation({ mutationKey, mutationFn, ...mutationOptions });
+}
+
+// ─── createRating ────────────────────────────────────────────────────────────
+
+export const createRating = async (
+  rfqId: number,
+  body: CreateRatingBodyParams,
+  options?: RequestInit,
+): Promise<Rating> =>
+  customFetch<Rating>(`/api/network/rfqs/${rfqId}/ratings`, {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export function useCreateRating<TError = ErrorType<unknown>, TContext = unknown>(
+  rfqId: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof createRating>>, TError, { data: CreateRatingBodyParams }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof createRating>>, TError, { data: CreateRatingBodyParams }, TContext> {
+  const { mutation: mutationOptions, request: requestOptions } = options ?? {};
+  const mutationKey = [`/api/network/rfqs/${rfqId}/ratings`];
+  const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRating>>, { data: CreateRatingBodyParams }> =
+    (props) => createRating(rfqId, props.data, requestOptions as RequestInit);
+  return useMutation({ mutationKey, mutationFn, ...mutationOptions });
+}
+
+// ─── getRfqRatings ───────────────────────────────────────────────────────────
+
+export const getRfqRatings = async (
+  rfqId: number,
+  options?: RequestInit,
+): Promise<Rating[]> =>
+  customFetch<Rating[]>(`/api/network/rfqs/${rfqId}/ratings`, {
+    ...options,
+    method: "GET",
+  });
+
+export function useGetRfqRatings<TError = ErrorType<unknown>>(
+  rfqId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getRfqRatings>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getRfqRatings>>, TError> {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? [`/api/network/rfqs/${rfqId}/ratings`];
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getRfqRatings>>> =
+    () => getRfqRatings(rfqId, requestOptions as RequestInit);
+  return useQuery({ queryKey, queryFn, ...queryOptions });
 }

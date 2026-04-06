@@ -687,6 +687,13 @@ export const UpdateRfqQuoteStatusBody = zod.object({
   status: zod.enum(["pending", "accepted", "rejected"]),
 });
 
+export const CreateRatingBody = zod.object({
+  quality:       zod.number().int().min(1).max(5),
+  punctuality:   zod.number().int().min(1).max(5),
+  communication: zod.number().int().min(1).max(5),
+  comment:       zod.string().optional(),
+});
+
 // ─── Daily Logs ─────────────────────────────────────────────────────────────
 export const DailyLogParams = zod.object({
   id: zod.coerce.number(),

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, ilike, or } from "drizzle-orm";
-import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable } from "@workspace/db";
+import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable, ratingsTable } from "@workspace/db";
 import {
   RfqParams,
   CreateRfqBody,
@@ -8,6 +8,7 @@ import {
   CreateRfqQuoteBody,
   QuoteParams,
   UpdateRfqQuoteStatusBody,
+  CreateRatingBody,
 } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { sendRfqNotification } from "../lib/email.js";
@@ -298,6 +299,96 @@ router.patch("/network/rfqs/:rfqId/quotes/:quoteId", requireAuth, async (req: Au
 
   if (!updated) { res.status(404).json({ error: "Quote not found" }); return; }
   res.json(updated);
+});
+
+// ─── POST /api/network/rfqs/:rfqId/complete ──────────────────────────────────
+router.post("/network/rfqs/:rfqId/complete", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const user = req.user!;
+  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const params = RfqParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const [rfq] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, params.data.rfqId));
+  if (!rfq) { res.status(404).json({ error: "RFQ not found" }); return; }
+  if (rfq.createdBy !== user.id) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const [updated] = await db
+    .update(rfqsTable)
+    .set({ status: "awarded", completedAt: new Date() })
+    .where(eq(rfqsTable.id, params.data.rfqId))
+    .returning();
+
+  res.json(updated);
+});
+
+// ─── POST /api/network/rfqs/:rfqId/ratings ───────────────────────────────────
+router.post("/network/rfqs/:rfqId/ratings", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const user = req.user!;
+  if (user.role !== "builder" && user.role !== "subcontractor") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const params = RfqParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const parsed = CreateRatingBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+
+  const [rfq] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, params.data.rfqId));
+  if (!rfq) { res.status(404).json({ error: "RFQ not found" }); return; }
+  if (rfq.completedAt == null) { res.status(400).json({ error: "RFQ is not completed yet" }); return; }
+
+  let ratedId: number;
+  let role: string;
+
+  if (user.role === "builder") {
+    if (rfq.createdBy !== user.id) { res.status(403).json({ error: "Forbidden" }); return; }
+    const [accepted] = await db
+      .select()
+      .from(rfqQuotesTable)
+      .where(and(eq(rfqQuotesTable.rfqId, rfq.id), eq(rfqQuotesTable.status, "accepted")));
+    if (!accepted) { res.status(400).json({ error: "No accepted quote found" }); return; }
+    ratedId = accepted.subcontractorId;
+    role = "builder_rating_sub";
+  } else {
+    const [myQuote] = await db
+      .select()
+      .from(rfqQuotesTable)
+      .where(and(eq(rfqQuotesTable.rfqId, rfq.id), eq(rfqQuotesTable.subcontractorId, user.id)));
+    if (!myQuote) { res.status(403).json({ error: "No quote found for this RFQ" }); return; }
+    ratedId = rfq.createdBy;
+    role = "sub_rating_builder";
+  }
+
+  const [existing] = await db
+    .select()
+    .from(ratingsTable)
+    .where(and(eq(ratingsTable.rfqId, rfq.id), eq(ratingsTable.raterId, user.id)));
+  if (existing) { res.status(409).json({ error: "Already rated this RFQ" }); return; }
+
+  const [rating] = await db
+    .insert(ratingsTable)
+    .values({ rfqId: rfq.id, raterId: user.id, ratedId, role, ...parsed.data })
+    .returning();
+
+  res.status(201).json(rating);
+});
+
+// ─── GET /api/network/rfqs/:rfqId/ratings ────────────────────────────────────
+router.get("/network/rfqs/:rfqId/ratings", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const user = req.user!;
+
+  const params = RfqParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const [rfq] = await db.select().from(rfqsTable).where(eq(rfqsTable.id, params.data.rfqId));
+  if (!rfq) { res.status(404).json({ error: "RFQ not found" }); return; }
+
+  const isBuilder = user.role === "builder" && rfq.createdBy === user.id;
+  const isSub = user.role === "subcontractor";
+  if (!isBuilder && !isSub) { res.status(403).json({ error: "Forbidden" }); return; }
+
+  const ratings = await db.select().from(ratingsTable).where(eq(ratingsTable.rfqId, params.data.rfqId));
+  res.json(ratings);
 });
 
 export default router;

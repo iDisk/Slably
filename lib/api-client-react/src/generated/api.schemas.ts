@@ -535,3 +535,23 @@ export interface UpdateDailyLogBodyParams {
   notes?:         string;
   status?:        'draft' | 'confirmed';
 }
+
+export interface Rating {
+  id:            number;
+  rfqId:         number;
+  raterId:       number;
+  ratedId:       number;
+  role:          'builder_rating_sub' | 'sub_rating_builder';
+  quality:       number;
+  punctuality:   number;
+  communication: number;
+  comment:       string | null;
+  createdAt:     string;
+}
+
+export interface CreateRatingBodyParams {
+  quality:       number;
+  punctuality:   number;
+  communication: number;
+  comment?:      string;
+}
