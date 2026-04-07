@@ -708,6 +708,15 @@ export const BuilderProfileParams = zod.object({
   builderId: zod.coerce.number(),
 });
 
+// ─── Find ─────────────────────────────────────────────────────────────────────
+export const FindQueryParams = zod.object({
+  role:      zod.enum(["builder", "subcontractor"]).optional(),
+  specialty: zod.string().optional(),
+  city:      zod.string().optional(),
+  page:      zod.coerce.number().int().positive().default(1),
+  limit:     zod.coerce.number().int().positive().max(50).default(12),
+});
+
 // ─── Daily Logs ─────────────────────────────────────────────────────────────
 export const DailyLogParams = zod.object({
   id: zod.coerce.number(),

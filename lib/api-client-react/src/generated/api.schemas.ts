@@ -620,6 +620,47 @@ export interface BuilderProfile {
   badges:    string[];
 }
 
+export interface FindParams {
+  role?:      "builder" | "subcontractor";
+  specialty?: string;
+  city?:      string;
+  page?:      number;
+  limit?:     number;
+}
+
+export interface FindResultItem {
+  id:            number;
+  role:          "builder" | "subcontractor";
+  name:          string;
+  /** @nullable */
+  profilePhoto:  string | null;
+  /** @nullable */
+  companyLogo:   string | null;
+  /** @nullable */
+  companyName:   string | null;
+  /** @nullable */
+  state:         string | null;
+  /** @nullable */
+  category:      string | null;
+  /** @nullable */
+  serviceCity:   string | null;
+  /** @nullable */
+  serviceRadius: number | null;
+  stats: {
+    totalProjects: number;
+    averageRating: number;
+    totalRatings:  number;
+  };
+  badges: string[];
+}
+
+export interface FindResult {
+  data:  FindResultItem[];
+  page:  number;
+  limit: number;
+  total: number;
+}
+
 export interface UploadProfilePhotoResponse {
   profilePhoto: string;
 }

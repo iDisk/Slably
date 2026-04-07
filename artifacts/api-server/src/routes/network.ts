@@ -11,6 +11,7 @@ import {
   CreateRatingBody,
   SubProfileParams,
   BuilderProfileParams,
+  FindQueryParams,
 } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { sendRfqNotification } from "../lib/email.js";
@@ -432,6 +433,103 @@ router.get("/network/rfqs/:rfqId/ratings", requireAuth, async (req: AuthRequest,
 
   const ratings = await db.select().from(ratingsTable).where(eq(ratingsTable.rfqId, params.data.rfqId));
   res.json(ratings);
+});
+
+// ─── GET /api/find (público, sin auth) ───────────────────────────────────────
+router.get("/find", async (req, res): Promise<void> => {
+  const parsed = FindQueryParams.safeParse(req.query);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const { role, specialty, city, page, limit } = parsed.data;
+
+  const conds = [
+    role
+      ? eq(usersTable.role, role)
+      : or(eq(usersTable.role, "builder"), eq(usersTable.role, "subcontractor")),
+  ];
+  if (specialty) conds.push(ilike(usersTable.category, `%${specialty}%`));
+  if (city) conds.push(
+    or(ilike(usersTable.serviceCity, `%${city}%`), ilike(organizationsTable.state, `%${city}%`)),
+  );
+
+  const users = await db
+    .select({
+      id:            usersTable.id,
+      name:          usersTable.name,
+      role:          usersTable.role,
+      profilePhoto:  usersTable.profilePhoto,
+      companyLogo:   usersTable.companyLogo,
+      category:      usersTable.category,
+      serviceCity:   usersTable.serviceCity,
+      serviceRadius: usersTable.serviceRadius,
+      companyName:   organizationsTable.companyName,
+      state:         organizationsTable.state,
+    })
+    .from(usersTable)
+    .leftJoin(organizationsTable, eq(usersTable.organizationId, organizationsTable.id))
+    .where(and(...(conds as any[])));
+
+  if (users.length === 0) { res.json({ data: [], page, limit, total: 0 }); return; }
+
+  const userIds    = users.map(u => u.id);
+  const builderIds = users.filter(u => u.role === "builder").map(u => u.id);
+
+  const projectRows = builderIds.length > 0
+    ? await db
+        .select({ builderId: projectsTable.builderId })
+        .from(projectsTable)
+        .where(and(inArray(projectsTable.builderId, builderIds), eq(projectsTable.status, "completed")))
+    : [];
+  const projectCountMap = new Map<number, number>();
+  for (const p of projectRows) {
+    const bid = p.builderId as number;
+    projectCountMap.set(bid, (projectCountMap.get(bid) ?? 0) + 1);
+  }
+
+  const ratingRows = await db
+    .select({ ratedId: ratingsTable.ratedId, quality: ratingsTable.quality, punctuality: ratingsTable.punctuality, communication: ratingsTable.communication })
+    .from(ratingsTable)
+    .where(inArray(ratingsTable.ratedId, userIds));
+  const ratingsByUser = new Map<number, { quality: number; punctuality: number; communication: number }[]>();
+  for (const r of ratingRows) {
+    const arr = ratingsByUser.get(r.ratedId) ?? [];
+    arr.push(r);
+    ratingsByUser.set(r.ratedId, arr);
+  }
+
+  const items = users.map(u => {
+    const totalProjects = projectCountMap.get(u.id) ?? 0;
+    const ratings       = ratingsByUser.get(u.id) ?? [];
+    const totalRatings  = ratings.length;
+    const averageRating = totalRatings > 0
+      ? Math.round((ratings.reduce((s, r) => s + (r.quality + r.punctuality + r.communication) / 3, 0) / totalRatings) * 10) / 10
+      : 0;
+
+    const badges: string[] = [];
+    if (u.role === "builder") {
+      if (totalProjects >= 3)                        badges.push("verified");
+      if (averageRating >= 4.5 && totalRatings >= 5) badges.push("top_rated");
+      if (totalProjects >= 10)                       badges.push("experienced");
+    } else {
+      if (totalRatings >= 3)                         badges.push("verified");
+      if (averageRating >= 4.5 && totalRatings >= 5) badges.push("top_rated");
+    }
+
+    return {
+      id: u.id, role: u.role as "builder" | "subcontractor",
+      name: u.name, profilePhoto: u.profilePhoto, companyLogo: u.companyLogo,
+      companyName: u.companyName, state: u.state, category: u.category,
+      serviceCity: u.serviceCity, serviceRadius: u.serviceRadius,
+      stats: { totalProjects, averageRating, totalRatings },
+      badges,
+    };
+  }).sort((a, b) => {
+    if (b.stats.averageRating !== a.stats.averageRating) return b.stats.averageRating - a.stats.averageRating;
+    return b.stats.totalRatings - a.stats.totalRatings;
+  });
+
+  const total = items.length;
+  const start = (page - 1) * limit;
+  res.json({ data: items.slice(start, start + limit), page, limit, total });
 });
 
 // ─── GET /api/builders/:builderId (público, sin auth) ────────────────────────

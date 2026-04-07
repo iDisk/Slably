@@ -59,6 +59,8 @@ import type {
   CreateRatingBodyParams,
   SubProfile,
   BuilderProfile,
+  FindParams,
+  FindResult,
   DailyLog,
   CreateDailyLogBodyParams,
   UpdateDailyLogBodyParams,
@@ -3644,6 +3646,38 @@ export function useGetBuilderProfile<TError = ErrorType<unknown>>(
   const queryKey = queryOptions?.queryKey ?? getBuilderProfileQueryKey(builderId);
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getBuilderProfile>>> =
     () => getBuilderProfile(builderId, requestOptions as RequestInit);
+  return useQuery({ queryKey, queryFn, ...queryOptions });
+}
+
+// ─── find ─────────────────────────────────────────────────────────────────────
+
+export const getFind = async (
+  params: FindParams = {},
+  options?: RequestInit,
+): Promise<FindResult> => {
+  const qs = new URLSearchParams();
+  if (params.role)      qs.set("role", params.role);
+  if (params.specialty) qs.set("specialty", params.specialty);
+  if (params.city)      qs.set("city", params.city);
+  if (params.page)      qs.set("page", String(params.page));
+  if (params.limit)     qs.set("limit", String(params.limit));
+  const q = qs.toString();
+  return customFetch<FindResult>(`/api/find${q ? `?${q}` : ""}`, { ...options, method: "GET" });
+};
+
+export const getFindQueryKey = (params: FindParams = {}) => ["/api/find", params];
+
+export function useFind<TError = ErrorType<unknown>>(
+  params: FindParams = {},
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getFind>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getFind>>, TError> {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getFindQueryKey(params);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getFind>>> =
+    () => getFind(params, requestOptions as RequestInit);
   return useQuery({ queryKey, queryFn, ...queryOptions });
 }
 
