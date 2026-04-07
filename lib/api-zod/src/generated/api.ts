@@ -703,6 +703,11 @@ export const SubProfileParams = zod.object({
   subId: zod.coerce.number(),
 });
 
+// ─── Builder Profile ─────────────────────────────────────────────────────────
+export const BuilderProfileParams = zod.object({
+  builderId: zod.coerce.number(),
+});
+
 // ─── Daily Logs ─────────────────────────────────────────────────────────────
 export const DailyLogParams = zod.object({
   id: zod.coerce.number(),

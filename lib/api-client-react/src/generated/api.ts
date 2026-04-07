@@ -58,6 +58,7 @@ import type {
   Rating,
   CreateRatingBodyParams,
   SubProfile,
+  BuilderProfile,
   DailyLog,
   CreateDailyLogBodyParams,
   UpdateDailyLogBodyParams,
@@ -3619,6 +3620,30 @@ export function useGetSubProfile<TError = ErrorType<unknown>>(
   const queryKey = queryOptions?.queryKey ?? getSubProfileQueryKey(subId);
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getSubProfile>>> =
     () => getSubProfile(subId, requestOptions as RequestInit);
+  return useQuery({ queryKey, queryFn, ...queryOptions });
+}
+
+// ─── getBuilderProfile ────────────────────────────────────────────────────────
+
+export const getBuilderProfile = async (
+  builderId: number,
+  options?: RequestInit,
+): Promise<BuilderProfile> =>
+  customFetch<BuilderProfile>(`/api/builders/${builderId}`, { ...options, method: "GET" });
+
+export const getBuilderProfileQueryKey = (builderId: number) => [`/api/builders/${builderId}`];
+
+export function useGetBuilderProfile<TError = ErrorType<unknown>>(
+  builderId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getBuilderProfile>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getBuilderProfile>>, TError> {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getBuilderProfileQueryKey(builderId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getBuilderProfile>>> =
+    () => getBuilderProfile(builderId, requestOptions as RequestInit);
   return useQuery({ queryKey, queryFn, ...queryOptions });
 }
 

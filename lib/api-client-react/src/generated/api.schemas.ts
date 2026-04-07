@@ -580,6 +580,46 @@ export interface SubProfile {
   };
 }
 
+export interface BuilderPortfolioPhoto {
+  fileUrl: string;
+}
+
+export interface BuilderPortfolioProject {
+  id:          number;
+  name:        string;
+  address:     string;
+  /** @nullable */
+  projectType: string | null;
+  /** @nullable */
+  startDate:   string | null;
+  photos:      BuilderPortfolioPhoto[];
+}
+
+export interface BuilderProfile {
+  id:            number;
+  name:          string;
+  /** @nullable */
+  profilePhoto:  string | null;
+  /** @nullable */
+  companyLogo:   string | null;
+  createdAt:     string;
+  /** @nullable */
+  companyName:   string | null;
+  /** @nullable */
+  licenseNumber: string | null;
+  /** @nullable */
+  state:         string | null;
+  /** @nullable */
+  phone:         string | null;
+  stats: {
+    totalProjects: number;
+    totalRatings:  number;
+    averageRating: number;
+  };
+  portfolio: BuilderPortfolioProject[];
+  badges:    string[];
+}
+
 export interface UploadProfilePhotoResponse {
   profilePhoto: string;
 }

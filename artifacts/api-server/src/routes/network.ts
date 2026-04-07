@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, and, ilike, or, inArray } from "drizzle-orm";
-import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable, ratingsTable } from "@workspace/db";
+import { eq, and, ilike, or, inArray, desc } from "drizzle-orm";
+import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable, ratingsTable, projectsTable, photosTable } from "@workspace/db";
 import {
   RfqParams,
   CreateRfqBody,
@@ -10,6 +10,7 @@ import {
   UpdateRfqQuoteStatusBody,
   CreateRatingBody,
   SubProfileParams,
+  BuilderProfileParams,
 } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { sendRfqNotification } from "../lib/email.js";
@@ -431,6 +432,100 @@ router.get("/network/rfqs/:rfqId/ratings", requireAuth, async (req: AuthRequest,
 
   const ratings = await db.select().from(ratingsTable).where(eq(ratingsTable.rfqId, params.data.rfqId));
   res.json(ratings);
+});
+
+// ─── GET /api/builders/:builderId (público, sin auth) ────────────────────────
+router.get("/builders/:builderId", async (req, res): Promise<void> => {
+  const parsed = BuilderProfileParams.safeParse(req.params);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const { builderId } = parsed.data;
+
+  // 1. Builder user
+  const [builder] = await db
+    .select({
+      id:             usersTable.id,
+      name:           usersTable.name,
+      profilePhoto:   usersTable.profilePhoto,
+      companyLogo:    usersTable.companyLogo,
+      createdAt:      usersTable.createdAt,
+      organizationId: usersTable.organizationId,
+    })
+    .from(usersTable)
+    .where(and(eq(usersTable.id, builderId), eq(usersTable.role, "builder")));
+
+  if (!builder) { res.status(404).json({ error: "Builder not found" }); return; }
+
+  // 2. Organization data
+  let orgData = { companyName: null as string | null, licenseNumber: null as string | null, state: null as string | null, phone: null as string | null };
+  if (builder.organizationId) {
+    const [org] = await db
+      .select({ companyName: organizationsTable.companyName, licenseNumber: organizationsTable.licenseNumber, state: organizationsTable.state, phone: organizationsTable.phone })
+      .from(organizationsTable)
+      .where(eq(organizationsTable.id, builder.organizationId));
+    if (org) orgData = org;
+  }
+
+  // 3. Completed projects count
+  const allCompleted = await db
+    .select({ id: projectsTable.id })
+    .from(projectsTable)
+    .where(and(eq(projectsTable.builderId, builderId), eq(projectsTable.status, "completed")));
+  const totalProjects = allCompleted.length;
+
+  // 4. Ratings received (subs rating this builder)
+  const ratings = await db
+    .select({ quality: ratingsTable.quality, punctuality: ratingsTable.punctuality, communication: ratingsTable.communication })
+    .from(ratingsTable)
+    .where(and(eq(ratingsTable.ratedId, builderId), eq(ratingsTable.role, "sub_rating_builder")));
+  const totalRatings = ratings.length;
+  const averageRating = totalRatings > 0
+    ? Math.round((ratings.reduce((s, r) => s + (r.quality + r.punctuality + r.communication) / 3, 0) / totalRatings) * 10) / 10
+    : 0;
+
+  // 5. Portfolio: last 6 completed projects
+  const portfolioRows = await db
+    .select({ id: projectsTable.id, name: projectsTable.name, address: projectsTable.address, projectType: projectsTable.projectType, startDate: projectsTable.startDate })
+    .from(projectsTable)
+    .where(and(eq(projectsTable.builderId, builderId), eq(projectsTable.status, "completed")))
+    .orderBy(desc(projectsTable.createdAt))
+    .limit(6);
+
+  // 6. Photos for those projects (max 4 each, visible_to_client = true)
+  let portfolio = portfolioRows.map(p => ({ ...p, photos: [] as { fileUrl: string }[] }));
+  if (portfolioRows.length > 0) {
+    const ids = portfolioRows.map(p => p.id);
+    const photos = await db
+      .select({ projectId: photosTable.projectId, fileUrl: photosTable.fileUrl })
+      .from(photosTable)
+      .where(and(inArray(photosTable.projectId, ids), eq(photosTable.visibleToClient, true)))
+      .orderBy(desc(photosTable.createdAt));
+
+    const byProject = new Map<number, { fileUrl: string }[]>();
+    for (const ph of photos) {
+      const arr = byProject.get(ph.projectId) ?? [];
+      if (arr.length < 4) arr.push({ fileUrl: ph.fileUrl });
+      byProject.set(ph.projectId, arr);
+    }
+    portfolio = portfolioRows.map(p => ({ ...p, photos: byProject.get(p.id) ?? [] }));
+  }
+
+  // 7. Badges
+  const badges: string[] = [];
+  if (totalProjects >= 3)                        badges.push("verified");
+  if (averageRating >= 4.5 && totalRatings >= 5) badges.push("top_rated");
+  if (totalProjects >= 10)                       badges.push("experienced");
+
+  res.json({
+    id:           builder.id,
+    name:         builder.name,
+    profilePhoto: builder.profilePhoto,
+    companyLogo:  builder.companyLogo,
+    createdAt:    builder.createdAt,
+    ...orgData,
+    stats:     { totalProjects, totalRatings, averageRating },
+    portfolio,
+    badges,
+  });
 });
 
 // ─── GET /api/subs/:subId (público, sin auth) ────────────────────────────────
