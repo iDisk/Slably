@@ -1,0 +1,72 @@
+Implementa SEO básico en 3 cambios:
+
+CAMBIO 1 — artifacts/buildos/public/robots.txt
+Crea este archivo nuevo:
+
+User-agent: *
+Allow: /
+Allow: /find
+Allow: /builder/
+Allow: /sub/
+Disallow: /dashboard
+Disallow: /projects
+Disallow: /network
+Disallow: /profile
+
+Sitemap: https://slably.app/sitemap.xml
+
+CAMBIO 2 — artifacts/buildos/index.html
+Agrega estos meta tags en el <head>
+después del <title>:
+
+<meta name="description" content="Slably — Tu red de construcción. Conecta con constructores y subcontratistas verificados en Texas y Florida." />
+<meta name="keywords" content="contratistas latinos, constructores Texas, subcontratistas Florida, construcción Houston, plomero Houston" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Slably — Tu red de construcción" />
+<meta property="og:description" content="Conecta con constructores y subcontratistas verificados." />
+<meta property="og:image" content="/opengraph.jpg" />
+<meta property="og:site_name" content="Slably" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Slably — Tu red de construcción" />
+<meta name="twitter:description" content="Conecta con constructores y subcontratistas verificados." />
+<meta name="twitter:image" content="/opengraph.jpg" />
+
+CAMBIO 3 — artifacts/api-server/src/routes/network.ts
+Agrega un endpoint público para el sitemap:
+
+GET /sitemap.xml
+Sin autenticación.
+Devuelve XML con:
+- URL raíz: /find
+- Una URL por cada builder: /builder/:id
+- Una URL por cada sub: /sub/:id
+
+El XML debe tener este formato:
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://slably.app/find</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://slably.app/builder/1</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  ...
+</urlset>
+
+Lee los usuarios de la DB con role 
+builder o subcontractor para generar 
+las URLs dinámicamente.
+
+Usa el header:
+Content-Type: application/xml
+
+Muéstrame el diff de los 3 cambios 
+antes de aplicar.
