@@ -49,10 +49,10 @@ export default function Find() {
         {/* Heading */}
         <div className="space-y-1">
           <h1 className="text-3xl font-display font-bold text-foreground">
-            Encuentra profesionales de construcción
+            Tu red de construcción
           </h1>
           <p className="text-sm text-muted-foreground">
-            Conecta con constructores y subcontratistas verificados.
+            Conecta con constructores y subcontratistas verificados en tu área.
           </p>
         </div>
 
