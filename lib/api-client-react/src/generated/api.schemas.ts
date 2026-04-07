@@ -579,3 +579,11 @@ export interface SubProfile {
     total:         number;
   };
 }
+
+export interface UploadProfilePhotoResponse {
+  profilePhoto: string;
+}
+
+export interface UploadCompanyLogoResponse {
+  companyLogo: string;
+}
