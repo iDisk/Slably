@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Save, Building2, Phone, MapPin, BadgeCheck, User } from "lucide-react";
+import { Loader2, Save, Building2, Phone, MapPin, BadgeCheck, User, Share2, Copy } from "lucide-react";
 
 import { useGetMyOrg, useUpdateMyOrg, getGetMyOrgQueryKey } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,6 +23,10 @@ type ProfileForm = z.infer<typeof profileSchema>;
 
 export default function Profile() {
   const { user } = useAuth();
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const profileUrl = user?.role === "subcontractor"
+    ? `${window.location.origin}${base}/sub/${user.id}`
+    : `${window.location.origin}${base}/builder/${user?.id}`;
   const queryClient = useQueryClient();
   const { data: org, isLoading } = useGetMyOrg();
   const updateMutation = useUpdateMyOrg();
@@ -176,6 +180,36 @@ export default function Profile() {
                 </div>
               </form>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Public profile link */}
+        <Card className="border-none shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Share2 className="w-4 h-4 text-primary" /> Tu perfil público
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Comparte este link para que otros vean tu perfil y calificaciones
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-muted rounded-lg px-3 py-2 text-xs text-muted-foreground font-mono truncate">
+                {profileUrl}
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 shrink-0"
+                onClick={() => {
+                  navigator.clipboard.writeText(profileUrl);
+                  toast.success("Link copiado al portapapeles");
+                }}
+              >
+                <Copy className="w-3.5 h-3.5" /> Copiar
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
