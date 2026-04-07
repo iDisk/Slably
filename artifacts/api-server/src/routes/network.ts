@@ -674,4 +674,27 @@ router.get("/subs/:subId", async (req, res): Promise<void> => {
   res.json({ ...sub, ratings, averages });
 });
 
+// ─── GET /sitemap.xml (público, sin auth) ────────────────────────────────────
+router.get("/sitemap.xml", async (req, res): Promise<void> => {
+  const users = await db
+    .select({ id: usersTable.id, role: usersTable.role })
+    .from(usersTable)
+    .where(or(eq(usersTable.role, "builder"), eq(usersTable.role, "subcontractor")));
+
+  const base = "https://slably.app";
+
+  const urls = [
+    `  <url>\n    <loc>${base}/find</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>`,
+    ...users.map(u => {
+      const path = u.role === "builder" ? `builder/${u.id}` : `sub/${u.id}`;
+      return `  <url>\n    <loc>${base}/${path}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>`;
+    }),
+  ];
+
+  res.setHeader("Content-Type", "application/xml");
+  res.send(
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`,
+  );
+});
+
 export default router;

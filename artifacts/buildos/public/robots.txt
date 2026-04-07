@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /find
+Allow: /builder/
+Allow: /sub/
+Disallow: /dashboard
+Disallow: /projects
+Disallow: /network
+Disallow: /profile
+
+Sitemap: https://slably.app/sitemap.xml
