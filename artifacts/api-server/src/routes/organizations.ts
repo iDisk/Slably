@@ -1,13 +1,14 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
-import { db, organizationsTable } from "@workspace/db";
+import { db, organizationsTable, usersTable } from "@workspace/db";
 import {
-  GetMyOrgResponse,
   UpdateMyOrgBody,
 } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router: IRouter = Router();
+
+// ─── GET /api/organizations/me ────────────────────────────────────────────────
 
 router.get("/organizations/me", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const user = req.user!;
@@ -24,19 +25,29 @@ router.get("/organizations/me", requireAuth, async (req: AuthRequest, res): Prom
     return;
   }
 
-  res.json(GetMyOrgResponse.parse(org));
+  const [userData] = await db
+    .select({ profilePhoto: usersTable.profilePhoto, companyLogo: usersTable.companyLogo })
+    .from(usersTable)
+    .where(eq(usersTable.id, user.id));
+
+  res.json({
+    id:            org.id,
+    name:          org.name,
+    slug:          org.slug,
+    companyName:   org.companyName,
+    licenseNumber: org.licenseNumber,
+    state:         org.state,
+    phone:         org.phone,
+    createdAt:     org.createdAt,
+    profilePhoto:  userData?.profilePhoto  ?? null,
+    companyLogo:   userData?.companyLogo   ?? null,
+  });
 });
+
+// ─── PATCH /api/organizations/me ─────────────────────────────────────────────
 
 router.patch("/organizations/me", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const user = req.user!;
-  if (user.role !== "builder") {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-  if (!user.organizationId) {
-    res.status(404).json({ error: "No organization found" });
-    return;
-  }
 
   const parsed = UpdateMyOrgBody.safeParse(req.body);
   if (!parsed.success) {
@@ -44,18 +55,59 @@ router.patch("/organizations/me", requireAuth, async (req: AuthRequest, res): Pr
     return;
   }
 
-  const updateData: Record<string, unknown> = {};
-  if (parsed.data.companyName   !== undefined) updateData.companyName   = parsed.data.companyName;
-  if (parsed.data.licenseNumber !== undefined) updateData.licenseNumber = parsed.data.licenseNumber;
-  if (parsed.data.state         !== undefined) updateData.state         = parsed.data.state;
-  if (parsed.data.phone         !== undefined) updateData.phone         = parsed.data.phone;
+  // Update user-level photo fields (any role)
+  const userUpdate: Record<string, unknown> = {};
+  if (parsed.data.profilePhoto !== undefined) userUpdate.profilePhoto = parsed.data.profilePhoto;
+  if (parsed.data.companyLogo  !== undefined) userUpdate.companyLogo  = parsed.data.companyLogo;
+  if (Object.keys(userUpdate).length > 0) {
+    await db.update(usersTable).set(userUpdate).where(eq(usersTable.id, user.id));
+  }
 
-  const [org] = await db.update(organizationsTable)
-    .set(updateData)
-    .where(eq(organizationsTable.id, user.organizationId))
-    .returning();
+  // Update org-level fields (builder only)
+  let org = null;
+  if (user.role === "builder" && user.organizationId) {
+    const orgData: Record<string, unknown> = {};
+    if (parsed.data.companyName   !== undefined) orgData.companyName   = parsed.data.companyName;
+    if (parsed.data.licenseNumber !== undefined) orgData.licenseNumber = parsed.data.licenseNumber;
+    if (parsed.data.state         !== undefined) orgData.state         = parsed.data.state;
+    if (parsed.data.phone         !== undefined) orgData.phone         = parsed.data.phone;
 
-  res.json(GetMyOrgResponse.parse(org));
+    if (Object.keys(orgData).length > 0) {
+      [org] = await db.update(organizationsTable)
+        .set(orgData)
+        .where(eq(organizationsTable.id, user.organizationId))
+        .returning();
+    } else {
+      [org] = await db.select().from(organizationsTable)
+        .where(eq(organizationsTable.id, user.organizationId));
+    }
+  }
+
+  const [userData] = await db
+    .select({ profilePhoto: usersTable.profilePhoto, companyLogo: usersTable.companyLogo })
+    .from(usersTable)
+    .where(eq(usersTable.id, user.id));
+
+  if (!org) {
+    res.json({
+      profilePhoto: userData?.profilePhoto ?? null,
+      companyLogo:  userData?.companyLogo  ?? null,
+    });
+    return;
+  }
+
+  res.json({
+    id:            org.id,
+    name:          org.name,
+    slug:          org.slug,
+    companyName:   org.companyName,
+    licenseNumber: org.licenseNumber,
+    state:         org.state,
+    phone:         org.phone,
+    createdAt:     org.createdAt,
+    profilePhoto:  userData?.profilePhoto  ?? null,
+    companyLogo:   userData?.companyLogo   ?? null,
+  });
 });
 
 export default router;

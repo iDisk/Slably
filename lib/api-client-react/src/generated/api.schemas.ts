@@ -429,6 +429,10 @@ export interface Organization {
   /** @nullable */
   phone: string | null;
   createdAt: string;
+  /** @nullable */
+  profilePhoto: string | null;
+  /** @nullable */
+  companyLogo:  string | null;
 }
 
 export interface UpdateMyOrgBody {
@@ -436,6 +440,8 @@ export interface UpdateMyOrgBody {
   licenseNumber?: string;
   state?: string;
   phone?: string;
+  profilePhoto?: string;
+  companyLogo?:  string;
 }
 
 export interface UpdatePhaseBody {

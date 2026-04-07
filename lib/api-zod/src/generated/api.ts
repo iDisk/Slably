@@ -569,6 +569,8 @@ export const GetMyOrgResponse = zod.object({
   state:         zod.string().nullable(),
   phone:         zod.string().nullable(),
   createdAt:     zod.coerce.date(),
+  profilePhoto:  zod.string().nullable(),
+  companyLogo:   zod.string().nullable(),
 });
 
 /**
@@ -579,6 +581,8 @@ export const UpdateMyOrgBody = zod.object({
   licenseNumber: zod.string().optional(),
   state:         zod.string().optional(),
   phone:         zod.string().optional(),
+  profilePhoto:  zod.string().optional(),
+  companyLogo:   zod.string().optional(),
 });
 
 // ─── Documents & Templates ───────────────────────────────────────────────────

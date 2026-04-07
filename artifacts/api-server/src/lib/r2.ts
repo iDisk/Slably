@@ -44,3 +44,19 @@ export async function getPresignedUploadUrl(
 export function getPublicUrl(key: string): string {
   return `${publicUrlBase}/${key}`;
 }
+
+export async function uploadBuffer(
+  key: string,
+  buffer: Buffer,
+  contentType: string,
+): Promise<string> {
+  await r2Client.send(
+    new PutObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    }),
+  );
+  return getPublicUrl(key);
+}
