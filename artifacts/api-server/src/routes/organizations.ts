@@ -13,7 +13,23 @@ const router: IRouter = Router();
 router.get("/organizations/me", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const user = req.user!;
   if (!user.organizationId) {
-    res.status(404).json({ error: "No organization found" });
+    const [userData] = await db
+      .select({ profilePhoto: usersTable.profilePhoto, companyLogo: usersTable.companyLogo })
+      .from(usersTable)
+      .where(eq(usersTable.id, user.id));
+
+    res.json({
+      id:            null,
+      name:          null,
+      slug:          null,
+      companyName:   null,
+      licenseNumber: null,
+      state:         null,
+      phone:         null,
+      createdAt:     null,
+      profilePhoto:  userData?.profilePhoto ?? null,
+      companyLogo:   userData?.companyLogo  ?? null,
+    });
     return;
   }
 
