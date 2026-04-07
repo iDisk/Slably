@@ -17,6 +17,8 @@ export const usersTable = pgTable(
     category:       text("category"),
     serviceCity:    text("service_city"),
     serviceRadius:  integer("service_radius"),
+    profilePhoto:   text("profile_photo"),
+    companyLogo:    text("company_logo"),
     createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
