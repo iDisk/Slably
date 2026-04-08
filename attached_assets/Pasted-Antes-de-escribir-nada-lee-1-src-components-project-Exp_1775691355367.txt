@@ -1,0 +1,166 @@
+Antes de escribir nada, lee:
+1. src/components/project/ExpensesTab.tsx
+   — para seguir el mismo patrón de UI
+2. src/components/project/DailyLogTab.tsx
+   — para ver el patrón de vistas múltiples
+3. src/pages/builder/ProjectDetails.tsx
+   — para ver cómo se agregan tabs
+
+Crea src/components/project/VendorsTab.tsx
+
+El componente recibe { projectId } como prop.
+
+Usa estos hooks importados de 
+@workspace/api-client-react:
+useGetVendors, useCreateVendor, 
+usePatchVendor, useDeleteVendor,
+useGetVendorPayments, useCreateVendorPayment,
+usePatchVendorPayment, useDeleteVendorPayment,
+useGetVendorChangeOrders, useCreateVendorChangeOrder,
+usePatchVendorChangeOrder, useGetVendorLedger,
+useGetVendorAlerts
+
+VISTA 1 — Lista de vendors (default)
+
+Header: "Proveedores" + botón naranja 
+"+ Agregar Proveedor"
+
+Banner de alertas (si hay alertas activas):
+Fondo rojo si hay alertas 'high',
+naranja si solo hay 'medium' o 'low'.
+Texto: "⚠️ X alertas requieren atención"
+Lista colapsable de alertas con:
+- ícono según tipo (🔴 pago vencido, 
+  🟡 change order pendiente, 
+  🟠 COI por vencer, ⚪ sin actividad)
+- mensaje de la alerta
+- nombre del vendor
+- botón "Ver" → abre detalle de ese vendor
+
+Cada vendor card:
+- Nombre en bold + empresa en gris
+- Badge de tipo:
+  subcontractor → azul "Subcontratista"
+  supplier → verde "Proveedor"
+  other → gris "Otro"
+- Badge de status:
+  active → verde "Activo"
+  completed → azul "Completado"
+  paused → amarillo "Pausado"
+  cancelled → rojo "Cancelado"
+- Especialidad si existe
+- 3 pills financieros:
+  "Contrato: $X,XXX" 
+  "Pagado: $X,XXX" en verde
+  "Pendiente: $X,XXX" en rojo si > 0, 
+  verde si = 0
+- Si tiene linkedUserId → botón outline 
+  pequeño "Ver perfil" que navega a 
+  /sub/:linkedUserId
+- Botón "Ver detalle →"
+
+Estado vacío:
+Ícono de edificio + texto:
+"No hay proveedores en este proyecto.
+Agrega subcontratistas y proveedores 
+para hacer seguimiento financiero."
+
+VISTA 2 — Detalle del vendor
+
+Header: nombre del vendor + badge status
+Botón "← Volver" arriba izquierda
+Botones: "Editar" (outline) + 
+"Cancelar vendor" (rojo, solo si active)
+
+LEDGER CARD (siempre visible arriba):
+Fondo azul muy claro (blue-50):
+Contrato original:      $XX,XXX
++ Change Orders:        +$X,XXX
+= Contrato ajustado:    $XX,XXX
+──────────────────────────────────
+Pagado:                ($X,XXX)
+BALANCE PENDIENTE:      $X,XXX
+(en rojo si > 0, en verde si = 0)
+
+SECCIÓN PAGOS:
+Título "Pagos" + botón "+ Agregar Pago"
+Lista de pagos con:
+- Descripción + método de pago
+- Monto formateado
+- Badge de status:
+  pending → amarillo "Pendiente"
+  paid → verde "Pagado"
+  overdue → rojo "Vencido"
+  cancelled → gris "Cancelado"
+- Fecha de vencimiento si existe
+- Si status=pending o overdue:
+  botón "Marcar como pagado" → 
+  PATCH status='paid'
+
+Estado vacío: "Sin pagos registrados"
+
+SECCIÓN CHANGE ORDERS DEL VENDOR:
+Título "Change Orders" + botón "+ CO"
+Lista con:
+- Número + título
+- Monto (verde si positivo, rojo si negativo)
+- Badge: pending/approved/rejected
+- Si pending: botones "Aprobar" y "Rechazar"
+
+Estado vacío: "Sin change orders"
+
+SECCIÓN INFORMACIÓN:
+Grid 2 col con: email, teléfono, 
+especialidad, tipo de contrato
+Notas del contrato si existen
+
+Documentos:
+W-9: link si existe o "No cargado"
+COI: link + fecha vencimiento si existe
+Si COI vence en < 30 días → badge rojo 
+"⚠️ Por vencer"
+
+TIMELINE (al fondo):
+Lista cronológica de todas las 
+transacciones del ledger:
+- Ícono según tipo:
+  contract → 📋 azul
+  change_order → 🔄 naranja  
+  payment → 💰 verde
+- Fecha + descripción + monto
+- Balance corriente acumulado
+
+MODAL crear vendor:
+Campos:
+- Nombre * (text input)
+- Tipo * (select: Subcontratista/Proveedor/Otro)
+- Empresa (text input)
+- Especialidad (text input)
+- Email (email input)
+- Teléfono (text input)
+- Monto del contrato (number input)
+- Notas del contrato (textarea)
+
+MODAL agregar pago:
+Campos:
+- Descripción * (text input)
+- Monto * (number input)
+- Tipo de pago * (select: Draw/Depósito/Final/Otro)
+- Estado (select: Pendiente/Pagado)
+- Fecha de vencimiento (date input)
+- Método de pago (select: Check/Zelle/Efectivo/Transferencia)
+- Notas (textarea)
+
+MODAL agregar change order:
+Campos:
+- Título * (text input)
+- Monto * (number input, puede ser negativo)
+- Descripción (textarea)
+
+Conecta en ProjectDetails.tsx:
+- Import VendorsTab
+- Agrega TabsTrigger "Proveedores" 
+  entre "Fases" y "Daily Log"
+- Agrega TabsContent correspondiente
+
+Muéstrame el diff completo antes de aplicar.
