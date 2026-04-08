@@ -566,6 +566,87 @@ export function VendorsTab({ projectId }: { projectId: number }) {
         </div>
       </div>
 
+      {/* Performance */}
+      {selectedVendor.contractAmount && parseFloat(selectedVendor.contractAmount) > 0 && (
+        <Card className="border border-border shadow-sm bg-white">
+          <CardContent className="p-5 space-y-5">
+            <h4 className="font-semibold text-foreground">Performance</h4>
+
+            {!ledger ? (
+              <div className="space-y-3">
+                <div className="h-4 bg-slate-100 rounded animate-pulse w-3/4" />
+                <div className="h-3 bg-slate-100 rounded animate-pulse w-1/2" />
+                <div className="h-4 bg-slate-100 rounded animate-pulse w-3/4 mt-4" />
+                <div className="h-3 bg-slate-100 rounded animate-pulse w-1/2" />
+              </div>
+            ) : (() => {
+              const origAmt   = parseFloat(selectedVendor.contractAmount!);
+              const adjAmt    = ledger.adjusted_contract;
+              const paidAmt   = ledger.payments_made;
+              const variacion = adjAmt - origAmt;
+              const varPct    = origAmt > 0 ? variacion / origAmt : 0;
+              const barBudget = Math.min((adjAmt / origAmt) * 100, 100);
+              const barPaid   = adjAmt > 0 ? Math.min((paidAmt / adjAmt) * 100, 100) : 0;
+              const fullyPaid = paidAmt >= adjAmt && adjAmt > 0;
+
+              const budgetColor =
+                variacion === 0 ? "bg-emerald-500"
+                : varPct <= 0.10 ? "bg-amber-400"
+                : "bg-red-500";
+
+              const budgetBadge =
+                variacion === 0
+                  ? <span className="text-xs font-semibold text-emerald-700">✓ Dentro del presupuesto</span>
+                  : varPct <= 0.10
+                  ? <span className="text-xs font-semibold text-amber-600">⚠️ +{(varPct * 100).toFixed(1)}% sobre presupuesto</span>
+                  : <span className="text-xs font-semibold text-red-600">⚠️ +{(varPct * 100).toFixed(1)}% sobre presupuesto</span>;
+
+              return (
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">Presupuesto</span>
+                      {budgetBadge}
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className={`h-2.5 rounded-full transition-all ${budgetColor}`}
+                        style={{ width: `${barBudget}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Contrato original: {fmt(origAmt)} → Ajustado: {fmt(adjAmt)}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-foreground">Pagos realizados</span>
+                      {fullyPaid && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-emerald-100 text-emerald-700 border-emerald-200">
+                          ✓ Pagado en su totalidad
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className="h-2.5 rounded-full bg-blue-500 transition-all"
+                        style={{ width: `${barPaid}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {paidAmt === 0
+                        ? "Sin pagos realizados"
+                        : `${barPaid.toFixed(1)}% del contrato pagado`}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pagos */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
