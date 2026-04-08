@@ -1,0 +1,159 @@
+Antes de escribir nada, lee:
+1. artifacts/api-server/src/routes/expenses.ts
+   — para seguir el mismo patrón de rutas
+2. artifacts/api-server/src/routes/network.ts
+   — para ver cómo se hace el ledger calculado
+
+Crea el archivo:
+artifacts/api-server/src/routes/vendors.ts
+
+Con estos endpoints:
+
+-- VENDORS --
+GET    /api/projects/:projectId/vendors
+  Lista todos los vendors del proyecto.
+  requireAuth, solo builders.
+  Para cada vendor incluye:
+  - Todos sus campos
+  - payments_made: suma de pagos con 
+    status='paid'
+  - change_orders_total: suma de change 
+    orders con status='approved'
+  - balance_pending: contract_amount 
+    + change_orders_total - payments_made
+
+POST   /api/projects/:projectId/vendors
+  Crear nuevo vendor. requireAuth, builder.
+  Body: name, type (required)
+  Opcionales: company, email, phone, 
+  specialty, contract_amount, 
+  contract_notes, linked_user_id
+
+PATCH  /api/projects/:projectId/vendors/:vendorId
+  Actualizar vendor. requireAuth, builder.
+  Body: cualquier campo opcional
+
+DELETE /api/projects/:projectId/vendors/:vendorId
+  Soft delete: status='cancelled'
+  requireAuth, builder.
+
+-- PAYMENTS --
+GET    /api/projects/:projectId/vendors/:vendorId/payments
+  Lista pagos del vendor. requireAuth.
+
+POST   /api/projects/:projectId/vendors/:vendorId/payments
+  Crear pago. requireAuth, builder.
+  Body: description, amount, payment_type 
+  (required). Opcionales: status, due_date,
+  payment_method, notes
+
+PATCH  /api/projects/:projectId/vendors/:vendorId/payments/:paymentId
+  Actualizar pago. requireAuth, builder.
+  Si status cambia a 'paid' → 
+  auto-set paid_at = now()
+
+DELETE /api/projects/:projectId/vendors/:vendorId/payments/:paymentId
+  Eliminar pago. requireAuth, builder.
+
+-- CHANGE ORDERS --
+GET    /api/projects/:projectId/vendors/:vendorId/change-orders
+  Lista change orders del vendor.
+
+POST   /api/projects/:projectId/vendors/:vendorId/change-orders
+  Crear change order. requireAuth, builder.
+  Body: title, amount (required)
+  Opcionales: description, number
+  Si no se especifica number → 
+  auto-calcular como MAX(number)+1 
+  para ese vendor
+
+PATCH  /api/projects/:projectId/vendors/:vendorId/change-orders/:coId
+  Aprobar o rechazar. requireAuth, builder.
+  Body: status ('approved' | 'rejected')
+  Si approved → auto-set approved_at = now()
+
+-- LEDGER --
+GET    /api/projects/:projectId/vendors/:vendorId/ledger
+  Calcula el estado financiero completo:
+  {
+    contract_amount: number,
+    change_orders_total: number,
+    adjusted_contract: number,
+    payments_made: number,
+    balance_pending: number,
+    transactions: [
+      {
+        date: string,
+        type: 'contract' | 'change_order' | 'payment',
+        description: string,
+        amount: number,
+        running_balance: number
+      }
+    ]
+  }
+  
+  El running_balance se calcula así:
+  - Empieza con 0
+  - Contrato: suma el contract_amount
+  - Change orders aprobados: suma/resta
+  - Pagos realizados (paid): resta
+
+-- ALERTAS --
+GET    /api/projects/:projectId/vendors/alerts
+  Sin body. Devuelve array de alertas:
+  [
+    {
+      type: 'overdue_payment' | 
+            'pending_change_order' | 
+            'coi_expiring' | 
+            'no_activity',
+      vendor_id: number,
+      vendor_name: string,
+      message: string,
+      severity: 'high' | 'medium' | 'low'
+    }
+  ]
+  
+  Lógica:
+  - overdue_payment: payments con 
+    status='pending' y due_date < hoy
+  - pending_change_order: change orders 
+    con status='pending' creados hace 
+    más de 7 días
+  - coi_expiring: coi_expires_at dentro 
+    de 30 días
+  - no_activity: vendors activos sin 
+    pagos ni change orders en 14+ días
+
+IMPORTANTE: Registra el router en 
+artifacts/api-server/src/routes/index.ts
+
+Agrega todos los schemas Zod en 
+lib/api-zod/src/generated/api.ts
+
+Agrega los tipos e interfaces en 
+lib/api-client-react/src/generated/api.schemas.ts
+
+Agrega los hooks en 
+lib/api-client-react/src/generated/api.ts:
+useGetVendors(projectId)
+useCreateVendor(projectId)
+usePatchVendor(projectId, vendorId)
+useDeleteVendor(projectId, vendorId)
+useGetVendorPayments(projectId, vendorId)
+useCreateVendorPayment(projectId, vendorId)
+usePatchVendorPayment(projectId, vendorId, paymentId)
+useDeleteVendorPayment(projectId, vendorId, paymentId)
+useGetVendorChangeOrders(projectId, vendorId)
+useCreateVendorChangeOrder(projectId, vendorId)
+usePatchVendorChangeOrder(projectId, vendorId, coId)
+useGetVendorLedger(projectId, vendorId)
+useGetVendorAlerts(projectId)
+
+Compila en orden al final:
+1. lib/db (tsc --build)
+2. lib/api-zod (tsc --build)
+3. lib/api-client-react (tsc --build)
+4. artifacts/api-server (tsc --noEmit)
+
+Muéstrame el diff completo antes de aplicar.
