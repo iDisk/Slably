@@ -13,6 +13,7 @@ import organizationsRouter from "./organizations";
 import documentsRouter from "./documents";
 import networkRouter from "./network";
 import dailyLogsRouter from "./daily-logs";
+import vendorsRouter from "./vendors";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(organizationsRouter);
 router.use(documentsRouter);
 router.use(networkRouter);
 router.use(dailyLogsRouter);
+router.use(vendorsRouter);
 
 export default router;

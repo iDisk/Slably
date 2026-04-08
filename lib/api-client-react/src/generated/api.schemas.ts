@@ -668,3 +668,104 @@ export interface UploadProfilePhotoResponse {
 export interface UploadCompanyLogoResponse {
   companyLogo: string;
 }
+
+// ─── Vendors ──────────────────────────────────────────────────────────────────
+
+export type VendorType              = "subcontractor" | "supplier" | "other";
+export type VendorStatus            = "active" | "completed" | "paused" | "cancelled";
+export type VendorPaymentType       = "draw" | "deposit" | "final" | "other";
+export type VendorPaymentStatus     = "pending" | "paid" | "overdue" | "cancelled";
+export type VendorPaymentMethod     = "check" | "zelle" | "cash" | "transfer";
+export type VendorChangeOrderStatus = "pending" | "approved" | "rejected";
+export type VendorAlertType         = "overdue_payment" | "pending_change_order" | "coi_expiring" | "no_activity";
+export type VendorAlertSeverity     = "high" | "medium" | "low";
+
+export interface ProjectVendor {
+  id: number; projectId: number; organizationId: number; createdBy: number;
+  name: string; type: VendorType; status: VendorStatus;
+  /** @nullable */ company:        string | null;
+  /** @nullable */ email:          string | null;
+  /** @nullable */ phone:          string | null;
+  /** @nullable */ specialty:      string | null;
+  /** @nullable */ linkedUserId:   number | null;
+  /** @nullable */ contractAmount: string | null;
+  /** @nullable */ contractNotes:  string | null;
+  /** @nullable */ w9Url:          string | null;
+  /** @nullable */ coiUrl:         string | null;
+  /** @nullable */ coiExpiresAt:   string | null;
+  createdAt: string; updatedAt: string;
+}
+
+export interface ProjectVendorWithLedger extends ProjectVendor {
+  payments_made: number; change_orders_total: number; balance_pending: number;
+}
+
+export interface VendorPayment {
+  id: number; vendorId: number; projectId: number; createdBy: number;
+  description: string; amount: string; paymentType: VendorPaymentType;
+  status: VendorPaymentStatus;
+  /** @nullable */ dueDate:       string | null;
+  /** @nullable */ paidAt:        string | null;
+  /** @nullable */ paymentMethod: VendorPaymentMethod | null;
+  /** @nullable */ receiptUrl:    string | null;
+  /** @nullable */ notes:         string | null;
+  createdAt: string; updatedAt: string;
+}
+
+export interface VendorChangeOrder {
+  id: number; vendorId: number; projectId: number; createdBy: number;
+  number: number; title: string;
+  /** @nullable */ description: string | null;
+  amount: string; status: VendorChangeOrderStatus;
+  /** @nullable */ approvedAt: string | null;
+  createdAt: string;
+}
+
+export interface VendorLedgerTransaction {
+  date: string; type: "contract" | "change_order" | "payment";
+  description: string; amount: number; running_balance: number;
+}
+
+export interface VendorLedger {
+  contract_amount: number; change_orders_total: number;
+  adjusted_contract: number; payments_made: number; balance_pending: number;
+  transactions: VendorLedgerTransaction[];
+}
+
+export interface VendorAlert {
+  type: VendorAlertType; vendor_id: number; vendor_name: string;
+  message: string; severity: VendorAlertSeverity;
+}
+
+export interface CreateVendorBody {
+  name: string; type: VendorType;
+  company?: string; email?: string; phone?: string; specialty?: string;
+  contract_amount?: number; contract_notes?: string; linked_user_id?: number;
+}
+
+export interface UpdateVendorBody {
+  name?: string; type?: VendorType; company?: string; email?: string;
+  phone?: string; specialty?: string; contract_amount?: number | null;
+  contract_notes?: string; linked_user_id?: number | null; status?: VendorStatus;
+  w9_url?: string; coi_url?: string; coi_expires_at?: string;
+}
+
+export interface CreateVendorPaymentBody {
+  description: string; amount: number; payment_type: VendorPaymentType;
+  status?: VendorPaymentStatus; due_date?: string;
+  payment_method?: VendorPaymentMethod; notes?: string;
+}
+
+export interface UpdateVendorPaymentBody {
+  description?: string; amount?: number; payment_type?: VendorPaymentType;
+  status?: VendorPaymentStatus; due_date?: string;
+  payment_method?: VendorPaymentMethod; receipt_url?: string; notes?: string;
+}
+
+export interface CreateVendorChangeOrderBody {
+  title: string; amount: number; description?: string; number?: number;
+}
+
+export interface UpdateVendorChangeOrderBody {
+  status: "approved" | "rejected";
+}

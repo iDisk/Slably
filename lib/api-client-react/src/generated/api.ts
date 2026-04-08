@@ -64,6 +64,17 @@ import type {
   DailyLog,
   CreateDailyLogBodyParams,
   UpdateDailyLogBodyParams,
+  ProjectVendorWithLedger,
+  VendorPayment,
+  VendorChangeOrder,
+  VendorLedger,
+  VendorAlert,
+  CreateVendorBody,
+  UpdateVendorBody,
+  CreateVendorPaymentBody,
+  UpdateVendorPaymentBody,
+  CreateVendorChangeOrderBody,
+  UpdateVendorChangeOrderBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -3815,4 +3826,270 @@ export function useUploadCompanyLogo<
 > {
   const mutationOptions = getUploadCompanyLogoMutationOptions(options);
   return useMutation(mutationOptions);
+}
+
+// ─── Vendors ──────────────────────────────────────────────────────────────────
+
+export const getVendors = (pid: number, o?: RequestInit) =>
+  customFetch<ProjectVendorWithLedger[]>(`/api/projects/${pid}/vendors`, { ...o, method: "GET" });
+
+export const getVendorsQueryKey = (pid: number) => [`/api/projects/${pid}/vendors`] as const;
+
+export function useGetVendors<TError = ErrorType<unknown>>(
+  pid: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getVendors>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getVendors>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getVendorsQueryKey(pid);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getVendors>>> =
+    () => getVendors(pid, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
+}
+
+const createVendorFn = (pid: number, body: CreateVendorBody, o?: RequestInit) =>
+  customFetch<ProjectVendorWithLedger>(`/api/projects/${pid}/vendors`, {
+    ...o, method: "POST",
+    headers: { "Content-Type": "application/json", ...(o?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export function useCreateVendor<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof createVendorFn>>, TError, { data: CreateVendorBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof createVendorFn>>, TError, { data: CreateVendorBody }, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({ mutationKey: [`/api/projects/${pid}/vendors`], mutationFn: (p) => createVendorFn(pid, p.data, ro as RequestInit), ...mo });
+}
+
+const patchVendorFn = (pid: number, vid: number, body: UpdateVendorBody, o?: RequestInit) =>
+  customFetch<ProjectVendorWithLedger>(`/api/projects/${pid}/vendors/${vid}`, {
+    ...o, method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(o?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export function usePatchVendor<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  vid: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof patchVendorFn>>, TError, { data: UpdateVendorBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof patchVendorFn>>, TError, { data: UpdateVendorBody }, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({ mutationKey: [`/api/projects/${pid}/vendors/${vid}`], mutationFn: (p) => patchVendorFn(pid, vid, p.data, ro as RequestInit), ...mo });
+}
+
+export function useDeleteVendor<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  vid: number,
+  options?: {
+    mutation?: UseMutationOptions<void, TError, void, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<void, TError, void, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({
+    mutationKey: [`/api/projects/${pid}/vendors/${vid}`],
+    mutationFn: () => customFetch<void>(`/api/projects/${pid}/vendors/${vid}`, { ...(ro as RequestInit), method: "DELETE" }),
+    ...mo,
+  });
+}
+
+// ─── Vendor Payments ──────────────────────────────────────────────────────────
+
+export const getVendorPayments = (pid: number, vid: number, o?: RequestInit) =>
+  customFetch<VendorPayment[]>(`/api/projects/${pid}/vendors/${vid}/payments`, { ...o, method: "GET" });
+
+export const getVendorPaymentsQueryKey = (pid: number, vid: number) =>
+  [`/api/projects/${pid}/vendors/${vid}/payments`] as const;
+
+export function useGetVendorPayments<TError = ErrorType<unknown>>(
+  pid: number,
+  vid: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getVendorPayments>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getVendorPayments>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getVendorPaymentsQueryKey(pid, vid);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getVendorPayments>>> =
+    () => getVendorPayments(pid, vid, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
+}
+
+export function useCreateVendorPayment<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  vid: number,
+  options?: {
+    mutation?: UseMutationOptions<VendorPayment, TError, { data: CreateVendorPaymentBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<VendorPayment, TError, { data: CreateVendorPaymentBody }, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({
+    mutationKey: [`/api/projects/${pid}/vendors/${vid}/payments`],
+    mutationFn: (p) => customFetch<VendorPayment>(`/api/projects/${pid}/vendors/${vid}/payments`, {
+      ...(ro as RequestInit), method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(p.data),
+    }),
+    ...mo,
+  });
+}
+
+export function usePatchVendorPayment<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  vid: number,
+  paymentId: number,
+  options?: {
+    mutation?: UseMutationOptions<VendorPayment, TError, { data: UpdateVendorPaymentBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<VendorPayment, TError, { data: UpdateVendorPaymentBody }, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({
+    mutationKey: [`/api/projects/${pid}/vendors/${vid}/payments/${paymentId}`],
+    mutationFn: (p) => customFetch<VendorPayment>(`/api/projects/${pid}/vendors/${vid}/payments/${paymentId}`, {
+      ...(ro as RequestInit), method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(p.data),
+    }),
+    ...mo,
+  });
+}
+
+export function useDeleteVendorPayment<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  vid: number,
+  paymentId: number,
+  options?: {
+    mutation?: UseMutationOptions<void, TError, void, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<void, TError, void, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({
+    mutationKey: [`/api/projects/${pid}/vendors/${vid}/payments/${paymentId}`],
+    mutationFn: () => customFetch<void>(`/api/projects/${pid}/vendors/${vid}/payments/${paymentId}`, {
+      ...(ro as RequestInit), method: "DELETE",
+    }),
+    ...mo,
+  });
+}
+
+// ─── Vendor Change Orders ─────────────────────────────────────────────────────
+
+export const getVendorChangeOrders = (pid: number, vid: number, o?: RequestInit) =>
+  customFetch<VendorChangeOrder[]>(`/api/projects/${pid}/vendors/${vid}/change-orders`, { ...o, method: "GET" });
+
+export const getVendorChangeOrdersQueryKey = (pid: number, vid: number) =>
+  [`/api/projects/${pid}/vendors/${vid}/change-orders`] as const;
+
+export function useGetVendorChangeOrders<TError = ErrorType<unknown>>(
+  pid: number,
+  vid: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getVendorChangeOrders>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getVendorChangeOrders>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getVendorChangeOrdersQueryKey(pid, vid);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getVendorChangeOrders>>> =
+    () => getVendorChangeOrders(pid, vid, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
+}
+
+export function useCreateVendorChangeOrder<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  vid: number,
+  options?: {
+    mutation?: UseMutationOptions<VendorChangeOrder, TError, { data: CreateVendorChangeOrderBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<VendorChangeOrder, TError, { data: CreateVendorChangeOrderBody }, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({
+    mutationKey: [`/api/projects/${pid}/vendors/${vid}/change-orders`],
+    mutationFn: (p) => customFetch<VendorChangeOrder>(`/api/projects/${pid}/vendors/${vid}/change-orders`, {
+      ...(ro as RequestInit), method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(p.data),
+    }),
+    ...mo,
+  });
+}
+
+export function usePatchVendorChangeOrder<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  vid: number,
+  coId: number,
+  options?: {
+    mutation?: UseMutationOptions<VendorChangeOrder, TError, { data: UpdateVendorChangeOrderBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<VendorChangeOrder, TError, { data: UpdateVendorChangeOrderBody }, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({
+    mutationKey: [`/api/projects/${pid}/vendors/${vid}/change-orders/${coId}`],
+    mutationFn: (p) => customFetch<VendorChangeOrder>(`/api/projects/${pid}/vendors/${vid}/change-orders/${coId}`, {
+      ...(ro as RequestInit), method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(p.data),
+    }),
+    ...mo,
+  });
+}
+
+// ─── Vendor Ledger ────────────────────────────────────────────────────────────
+
+export const getVendorLedger = (pid: number, vid: number, o?: RequestInit) =>
+  customFetch<VendorLedger>(`/api/projects/${pid}/vendors/${vid}/ledger`, { ...o, method: "GET" });
+
+export const getVendorLedgerQueryKey = (pid: number, vid: number) =>
+  [`/api/projects/${pid}/vendors/${vid}/ledger`] as const;
+
+export function useGetVendorLedger<TError = ErrorType<unknown>>(
+  pid: number,
+  vid: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getVendorLedger>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getVendorLedger>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getVendorLedgerQueryKey(pid, vid);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getVendorLedger>>> =
+    () => getVendorLedger(pid, vid, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
+}
+
+// ─── Vendor Alerts ────────────────────────────────────────────────────────────
+
+export const getVendorAlerts = (pid: number, o?: RequestInit) =>
+  customFetch<VendorAlert[]>(`/api/projects/${pid}/vendors/alerts`, { ...o, method: "GET" });
+
+export const getVendorAlertsQueryKey = (pid: number) =>
+  [`/api/projects/${pid}/vendors/alerts`] as const;
+
+export function useGetVendorAlerts<TError = ErrorType<unknown>>(
+  pid: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getVendorAlerts>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getVendorAlerts>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getVendorAlertsQueryKey(pid);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getVendorAlerts>>> =
+    () => getVendorAlerts(pid, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
 }

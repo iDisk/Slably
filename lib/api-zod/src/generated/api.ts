@@ -748,3 +748,86 @@ export const UpdateDailyLogBody = zod.object({
   notes:         zod.string().optional(),
   status:        zod.enum(["draft", "confirmed"]).optional(),
 });
+
+// ─── Vendors ──────────────────────────────────────────────────────────────────
+
+export const VendorProjectParams = zod.object({
+  projectId: zod.coerce.number(),
+});
+
+export const VendorParams = zod.object({
+  projectId: zod.coerce.number(),
+  vendorId:  zod.coerce.number(),
+});
+
+export const VendorPaymentParams = zod.object({
+  projectId: zod.coerce.number(),
+  vendorId:  zod.coerce.number(),
+  paymentId: zod.coerce.number(),
+});
+
+export const VendorChangeOrderParams = zod.object({
+  projectId: zod.coerce.number(),
+  vendorId:  zod.coerce.number(),
+  coId:      zod.coerce.number(),
+});
+
+export const CreateVendorBody = zod.object({
+  name:            zod.string().min(1),
+  type:            zod.enum(["subcontractor", "supplier", "other"]),
+  company:         zod.string().optional(),
+  email:           zod.string().optional(),
+  phone:           zod.string().optional(),
+  specialty:       zod.string().optional(),
+  contract_amount: zod.number().optional(),
+  contract_notes:  zod.string().optional(),
+  linked_user_id:  zod.number().int().optional(),
+});
+
+export const UpdateVendorBody = zod.object({
+  name:            zod.string().min(1).optional(),
+  type:            zod.enum(["subcontractor", "supplier", "other"]).optional(),
+  company:         zod.string().optional(),
+  email:           zod.string().optional(),
+  phone:           zod.string().optional(),
+  specialty:       zod.string().optional(),
+  contract_amount: zod.number().nullable().optional(),
+  contract_notes:  zod.string().optional(),
+  linked_user_id:  zod.number().int().nullable().optional(),
+  status:          zod.enum(["active", "completed", "paused", "cancelled"]).optional(),
+  w9_url:          zod.string().optional(),
+  coi_url:         zod.string().optional(),
+  coi_expires_at:  zod.string().optional(),
+});
+
+export const CreateVendorPaymentBody = zod.object({
+  description:    zod.string().min(1),
+  amount:         zod.number().positive(),
+  payment_type:   zod.enum(["draw", "deposit", "final", "other"]),
+  status:         zod.enum(["pending", "paid", "overdue", "cancelled"]).optional(),
+  due_date:       zod.string().optional(),
+  payment_method: zod.enum(["check", "zelle", "cash", "transfer"]).optional(),
+  notes:          zod.string().optional(),
+});
+
+export const UpdateVendorPaymentBody = zod.object({
+  description:    zod.string().min(1).optional(),
+  amount:         zod.number().positive().optional(),
+  payment_type:   zod.enum(["draw", "deposit", "final", "other"]).optional(),
+  status:         zod.enum(["pending", "paid", "overdue", "cancelled"]).optional(),
+  due_date:       zod.string().optional(),
+  payment_method: zod.enum(["check", "zelle", "cash", "transfer"]).optional(),
+  receipt_url:    zod.string().optional(),
+  notes:          zod.string().optional(),
+});
+
+export const CreateVendorChangeOrderBody = zod.object({
+  title:       zod.string().min(1),
+  amount:      zod.number(),
+  description: zod.string().optional(),
+  number:      zod.number().int().positive().optional(),
+});
+
+export const UpdateVendorChangeOrderBody = zod.object({
+  status: zod.enum(["approved", "rejected"]),
+});
