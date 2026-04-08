@@ -1,0 +1,98 @@
+Sin modificar nada todavía, muéstrame 
+el diff para crear estas 3 tablas nuevas 
+en lib/db/src/schema/:
+
+TABLA 1 — project_vendors.ts
+Representa a un proveedor o subcontratista
+vinculado a un proyecto específico.
+
+id:               serial PK
+project_id:       integer FK → projects (cascade)
+organization_id:  integer FK → organizations
+created_by:       integer FK → users
+
+-- Datos del vendor
+name:             text NOT NULL
+company:          text (nullable)
+email:            text (nullable)
+phone:            text (nullable)
+specialty:        text (nullable) 
+  -- plumber, electrician, framing, etc.
+type:             text NOT NULL
+  -- 'subcontractor' | 'supplier' | 'other'
+
+-- Vinculación con Network (si aplica)
+linked_user_id:   integer FK → users (nullable)
+  -- Si el vendor tiene cuenta en Slably
+
+-- Contrato
+contract_amount:  numeric(12,2) (nullable)
+contract_notes:   text (nullable)
+
+-- Estado
+status:           text NOT NULL default 'active'
+  -- 'active' | 'completed' | 'paused' | 'cancelled'
+
+-- Documentos
+w9_url:           text (nullable)
+coi_url:          text (nullable)
+coi_expires_at:   date (nullable)
+
+-- Timestamps
+created_at:       timestamptz NOT NULL defaultNow()
+updated_at:       timestamptz NOT NULL defaultNow()
+
+TABLA 2 — vendor_payments.ts
+Registro de pagos realizados o programados 
+a un vendor en un proyecto.
+
+id:               serial PK
+vendor_id:        integer FK → project_vendors (cascade)
+project_id:       integer FK → projects
+created_by:       integer FK → users
+
+description:      text NOT NULL
+  -- "Pago inicial", "Draw 2", "Pago final"
+amount:           numeric(12,2) NOT NULL
+payment_type:     text NOT NULL
+  -- 'draw' | 'deposit' | 'final' | 'other'
+status:           text NOT NULL default 'pending'
+  -- 'pending' | 'paid' | 'overdue' | 'cancelled'
+
+due_date:         date (nullable)
+paid_at:          timestamptz (nullable)
+payment_method:   text (nullable)
+  -- 'check' | 'zelle' | 'cash' | 'transfer'
+receipt_url:      text (nullable)
+notes:            text (nullable)
+
+created_at:       timestamptz NOT NULL defaultNow()
+updated_at:       timestamptz NOT NULL defaultNow()
+
+TABLA 3 — vendor_change_orders.ts
+Change orders específicos entre el builder
+y un vendor (diferente a los change orders
+del cliente).
+
+id:               serial PK
+vendor_id:        integer FK → project_vendors (cascade)
+project_id:       integer FK → projects
+created_by:       integer FK → users
+
+number:           integer NOT NULL
+  -- Número secuencial por vendor
+title:            text NOT NULL
+description:      text (nullable)
+amount:           numeric(12,2) NOT NULL
+  -- Positivo = costo adicional, negativo = crédito
+status:           text NOT NULL default 'pending'
+  -- 'pending' | 'approved' | 'rejected'
+approved_at:      timestamptz (nullable)
+
+created_at:       timestamptz NOT NULL defaultNow()
+
+Exporta las 3 tablas desde 
+lib/db/src/schema/index.ts
+
+Muéstrame el diff completo y el 
+SQL equivalente antes de aplicar.
