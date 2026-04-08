@@ -5,6 +5,7 @@ import { useFind } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DirectoryLayout } from "@/components/layout/DirectoryLayout";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const TRADE_LABELS: Record<string, string> = {
@@ -39,13 +40,8 @@ export default function Find() {
   const items = data?.data ?? [];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top bar */}
-      <div className="bg-[hsl(222,47%,11%)] px-6 py-4">
-        <img src="/slably-logo.png" alt="Slably" className="h-8" />
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 py-10 space-y-6">
+    <DirectoryLayout>
+      <div className="max-w-5xl mx-auto px-4 space-y-6">
         {/* Heading */}
         <div className="space-y-1">
           <h1 className="text-3xl font-display font-bold text-foreground">
@@ -220,6 +216,6 @@ export default function Find() {
           Powered by Slably · Gestión de construcción
         </p>
       </div>
-    </div>
+    </DirectoryLayout>
   );
 }

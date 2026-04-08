@@ -26,7 +26,14 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.startsWith(item.href);
+            const isDirectoryActive =
+              location.startsWith("/find") ||
+              location.startsWith("/builder/") ||
+              location.startsWith("/sub/");
+            const isActive =
+              item.href === "/find"
+                ? isDirectoryActive
+                : location.startsWith(item.href);
             return (
               <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${isActive ? "bg-primary text-primary-foreground shadow-md" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"}`}>
                 <item.icon className="h-5 w-5" />

@@ -5,6 +5,8 @@ import { MapPin, Loader2, ArrowRight, AlertCircle, Image as ImageIcon } from "lu
 import { useGetBuilderProfile } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DirectoryLayout } from "@/components/layout/DirectoryLayout";
+import { BackButton } from "@/components/BackButton";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function initials(name: string) {
@@ -76,13 +78,9 @@ export default function BuilderProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top bar */}
-      <div className="bg-[hsl(222,47%,11%)] px-6 py-4">
-        <img src="/slably-logo.png" alt="Slably" className="h-8" />
-      </div>
-
-      <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
+    <DirectoryLayout>
+      <div className="max-w-2xl mx-auto px-4 space-y-6">
+        <BackButton />
         {/* ── Profile header card ── */}
         <Card className="border border-border shadow-sm">
           <CardContent className="p-6 space-y-4">
@@ -224,6 +222,6 @@ export default function BuilderProfile() {
           Powered by Slably · Gestión de construcción
         </p>
       </div>
-    </div>
+    </DirectoryLayout>
   );
 }
