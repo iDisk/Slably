@@ -1,0 +1,82 @@
+Necesito 3 cambios en el frontend:
+
+CAMBIO 1 — Nueva sección en SubDashboard.tsx
+Agrega una sección "My Photos" debajo 
+de la lista de trabajos.
+
+Importa:
+useUploadUserPhoto, useGetUserPhotos,
+useShareUserPhoto, useGetMyWork
+de @workspace/api-client-react
+
+La sección muestra:
+
+Header: "My Photos" + botón naranja 
+"📷 Add Photo"
+
+Al tocar "Add Photo":
+- Input file oculto (accept="image/*")
+- Al seleccionar → llama useUploadUserPhoto
+  con FormData field "photo"
+- Toast "Photo uploaded" al éxito
+- Invalida useGetUserPhotos
+
+Grid 2 columnas de fotos:
+Cada foto muestra:
+- La imagen (aspect-video, object-cover)
+- Caption si existe
+- Badge de estado:
+  Si sharedWithBuilder = false:
+    botón outline pequeño "Share →"
+    Al tocar → abre un select con 
+    los proyectos donde el sub está 
+    como vendor (usar useGetMyWork 
+    para obtener la lista de proyectos)
+    → llama useShareUserPhoto con 
+    { project_id: selectedProjectId }
+    → toast "Shared with builder. 
+      Pending approval."
+  Si sharedWithBuilder = true y 
+  approvalStatus = 'pending':
+    badge amarillo "⏳ Pending approval"
+  Si approvalStatus = 'approved':
+    badge verde "✓ Approved"
+  Si approvalStatus = 'rejected':
+    badge rojo "✗ Rejected"
+    + botón "Share again" que resetea
+
+Estado vacío:
+"No photos yet. Add your first photo."
+
+CAMBIO 2 — Sección en PhotosTab.tsx del proyecto
+En src/components/project/PhotosTab.tsx
+agrega una sección "Pending Approval" 
+al tope del tab (antes de las fotos del proyecto).
+
+Importa useGetPendingPhotos, useApproveUserPhoto
+
+Solo visible para builders.
+
+Si hay fotos pendientes:
+Banner naranja: 
+"X photos pending your approval"
+
+Lista de fotos pendientes:
+Cada una muestra:
+- La imagen
+- Nombre del sub que la subió
+- Caption si existe
+- Botones: 
+  "✓ Approve" (verde) → llama 
+  useApproveUserPhoto con status='approved'
+  "✗ Reject" (rojo outline) → llama 
+  useApproveUserPhoto con status='rejected'
+- Al aprobar → la foto aparece en el 
+  grid normal del proyecto
+- Invalida queries al aprobar/rechazar
+
+CAMBIO 3 — Compilar y confirmar
+Compila artifacts/buildos (tsc --noEmit)
+Confirma cero errores.
+
+Muéstrame el diff completo antes de aplicar.
