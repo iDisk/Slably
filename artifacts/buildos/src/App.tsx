@@ -17,6 +17,7 @@ import Find from "@/pages/Find";
 import NotFound from "@/pages/not-found";
 import InvitePage from "@/pages/InvitePage";
 import ClientProjectView from "@/pages/ClientProjectView";
+import AdminPanel from "@/pages/AdminPanel";
 
 // Patch fetch to automatically inject the JWT token and handle 401s
 const originalFetch = window.fetch;
@@ -93,6 +94,7 @@ function Router() {
       <Route path="/builder/:builderId" component={BuilderProfile} />
       <Route path="/find" component={Find} />
       <Route path="/invite/:token" component={InvitePage} />
+      <Route path="/admin" component={AdminPanel} />
       <Route path="/" component={RootRedirect} />
       <Route component={NotFound} />
     </Switch>
