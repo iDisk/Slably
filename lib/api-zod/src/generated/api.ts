@@ -26,7 +26,7 @@ export const RegisterBody = zod.object({
   name: zod.string(),
   email: zod.string(),
   password: zod.string(),
-  role: zod.enum(["builder", "client", "subcontractor"]),
+  role: zod.enum(["builder", "client", "subcontractor", "supplier"]),
   companyName: zod.string().min(2).optional(),
   state: zod.string().optional(),
   phone: zod.string().optional(),
@@ -48,7 +48,7 @@ export const LoginResponse = zod.object({
     id: zod.number(),
     name: zod.string(),
     email: zod.string(),
-    role: zod.enum(["builder", "client", "subcontractor"]),
+    role: zod.enum(["builder", "client", "subcontractor", "supplier"]),
     organizationId: zod.number().nullable(),
     organizationSlug: zod.string().nullable(),
     createdAt: zod.coerce.date(),
@@ -70,7 +70,7 @@ export const GetMeResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
   email: zod.string(),
-  role: zod.enum(["builder", "client", "subcontractor"]),
+  role: zod.enum(["builder", "client", "subcontractor", "supplier"]),
   organizationId: zod.number().nullable(),
   organizationSlug: zod.string().nullable(),
   createdAt: zod.coerce.date(),
@@ -710,7 +710,7 @@ export const BuilderProfileParams = zod.object({
 
 // ─── Find ─────────────────────────────────────────────────────────────────────
 export const FindQueryParams = zod.object({
-  role:      zod.enum(["builder", "subcontractor"]).optional(),
+  role:      zod.enum(["builder", "subcontractor", "supplier"]).optional(),
   specialty: zod.string().optional(),
   city:      zod.string().optional(),
   page:      zod.coerce.number().int().positive().default(1),

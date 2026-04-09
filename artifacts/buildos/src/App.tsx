@@ -75,7 +75,7 @@ function RootRedirect() {
   const { user, isLoading } = useAuth();
   if (isLoading) return <div className="h-screen w-full flex items-center justify-center bg-background"><div className="animate-pulse font-display font-bold text-xl text-primary">Loading...</div></div>;
   if (!user) return <Redirect to="/login" />;
-  return <Redirect to={user.role === 'builder' ? '/dashboard' : user.role === 'subcontractor' ? '/network' : '/client'} />;
+  return <Redirect to={user.role === 'builder' || user.role === 'supplier' ? '/dashboard' : user.role === 'subcontractor' ? '/network' : '/client'} />;
 }
 
 function Router() {
@@ -83,12 +83,12 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      <Route path="/dashboard"><ProtectedRoute component={BuilderDashboard} roleRequired={['builder', 'subcontractor']} /></Route>
-      <Route path="/projects/:id"><ProtectedRoute component={ProjectDetails} roleRequired={["builder", "subcontractor"]} /></Route>
+      <Route path="/dashboard"><ProtectedRoute component={BuilderDashboard} roleRequired={['builder', 'subcontractor', 'supplier']} /></Route>
+      <Route path="/projects/:id"><ProtectedRoute component={ProjectDetails} roleRequired={["builder", "subcontractor", "supplier"]} /></Route>
       <Route path="/client/projects/:id"><ProtectedRoute component={ClientProjectView} roleRequired="client" /></Route>
       <Route path="/activities"><ProtectedRoute component={Activities} roleRequired="builder" /></Route>
-      <Route path="/profile"><ProtectedRoute component={Profile} roleRequired={['builder', 'subcontractor']} /></Route>
-      <Route path="/network"><ProtectedRoute component={Network} roleRequired={['builder', 'subcontractor']} /></Route>
+      <Route path="/profile"><ProtectedRoute component={Profile} roleRequired={['builder', 'subcontractor', 'supplier']} /></Route>
+      <Route path="/network"><ProtectedRoute component={Network} roleRequired={['builder', 'subcontractor', 'supplier']} /></Route>
       <Route path="/client"><ProtectedRoute component={ClientDashboard} roleRequired="client" /></Route>
       <Route path="/sub/:subId" component={SubProfile} />
       <Route path="/builder/:builderId" component={BuilderProfile} />

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowRight, Loader2, User, HardHat, Wrench } from "lucide-react";
+import { ArrowRight, Loader2, User, HardHat, Wrench, Store } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -15,7 +15,7 @@ const registerSchema = z.object({
   name:          z.string().min(2, "Name is required"),
   email:         z.string().email("Please enter a valid email"),
   password:      z.string().min(6, "Password must be at least 6 characters"),
-  role:          z.enum(["builder", "client", "subcontractor"]),
+  role:          z.enum(["builder", "client", "subcontractor", "supplier"]),
   companyName:   z.string().optional(),
   state:         z.string().optional(),
   phone:         z.string().optional(),
@@ -37,6 +37,17 @@ const registerSchema = z.object({
     }
     if (!data.serviceCity || data.serviceCity.trim().length < 2) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Service city is required", path: ["serviceCity"] });
+    }
+  }
+  if (data.role === "supplier") {
+    if (!data.companyName || data.companyName.trim().length < 2) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Company name is required", path: ["companyName"] });
+    }
+    if (!data.category) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Category is required", path: ["category"] });
+    }
+    if (!data.serviceCity || data.serviceCity.trim().length < 2) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "City is required", path: ["serviceCity"] });
     }
   }
 });
@@ -62,7 +73,7 @@ export default function Register() {
           name:        data.name,
           email:       data.email,
           password:    data.password,
-          role:          data.role,
+          role:          data.role as "builder" | "client" | "subcontractor" | "supplier",
           companyName:   data.companyName   || undefined,
           state:         data.state         || undefined,
           phone:         data.phone         || undefined,
@@ -75,7 +86,11 @@ export default function Register() {
         onSuccess: (res) => {
           login(res.token);
           toast.success("Account created successfully!");
-          setLocation(res.user.role === "builder" ? "/dashboard" : "/client");
+          setLocation(
+            res.user.role === "builder" ? "/dashboard"
+            : res.user.role === "client" ? "/client"
+            : "/network"
+          );
         },
         onError: (err: any) => {
           toast.error(err.message || "Failed to register.");
@@ -83,6 +98,13 @@ export default function Register() {
       }
     );
   };
+
+  const roleCards = [
+    { value: "builder",       icon: HardHat, label: "Builder",    subtitle: "Construyo y administro proyectos" },
+    { value: "subcontractor", icon: Wrench,  label: "Sub",        subtitle: "Ofrezco servicios de construcción" },
+    { value: "client",        icon: User,    label: "Cliente",    subtitle: "Tengo un proyecto en construcción" },
+    { value: "supplier",      icon: Store,   label: "Proveedor",  subtitle: "Vendo materiales y equipos" },
+  ] as const;
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -101,44 +123,25 @@ export default function Register() {
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Role selector */}
-            <div className="grid grid-cols-3 gap-3 mb-2">
-              <div
-                onClick={() => setValue("role", "builder")}
-                className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${
-                  selectedRole === "builder"
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-border hover:border-primary/30 text-muted-foreground"
-                }`}
-              >
-                <HardHat className="h-6 w-6" />
-                <span className="font-semibold text-sm">Builder</span>
-              </div>
-              <div
-                onClick={() => setValue("role", "client")}
-                className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${
-                  selectedRole === "client"
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-border hover:border-primary/30 text-muted-foreground"
-                }`}
-              >
-                <User className="h-6 w-6" />
-                <span className="font-semibold text-sm">Client</span>
-              </div>
-              <div
-                onClick={() => setValue("role", "subcontractor")}
-                className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${
-                  selectedRole === "subcontractor"
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-border hover:border-primary/30 text-muted-foreground"
-                }`}
-              >
-                <Wrench className="h-6 w-6" />
-                <span className="font-semibold text-sm">Sub</span>
-              </div>
+            {/* Role selector — 2×2 grid */}
+            <div className="grid grid-cols-2 gap-3 mb-2">
+              {roleCards.map(({ value, icon: Icon, label }) => (
+                <div
+                  key={value}
+                  onClick={() => setValue("role", value)}
+                  className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${
+                    selectedRole === value
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border hover:border-primary/30 text-muted-foreground"
+                  }`}
+                >
+                  <Icon className="h-6 w-6" />
+                  <span className="font-semibold text-sm">{label}</span>
+                </div>
+              ))}
             </div>
 
-            {/* Subcontractor-only fields */}
+            {/* Subcontractor fields */}
             {selectedRole === "subcontractor" && (
               <>
                 <div className="space-y-2">
@@ -168,17 +171,11 @@ export default function Register() {
                   </Select>
                   {errors.category && <p className="text-sm text-destructive font-medium">{errors.category.message}</p>}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="serviceCity">Service City *</Label>
-                  <Input
-                    id="serviceCity"
-                    placeholder="Ciudad donde trabajas (ej. Houston, TX)"
-                    {...register("serviceCity")}
-                  />
+                  <Input id="serviceCity" placeholder="Ciudad donde trabajas (ej. Houston, TX)" {...register("serviceCity")} />
                   {errors.serviceCity && <p className="text-sm text-destructive font-medium">{errors.serviceCity.message}</p>}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="serviceRadius">Service Radius</Label>
                   <Select id="serviceRadius" {...register("serviceRadius", { valueAsNumber: true })}>
@@ -191,6 +188,39 @@ export default function Register() {
               </>
             )}
 
+            {/* Supplier fields */}
+            {selectedRole === "supplier" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Nombre de la empresa *</Label>
+                  <Input id="companyName" placeholder="Ferretera González S.A." {...register("companyName")} />
+                  {errors.companyName && <p className="text-sm text-destructive font-medium">{errors.companyName.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Categoría de productos *</Label>
+                  <Select id="category" {...register("category")}>
+                    <option value="">Seleccionar categoría...</option>
+                    <option value="materiales">Materiales de construcción</option>
+                    <option value="equipos">Equipos y maquinaria</option>
+                    <option value="herramientas">Herramientas</option>
+                    <option value="varios">Varios / General</option>
+                  </Select>
+                  {errors.category && <p className="text-sm text-destructive font-medium">{errors.category.message}</p>}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="serviceCity">Ciudad principal *</Label>
+                    <Input id="serviceCity" placeholder="Houston, TX" {...register("serviceCity")} />
+                    {errors.serviceCity && <p className="text-sm text-destructive font-medium">{errors.serviceCity.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Teléfono</Label>
+                    <Input id="phone" placeholder="(555) 123-4567" {...register("phone")} />
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Full Name */}
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
@@ -198,21 +228,14 @@ export default function Register() {
               {errors.name && <p className="text-sm text-destructive font-medium">{errors.name.message}</p>}
             </div>
 
-            {/* Builder-only fields */}
+            {/* Builder fields */}
             {selectedRole === "builder" && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="companyName">Nombre de la empresa *</Label>
-                  <Input
-                    id="companyName"
-                    placeholder="López Construction"
-                    {...register("companyName")}
-                  />
-                  {errors.companyName && (
-                    <p className="text-sm text-destructive font-medium">{errors.companyName.message}</p>
-                  )}
+                  <Input id="companyName" placeholder="López Construction" {...register("companyName")} />
+                  {errors.companyName && <p className="text-sm text-destructive font-medium">{errors.companyName.message}</p>}
                 </div>
-
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="state">Estado *</Label>
@@ -227,9 +250,7 @@ export default function Register() {
                       <option value="CO">Colorado (CO)</option>
                       <option value="other">Otro</option>
                     </Select>
-                    {errors.state && (
-                      <p className="text-sm text-destructive font-medium">{errors.state.message}</p>
-                    )}
+                    {errors.state && <p className="text-sm text-destructive font-medium">{errors.state.message}</p>}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Teléfono</Label>

@@ -20,9 +20,10 @@ export interface MessageResponse {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export const UserRole = {
-  builder: "builder",
-  client: "client",
+  builder:       "builder",
+  client:        "client",
   subcontractor: "subcontractor",
+  supplier:      "supplier",
 } as const;
 
 export interface User {
@@ -37,9 +38,10 @@ export type RegisterBodyRole =
   (typeof RegisterBodyRole)[keyof typeof RegisterBodyRole];
 
 export const RegisterBodyRole = {
-  builder: "builder",
-  client: "client",
+  builder:       "builder",
+  client:        "client",
   subcontractor: "subcontractor",
+  supplier:      "supplier",
 } as const;
 
 export interface RegisterBody {
@@ -623,7 +625,7 @@ export interface BuilderProfile {
 }
 
 export interface FindParams {
-  role?:      "builder" | "subcontractor";
+  role?:      "builder" | "subcontractor" | "supplier";
   specialty?: string;
   city?:      string;
   page?:      number;
@@ -632,7 +634,7 @@ export interface FindParams {
 
 export interface FindResultItem {
   id:            number;
-  role:          "builder" | "subcontractor";
+  role:          "builder" | "subcontractor" | "supplier";
   name:          string;
   /** @nullable */
   profilePhoto:  string | null;

@@ -444,7 +444,7 @@ router.get("/find", async (req, res): Promise<void> => {
   const conds = [
     role
       ? eq(usersTable.role, role)
-      : or(eq(usersTable.role, "builder"), eq(usersTable.role, "subcontractor")),
+      : or(eq(usersTable.role, "builder"), eq(usersTable.role, "subcontractor"), eq(usersTable.role, "supplier")),
   ];
   if (specialty) conds.push(ilike(usersTable.category, `%${specialty}%`));
   if (city) conds.push(

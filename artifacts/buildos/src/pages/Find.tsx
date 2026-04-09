@@ -8,6 +8,13 @@ import { Input } from "@/components/ui/input";
 import { DirectoryLayout } from "@/components/layout/DirectoryLayout";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+const SUPPLIER_LABELS: Record<string, string> = {
+  materiales:   "Materiales",
+  equipos:      "Equipos",
+  herramientas: "Herramientas",
+  varios:       "Varios",
+};
+
 const TRADE_LABELS: Record<string, string> = {
   plumber: "Plomería", electrician: "Electricidad", carpenter: "Carpintería",
   painter: "Pintura", hvac: "HVAC / Clima", roofer: "Techado",
@@ -24,7 +31,7 @@ function initials(name: string) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function Find() {
   const [, navigate] = useLocation();
-  const [role, setRole]           = useState<"builder" | "subcontractor" | "">("");
+  const [role, setRole]           = useState<"builder" | "subcontractor" | "supplier" | "">("");
   const [city, setCity]           = useState("");
   const [specialty, setSpecialty] = useState("");
 
@@ -61,6 +68,7 @@ export default function Find() {
                 { value: "",              label: "Todos" },
                 { value: "builder",       label: "Constructores" },
                 { value: "subcontractor", label: "Subcontratistas" },
+                { value: "supplier",      label: "Proveedores" },
               ] as const
             ).map(opt => (
               <button
@@ -88,7 +96,7 @@ export default function Find() {
                 className="pl-9"
               />
             </div>
-            {role !== "builder" && (
+            {role === "subcontractor" && (
               <select
                 value={specialty}
                 onChange={e => setSpecialty(e.target.value)}
@@ -165,6 +173,16 @@ export default function Find() {
                       </p>
                     )}
                     {item.role === "subcontractor" && item.serviceCity && (
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="w-3 h-3 shrink-0" />{item.serviceCity}
+                      </p>
+                    )}
+                    {item.role === "supplier" && item.category && (
+                      <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                        {SUPPLIER_LABELS[item.category] ?? item.category}
+                      </span>
+                    )}
+                    {item.role === "supplier" && item.serviceCity && (
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
                         <MapPin className="w-3 h-3 shrink-0" />{item.serviceCity}
                       </p>
