@@ -24,6 +24,7 @@ export const dailyLogsTable = pgTable(
     transcription:  text("transcription"),
     aiProcessed:    boolean("ai_processed").notNull().default(false),
     status:         text("status").notNull().default("draft"),
+    shareWithClient: boolean("share_with_client").notNull().default(false),
     createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
