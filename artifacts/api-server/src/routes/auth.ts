@@ -148,6 +148,13 @@ router.post("/auth/login", loginLimiter, async (req, res): Promise<void> => {
     return;
   }
 
+  if (!rawUser.isActive) {
+    res.status(403).json({
+      error: "Your account is pending activation. Please contact support.",
+    });
+    return;
+  }
+
   const user = await fetchUserWithOrg(rawUser.id);
   if (!user) {
     res.status(500).json({ error: "User lookup failed" });
