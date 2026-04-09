@@ -1,0 +1,119 @@
+En src/components/project/VendorsTab.tsx
+mejora el modal de "Agregar Proveedor" 
+para que cuando el tipo seleccionado 
+sea 'subcontractor', aparezca un campo 
+de búsqueda para encontrar subs del 
+Network de Slably.
+
+CAMBIO 1 — Agrega estado de búsqueda:
+const [subSearch, setSubSearch] = useState("");
+const [subResults, setSubResults] = useState<any[]>([]);
+const [subSearchLoading, setSubSearchLoading] = useState(false);
+const [subSearchOpen, setSubSearchOpen] = useState(false);
+
+CAMBIO 2 — Función de búsqueda:
+Cuando subSearch tiene 3+ caracteres,
+llama a GET /api/find?role=subcontractor&city={subSearch}
+con debounce de 400ms.
+Guarda los resultados en subResults.
+
+useEffect(() => {
+  if (subSearch.length < 3 || vendorForm.type !== 'subcontractor') {
+    setSubResults([]);
+    setSubSearchOpen(false);
+    return;
+  }
+  const timer = setTimeout(async () => {
+    setSubSearchLoading(true);
+    try {
+      const token = localStorage.getItem('slably_token');
+      const res = await fetch(
+        `/api/find?role=subcontractor&city=${encodeURIComponent(subSearch)}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      const data = await res.json();
+      setSubResults(data.data ?? []);
+      setSubSearchOpen(true);
+    } catch {
+      setSubResults([]);
+    } finally {
+      setSubSearchLoading(false);
+    }
+  }, 400);
+  return () => clearTimeout(timer);
+}, [subSearch, vendorForm.type]);
+
+CAMBIO 3 — En el modal de crear vendor,
+después del campo "Empresa" y antes de 
+"Especialidad", agrega este bloque que 
+solo se muestra cuando type === 'subcontractor':
+
+{vendorForm.type === 'subcontractor' && (
+  <div className="space-y-2 col-span-2">
+    <Label>Buscar en red de Slably (opcional)</Label>
+    <div className="relative">
+      <Input
+        placeholder="Escribe ciudad o nombre (mín. 3 letras)..."
+        value={subSearch}
+        onChange={e => setSubSearch(e.target.value)}
+      />
+      {subSearchLoading && (
+        <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      )}
+    </div>
+    {subSearchOpen && subResults.length > 0 && (
+      <div className="border border-border rounded-lg overflow-hidden bg-white shadow-md">
+        {subResults.slice(0, 5).map(sub => (
+          <button
+            key={sub.id}
+            type="button"
+            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b border-border last:border-0"
+            onClick={() => {
+              setVendorForm(f => ({
+                ...f,
+                name:      sub.name,
+                specialty: sub.category ?? f.specialty,
+                linked_user_id: sub.id,  // guardar el ID
+              }));
+              setSubSearch(sub.name);
+              setSubSearchOpen(false);
+            }}
+          >
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+              <span className="text-white text-xs font-bold">
+                {sub.name.split(' ').slice(0,2).map((w: string) => w[0]).join('').toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold truncate">{sub.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {sub.category ?? ''} {sub.serviceCity ? `· ${sub.serviceCity}` : ''}
+                {sub.stats?.averageRating > 0 ? ` · ★ ${sub.stats.averageRating.toFixed(1)}` : ''}
+              </p>
+            </div>
+          </button>
+        ))}
+      </div>
+    )}
+    {subSearchOpen && subResults.length === 0 && !subSearchLoading && (
+      <p className="text-xs text-muted-foreground px-1">
+        No encontramos subs con ese filtro en Slably.
+      </p>
+    )}
+  </div>
+)}
+
+CAMBIO 4 — En el VendorForm interface 
+agrega: linked_user_id?: number
+
+CAMBIO 5 — En handleCreateVendor,
+pasa linked_user_id al mutation:
+linked_user_id: vendorForm.linked_user_id ?? undefined
+
+CAMBIO 6 — Al cerrar el modal o al 
+resetear el form, limpia también:
+setSubSearch("");
+setSubResults([]);
+setSubSearchOpen(false);
+
+Muéstrame el diff antes de aplicar.
