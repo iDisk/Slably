@@ -1,0 +1,85 @@
+Antes de escribir nada, lee:
+1. src/pages/builder/Dashboard.tsx
+   — para seguir el mismo patrón
+2. src/components/layout/BuilderLayout.tsx
+   — para ver el sidebar
+
+Necesito crear una vista del dashboard 
+para subcontratistas que muestre sus 
+trabajos activos.
+
+CAMBIO 1 — Nuevo endpoint en el backend:
+artifacts/api-server/src/routes/vendors.ts
+
+GET /api/my-work
+requireAuth, solo subcontractors y suppliers
+
+Devuelve todos los project_vendors donde 
+linked_user_id = user.id
+Con join a projects para obtener:
+- project name, address, status, progress
+- builder name (join a users)
+- builder company (join a organizations)
+
+Para cada vendor incluye:
+- Todos los campos del vendor 
+  (contractAmount, status, etc.)
+- payments_made: suma de pagos paid
+- balance_pending: contractAmount - payments_made
+- project: { name, address, status, progress }
+- builder: { name, companyName }
+
+CAMBIO 2 — Nueva página:
+src/pages/SubDashboard.tsx
+
+Usa un hook useGetMyWork() nuevo.
+
+DISEÑO:
+
+Header: "My Work" con badge del 
+número de trabajos activos
+
+Si no hay trabajos:
+Card vacía con:
+"You don't have any active work yet.
+Browse available jobs in Network."
+Botón "Go to Network" → /network
+
+Lista de trabajos:
+Cada card muestra:
+- Nombre del proyecto
+- Constructor: nombre + empresa
+- Estado del proyecto:
+  active → "In Progress" verde
+  completed → "Completed" azul
+  planning → "Planning" gris
+- Barra de progreso del proyecto
+- Mi contrato:
+  "Contract: $X,XXX"
+  "Paid: $X,XXX" en verde
+  "Pending: $X,XXX" en rojo si > 0
+- Badge de estado del vendor:
+  active → verde
+  completed → azul
+  cancelled → rojo
+- Botón "View details →" 
+  → navega a /my-work/:vendorId
+  (lo construimos en Fase 6)
+
+CAMBIO 3 — Conectar en App.tsx y sidebar:
+- Ruta: /sub-dashboard con ProtectedRoute
+  roleRequired: ['subcontractor', 'supplier']
+- En BuilderLayout.tsx agrega link 
+  "My Work" con ícono Briefcase
+  solo visible cuando role es 
+  subcontractor o supplier
+  Posición: después de Dashboard
+
+CAMBIO 4 — RootRedirect en App.tsx:
+Cuando el sub hace login, redirigir a 
+/sub-dashboard en lugar de /network
+
+Agrega el hook useGetMyWork en 
+lib/api-client-react.
+
+Muéstrame el diff completo antes de aplicar.
