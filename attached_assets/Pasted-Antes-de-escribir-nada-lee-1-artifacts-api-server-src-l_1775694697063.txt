@@ -1,0 +1,117 @@
+Antes de escribir nada, lee:
+1. artifacts/api-server/src/lib/email.ts
+   — para ver el patrón de emails con Resend
+2. artifacts/api-server/src/routes/auth.ts
+   — para ver cómo se crean usuarios y JWT
+
+Crea estos endpoints en un nuevo archivo:
+artifacts/api-server/src/routes/invitations.ts
+
+ENDPOINT 1 — POST /api/projects/:projectId/invite
+requireAuth, solo role !== 'client'
+Body: { email: string }
+
+Lógica:
+1. Verifica que el usuario tiene acceso 
+   al proyecto (checkProjectAccess)
+2. Genera un token aleatorio de 32 chars:
+   import { randomBytes } from 'crypto'
+   const token = randomBytes(16).toString('hex')
+3. Invalida cualquier invitación anterior
+   del mismo proyecto → UPDATE status='expired'
+4. Inserta nueva invitación:
+   project_id, email, token,
+   expires_at = now() + 90 días
+5. Obtiene el nombre del proyecto y 
+   del constructor para el email
+6. Envía email al cliente via Resend
+   con esta plantilla EN INGLÉS:
+
+   Subject: "[Builder name] invited you to 
+   track the progress of [Project name]"
+   
+   Body:
+   "Hi,
+   
+   [Builder name] has given you access 
+   to the project portal for [Project name].
+   
+   From this portal you can:
+   • Track the progress of your project 
+     in real time
+   • View photos of the work
+   • Access documents and contracts
+   • Stay updated with the team
+   
+   Access your portal here:
+   [BUTTON] View my project
+   
+   This link is personal and exclusive 
+   to you. It will be active for 90 days."
+   
+   Button URL: {APP_URL}/invite/{token}
+
+7. Devuelve:
+   { 
+     token, 
+     invite_url: `${APP_URL}/invite/${token}`,
+     email,
+     expires_at
+   }
+
+ENDPOINT 2 — GET /api/invitations/:token
+Sin autenticación (público)
+Verifica el token y devuelve info del proyecto:
+{
+  project_name: string,
+  builder_name: string,
+  builder_company: string | null,
+  email: string,
+  status: string,
+  expires_at: string
+}
+Si token no existe → 404
+Si expires_at < now() → 
+  UPDATE status='expired' → 404 con 
+  mensaje "This link has expired"
+
+ENDPOINT 3 — POST /api/invitations/:token/access
+Sin autenticación (público)
+Body: vacío — el token es el acceso
+
+Lógica:
+1. Verifica token válido y no expirado
+2. Si ya existe un client_id en la invitación
+   (cliente ya accedió antes):
+   → Genera nuevo JWT para ese usuario
+   → Devuelve { token: jwt, user, project_id }
+3. Si es la primera vez (client_id es null):
+   → Crea usuario con:
+     name: email (temporal)
+     email: invitation.email
+     password_hash: '' (no tiene contraseña)
+     role: 'client'
+     organization_id: null
+   → Actualiza invitación: 
+     client_id = nuevo user id,
+     status = 'accessed'
+   → Genera JWT
+   → Devuelve { token: jwt, user, project_id }
+
+ENDPOINT 4 — GET /api/projects/:projectId/invitation
+requireAuth, solo el constructor del proyecto
+Devuelve la invitación activa del proyecto:
+{ invite_url, email, status, expires_at }
+o null si no hay invitación activa
+
+Registra el router en 
+artifacts/api-server/src/routes/index.ts
+
+Agrega schemas Zod en lib/api-zod
+Agrega tipos y hooks en lib/api-client-react:
+- useInviteClient(projectId)
+- useGetInvitation(projectId)
+- useAccessInvitation(token) [mutation]
+- useGetInvitationInfo(token) [query]
+
+Muéstrame el diff completo antes de aplicar.
