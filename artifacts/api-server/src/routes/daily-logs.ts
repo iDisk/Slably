@@ -39,7 +39,7 @@ router.get("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, res
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role === "subcontractor") { res.status(403).json({ error: "Forbidden" }); return; }
+  if (user.role === "subcontractor" || user.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
 
   const project = await checkProjectAccess(params.data.id, user);
   if (!project) { res.status(404).json({ error: "Project not found" }); return; }
@@ -249,7 +249,7 @@ router.get("/projects/:id/daily-logs/:logId", requireAuth, async (req: AuthReque
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role === "subcontractor") { res.status(403).json({ error: "Forbidden" }); return; }
+  if (user.role === "subcontractor" || user.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
 
   const project = await checkProjectAccess(params.data.id, user);
   if (!project) { res.status(404).json({ error: "Project not found" }); return; }

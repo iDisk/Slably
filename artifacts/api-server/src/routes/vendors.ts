@@ -263,6 +263,8 @@ router.get("/projects/:projectId/vendors/:vendorId/payments", requireAuth, async
   const params = VendorParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
+  if (req.user!.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
+
   const project = await checkProjectAccess(params.data.projectId, req.user!);
   if (!project) { res.status(404).json({ error: "Project not found" }); return; }
 

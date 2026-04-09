@@ -19,7 +19,7 @@ export default function InvitePage() {
       onSuccess: (data) => {
         localStorage.setItem("slably_token", data.token);
         const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-        window.location.href = `${base}/projects/${data.project_id}`;
+        window.location.href = `${base}/client/projects/${data.project_id}`;
       },
     });
   };

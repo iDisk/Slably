@@ -16,6 +16,7 @@ import BuilderProfile from "@/pages/BuilderProfile";
 import Find from "@/pages/Find";
 import NotFound from "@/pages/not-found";
 import InvitePage from "@/pages/InvitePage";
+import ClientProjectView from "@/pages/ClientProjectView";
 
 // Patch fetch to automatically inject the JWT token and handle 401s
 const originalFetch = window.fetch;
@@ -82,7 +83,8 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/dashboard"><ProtectedRoute component={BuilderDashboard} roleRequired={['builder', 'subcontractor']} /></Route>
-      <Route path="/projects/:id"><ProtectedRoute component={ProjectDetails} roleRequired="builder" /></Route>
+      <Route path="/projects/:id"><ProtectedRoute component={ProjectDetails} roleRequired={["builder", "subcontractor"]} /></Route>
+      <Route path="/client/projects/:id"><ProtectedRoute component={ClientProjectView} roleRequired="client" /></Route>
       <Route path="/activities"><ProtectedRoute component={Activities} roleRequired="builder" /></Route>
       <Route path="/profile"><ProtectedRoute component={Profile} roleRequired={['builder', 'subcontractor']} /></Route>
       <Route path="/network"><ProtectedRoute component={Network} roleRequired={['builder', 'subcontractor']} /></Route>
