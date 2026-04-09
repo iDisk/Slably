@@ -25,6 +25,28 @@ function serializeCO(co: typeof changeOrdersTable.$inferSelect) {
   return { ...co, amount: Number(co.amount) };
 }
 
+router.get("/projects/:projectId/change-orders/client", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const params = ListChangeOrdersParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const project = await checkProjectAccess(params.data.projectId, req.user!);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+
+  const changeOrders = await db.select().from(changeOrdersTable)
+    .where(eq(changeOrdersTable.projectId, params.data.projectId));
+
+  const user = req.user!;
+  if (user.role === "client") {
+    const visible = ["sent", "approved", "rejected"];
+    res.json(ListChangeOrdersResponse.parse(
+      changeOrders.filter(co => visible.includes(co.status)).map(serializeCO)
+    ));
+    return;
+  }
+
+  res.json(ListChangeOrdersResponse.parse(changeOrders.map(serializeCO)));
+});
+
 router.get("/projects/:projectId/change-orders", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const params = ListChangeOrdersParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }

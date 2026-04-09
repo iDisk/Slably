@@ -739,14 +739,15 @@ export const CreateDailyLogBody = zod.object({
 });
 
 export const UpdateDailyLogBody = zod.object({
-  weather:       zod.string().optional(),
-  temperature:   zod.coerce.number().int().optional(),
-  workers_count: zod.coerce.number().int().optional(),
-  activities:    zod.string().min(1).optional(),
-  materials:     zod.string().optional(),
-  problems:      zod.string().optional(),
-  notes:         zod.string().optional(),
-  status:        zod.enum(["draft", "confirmed"]).optional(),
+  weather:           zod.string().optional(),
+  temperature:       zod.coerce.number().int().optional(),
+  workers_count:     zod.coerce.number().int().optional(),
+  activities:        zod.string().min(1).optional(),
+  materials:         zod.string().optional(),
+  problems:          zod.string().optional(),
+  notes:             zod.string().optional(),
+  status:            zod.enum(["draft", "confirmed"]).optional(),
+  share_with_client: zod.boolean().optional(),
 });
 
 // ─── Vendors ──────────────────────────────────────────────────────────────────

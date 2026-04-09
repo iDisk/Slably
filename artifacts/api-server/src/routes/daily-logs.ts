@@ -39,30 +39,55 @@ router.get("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, res
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role === "subcontractor" || user.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
+  if (user.role === "subcontractor") { res.status(403).json({ error: "Forbidden" }); return; }
 
   const project = await checkProjectAccess(params.data.id, user);
   if (!project) { res.status(404).json({ error: "Project not found" }); return; }
 
+  if (user.role === "client") {
+    const logs = await db
+      .select({
+        id:           dailyLogsTable.id,
+        projectId:    dailyLogsTable.projectId,
+        logDate:      dailyLogsTable.logDate,
+        weather:      dailyLogsTable.weather,
+        temperature:  dailyLogsTable.temperature,
+        workersCount: dailyLogsTable.workersCount,
+        activities:   dailyLogsTable.activities,
+        materials:    dailyLogsTable.materials,
+        problems:     dailyLogsTable.problems,
+        createdAt:    dailyLogsTable.createdAt,
+      })
+      .from(dailyLogsTable)
+      .where(and(
+        eq(dailyLogsTable.projectId, params.data.id),
+        eq(dailyLogsTable.shareWithClient, true),
+      ))
+      .orderBy(desc(dailyLogsTable.logDate));
+    res.json(logs);
+    return;
+  }
+
   const logs = await db
     .select({
-      id:             dailyLogsTable.id,
-      projectId:      dailyLogsTable.projectId,
-      organizationId: dailyLogsTable.organizationId,
-      createdBy:      dailyLogsTable.createdBy,
-      logDate:        dailyLogsTable.logDate,
-      weather:        dailyLogsTable.weather,
-      temperature:    dailyLogsTable.temperature,
-      workersCount:   dailyLogsTable.workersCount,
-      activities:     dailyLogsTable.activities,
-      materials:      dailyLogsTable.materials,
-      problems:       dailyLogsTable.problems,
-      notes:          dailyLogsTable.notes,
-      audioUrl:       dailyLogsTable.audioUrl,
-      aiProcessed:    dailyLogsTable.aiProcessed,
-      status:         dailyLogsTable.status,
-      createdAt:      dailyLogsTable.createdAt,
-      updatedAt:      dailyLogsTable.updatedAt,
+      id:              dailyLogsTable.id,
+      projectId:       dailyLogsTable.projectId,
+      organizationId:  dailyLogsTable.organizationId,
+      createdBy:       dailyLogsTable.createdBy,
+      logDate:         dailyLogsTable.logDate,
+      weather:         dailyLogsTable.weather,
+      temperature:     dailyLogsTable.temperature,
+      workersCount:    dailyLogsTable.workersCount,
+      activities:      dailyLogsTable.activities,
+      materials:       dailyLogsTable.materials,
+      problems:        dailyLogsTable.problems,
+      notes:           dailyLogsTable.notes,
+      audioUrl:        dailyLogsTable.audioUrl,
+      aiProcessed:     dailyLogsTable.aiProcessed,
+      status:          dailyLogsTable.status,
+      shareWithClient: dailyLogsTable.shareWithClient,
+      createdAt:       dailyLogsTable.createdAt,
+      updatedAt:       dailyLogsTable.updatedAt,
     })
     .from(dailyLogsTable)
     .where(eq(dailyLogsTable.projectId, params.data.id))
@@ -282,24 +307,26 @@ router.patch("/projects/:id/daily-logs/:logId", requireAuth, async (req: AuthReq
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
   const updates: Partial<{
-    weather:      string | null;
-    temperature:  number | null;
-    workersCount: number | null;
-    activities:   string;
-    materials:    string | null;
-    problems:     string | null;
-    notes:        string | null;
-    status:       string;
+    weather:         string | null;
+    temperature:     number | null;
+    workersCount:    number | null;
+    activities:      string;
+    materials:       string | null;
+    problems:        string | null;
+    notes:           string | null;
+    status:          string;
+    shareWithClient: boolean;
   }> = {};
 
-  if (parsed.data.weather       !== undefined) updates.weather       = parsed.data.weather;
-  if (parsed.data.temperature   !== undefined) updates.temperature   = parsed.data.temperature;
-  if (parsed.data.workers_count !== undefined) updates.workersCount  = parsed.data.workers_count;
-  if (parsed.data.activities    !== undefined) updates.activities    = parsed.data.activities;
-  if (parsed.data.materials     !== undefined) updates.materials     = parsed.data.materials;
-  if (parsed.data.problems      !== undefined) updates.problems      = parsed.data.problems;
-  if (parsed.data.notes         !== undefined) updates.notes         = parsed.data.notes;
-  if (parsed.data.status        !== undefined) updates.status        = parsed.data.status;
+  if (parsed.data.weather           !== undefined) updates.weather         = parsed.data.weather;
+  if (parsed.data.temperature       !== undefined) updates.temperature     = parsed.data.temperature;
+  if (parsed.data.workers_count     !== undefined) updates.workersCount    = parsed.data.workers_count;
+  if (parsed.data.activities        !== undefined) updates.activities      = parsed.data.activities;
+  if (parsed.data.materials         !== undefined) updates.materials       = parsed.data.materials;
+  if (parsed.data.problems          !== undefined) updates.problems        = parsed.data.problems;
+  if (parsed.data.notes             !== undefined) updates.notes           = parsed.data.notes;
+  if (parsed.data.status            !== undefined) updates.status          = parsed.data.status;
+  if (parsed.data.share_with_client !== undefined) updates.shareWithClient = parsed.data.share_with_client;
 
   if (Object.keys(updates).length === 0) {
     res.status(400).json({ error: "No fields to update" });

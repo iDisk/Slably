@@ -136,6 +136,41 @@ router.post("/projects/:id/documents", requireAuth, async (req: AuthRequest, res
   res.status(201).json(doc);
 });
 
+// ─── ENDPOINT 3b — GET /api/projects/:id/documents/client ────────────────────
+router.get("/projects/:id/documents/client", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const params = DocumentProjectParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+
+  const project = await checkProjectAccess(params.data.id, req.user!);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+
+  const docs = await db
+    .select({
+      id:                 generatedDocumentsTable.id,
+      projectId:          generatedDocumentsTable.projectId,
+      templateId:         generatedDocumentsTable.templateId,
+      type:               generatedDocumentsTable.type,
+      language:           generatedDocumentsTable.language,
+      title:              generatedDocumentsTable.title,
+      status:             generatedDocumentsTable.status,
+      contractorSignedAt: generatedDocumentsTable.contractorSignedAt,
+      clientSignedAt:     generatedDocumentsTable.clientSignedAt,
+      signedAt:           generatedDocumentsTable.signedAt,
+      createdAt:          generatedDocumentsTable.createdAt,
+      updatedAt:          generatedDocumentsTable.updatedAt,
+    })
+    .from(generatedDocumentsTable)
+    .where(eq(generatedDocumentsTable.projectId, params.data.id));
+
+  const user = req.user!;
+  if (user.role === "client") {
+    res.json(docs.filter(d => d.status === "signed" || d.status === "sent"));
+    return;
+  }
+
+  res.json(docs);
+});
+
 // ─── ENDPOINT 4 — GET /api/projects/:id/documents ────────────────────────────
 router.get("/projects/:id/documents", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const params = DocumentProjectParams.safeParse(req.params);

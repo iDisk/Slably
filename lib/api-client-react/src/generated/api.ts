@@ -4200,3 +4200,87 @@ export function useAccessInvitation<TError = ErrorType<unknown>, TContext = unkn
     ...mo,
   });
 }
+
+// ─── Client Documents ─────────────────────────────────────────────────────────
+
+export const getClientDocumentsUrl = (projectId: number) =>
+  `/api/projects/${projectId}/documents/client`;
+
+export const getClientDocuments = async (projectId: number, options?: RequestInit): Promise<DocumentListItemType[]> =>
+  customFetch<DocumentListItemType[]>(getClientDocumentsUrl(projectId), { ...options });
+
+export const getClientDocumentsQueryKey = (projectId: number) =>
+  [getClientDocumentsUrl(projectId)] as const;
+
+export const getClientDocumentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getClientDocuments>>,
+  TError = ErrorType<unknown>,
+>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getClientDocuments>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryOptions<Awaited<ReturnType<typeof getClientDocuments>>, TError, TData> & { queryKey: QueryKey } => ({
+  queryKey: getClientDocumentsQueryKey(projectId),
+  queryFn: () => getClientDocuments(projectId, options?.request as RequestInit),
+  enabled: !!projectId,
+  ...options?.query,
+});
+
+export function useGetClientDocuments<
+  TData = Awaited<ReturnType<typeof getClientDocuments>>,
+  TError = ErrorType<unknown>,
+>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getClientDocuments>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getClientDocumentsQueryOptions(projectId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+// ─── Client Change Orders ─────────────────────────────────────────────────────
+
+export const getClientChangeOrdersUrl = (projectId: number) =>
+  `/api/projects/${projectId}/change-orders/client`;
+
+export const getClientChangeOrders = async (projectId: number, options?: RequestInit): Promise<ChangeOrder[]> =>
+  customFetch<ChangeOrder[]>(getClientChangeOrdersUrl(projectId), { ...options });
+
+export const getClientChangeOrdersQueryKey = (projectId: number) =>
+  [getClientChangeOrdersUrl(projectId)] as const;
+
+export const getClientChangeOrdersQueryOptions = <
+  TData = Awaited<ReturnType<typeof getClientChangeOrders>>,
+  TError = ErrorType<unknown>,
+>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getClientChangeOrders>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryOptions<Awaited<ReturnType<typeof getClientChangeOrders>>, TError, TData> & { queryKey: QueryKey } => ({
+  queryKey: getClientChangeOrdersQueryKey(projectId),
+  queryFn: () => getClientChangeOrders(projectId, options?.request as RequestInit),
+  enabled: !!projectId,
+  ...options?.query,
+});
+
+export function useGetClientChangeOrders<
+  TData = Awaited<ReturnType<typeof getClientChangeOrders>>,
+  TError = ErrorType<unknown>,
+>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getClientChangeOrders>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getClientChangeOrdersQueryOptions(projectId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  return { ...query, queryKey: queryOptions.queryKey };
+}
