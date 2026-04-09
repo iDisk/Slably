@@ -12,7 +12,7 @@ interface AdminUser {
   id: number;
   name: string;
   email: string;
-  role: "builder" | "client" | "subcontractor";
+  role: "builder" | "client" | "subcontractor" | "supplier";
   category: string | null;
   serviceCity: string | null;
   isActive: boolean;
@@ -21,13 +21,14 @@ interface AdminUser {
   companyName: string | null;
 }
 
-type RoleFilter = "all" | "builder" | "subcontractor" | "client";
+type RoleFilter = "all" | "builder" | "subcontractor" | "supplier" | "client";
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const ROLE_BADGE: Record<string, string> = {
   builder:       "bg-blue-100 text-blue-700 border border-blue-200",
   subcontractor: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+  supplier:      "bg-amber-100 text-amber-700 border border-amber-200",
   client:        "bg-slate-100 text-slate-600 border border-slate-200",
 };
 
@@ -162,10 +163,11 @@ function AdminPanelView({ secret, initialUsers }: { secret: string; initialUsers
   }
 
   const ROLE_TABS: { label: string; value: RoleFilter }[] = [
-    { label: "All",      value: "all" },
-    { label: "Builders", value: "builder" },
-    { label: "Subs",     value: "subcontractor" },
-    { label: "Clients",  value: "client" },
+    { label: "All",       value: "all" },
+    { label: "Builders",  value: "builder" },
+    { label: "Subs",      value: "subcontractor" },
+    { label: "Suppliers", value: "supplier" },
+    { label: "Clients",   value: "client" },
   ];
 
   return (
