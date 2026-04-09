@@ -671,6 +671,7 @@ export const CreateRfqBody = zod.object({
   budget_min:  zod.coerce.number().optional(),
   budget_max:  zod.coerce.number().optional(),
   start_date:  zod.string().optional(),
+  project_id:  zod.number().int().optional(),
 });
 
 export const UpdateRfqStatusBody = zod.object({

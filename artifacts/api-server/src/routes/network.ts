@@ -121,9 +121,12 @@ router.get("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise<
         completedAt:   rfqsTable.completedAt,
         createdAt:     rfqsTable.createdAt,
         createdByName: usersTable.name,
+        projectId:     rfqsTable.projectId,
+        projectName:   projectsTable.name,
       })
       .from(rfqsTable)
       .leftJoin(usersTable, eq(rfqsTable.createdBy, usersTable.id))
+      .leftJoin(projectsTable, eq(rfqsTable.projectId, projectsTable.id))
       .where(eq(rfqsTable.organizationId, user.organizationId));
 
     res.json(rfqs);
@@ -141,7 +144,7 @@ router.post("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise
   const parsed = CreateRfqBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
-  const { title, description, specialty, city, budget_min, budget_max, start_date } = parsed.data;
+  const { title, description, specialty, city, budget_min, budget_max, start_date, project_id } = parsed.data;
 
   const [rfq] = await db
     .insert(rfqsTable)
@@ -155,6 +158,7 @@ router.post("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise
       budgetMin: budget_min != null ? String(budget_min) : null,
       budgetMax: budget_max != null ? String(budget_max) : null,
       startDate: start_date ?? null,
+      projectId: project_id ?? null,
       status:    "open",
     })
     .returning();

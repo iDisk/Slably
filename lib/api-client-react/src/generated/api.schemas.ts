@@ -465,6 +465,8 @@ export interface Rfq {
   createdAt:      string;
   createdByName:  string | null;
   completedAt:    string | null;
+  projectId:      number | null;
+  projectName:    string | null;
 }
 
 export interface RfqQuote {
@@ -487,6 +489,7 @@ export interface CreateRfqBodyParams {
   budget_min?: number;
   budget_max?: number;
   start_date?: string;
+  project_id?: number;
 }
 
 export interface UpdateRfqStatusBodyParams {

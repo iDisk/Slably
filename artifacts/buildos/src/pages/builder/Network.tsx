@@ -15,6 +15,7 @@ import {
   useGetNetworkRfqs, useCreateRfq, useUpdateRfqStatus,
   useGetRfqQuotes, useCreateRfqQuote, useUpdateRfqQuoteStatus,
   useCompleteRfq, useCreateRating, useGetRfqRatings,
+  useListProjects,
   getNetworkRfqsQueryKey, getRfqQuotesQueryKey,
   type Rfq, type RfqQuote,
 } from "@workspace/api-client-react";
@@ -81,6 +82,7 @@ const rfqSchema = z.object({
   budget_min:  z.coerce.number().optional(),
   budget_max:  z.coerce.number().optional(),
   start_date:  z.string().optional(),
+  project_id:  z.preprocess(v => (v === "" || v == null) ? undefined : Number(v), z.number().int().positive().optional()),
 });
 
 const quoteSchema = z.object({
@@ -247,6 +249,11 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
               {rfq.completedAt && (
                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
                   ✓ Completado
+                </span>
+              )}
+              {rfq.projectName && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">
+                  📋 {rfq.projectName}
                 </span>
               )}
             </div>
@@ -619,6 +626,7 @@ function BuilderNetwork({ rfqs, isLoading }: { rfqs: Rfq[] | undefined; isLoadin
   const [createOpen, setCreateOpen] = useState(false);
   const qc = useQueryClient();
   const createRfq = useCreateRfq();
+  const { data: projects } = useListProjects({ query: { queryKey: ["/api/projects"] } });
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<RfqForm>({
     resolver: zodResolver(rfqSchema),
@@ -715,6 +723,18 @@ function BuilderNetwork({ rfqs, isLoading }: { rfqs: Rfq[] | undefined; isLoadin
                 <div className="space-y-2">
                   <Label>Fecha de inicio (opcional)</Label>
                   <Input {...register("start_date")} type="date" />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Proyecto (opcional)</Label>
+                  <select
+                    {...register("project_id")}
+                    className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
+                  >
+                    <option value="">Sin proyecto específico</option>
+                    {projects?.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
