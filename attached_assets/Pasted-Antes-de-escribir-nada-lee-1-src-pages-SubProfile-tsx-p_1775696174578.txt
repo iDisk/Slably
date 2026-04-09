@@ -1,0 +1,92 @@
+Antes de escribir nada, lee:
+1. src/pages/SubProfile.tsx — para ver 
+   el patrón de página pública limpia
+2. src/components/project/PhotosTab.tsx
+   — para ver cómo se cargan las fotos
+3. artifacts/api-server/src/routes/projects.ts
+   — para ver el endpoint GET /api/projects/:id
+
+Necesito 3 cambios:
+
+CAMBIO 1 — Proteger endpoints sensibles 
+en el backend.
+
+En estos archivos agrega verificación:
+si user.role === 'client' → 403 Forbidden
+
+Archivos y endpoints a proteger:
+- routes/expenses.ts → todos los endpoints
+- routes/vendors.ts → todos los endpoints  
+- routes/daily-logs.ts → todos los endpoints
+- routes/phases.ts → PATCH (editar fases)
+- routes/change_orders.ts → POST y PATCH
+
+El GET de fotos en routes/photos.ts 
+SÍ puede ser accedido por clients pero 
+solo devuelve fotos con visible_to_client=true
+
+CAMBIO 2 — Nueva página pública del cliente:
+src/pages/ClientProjectView.tsx
+
+Ruta: /client/projects/:id
+ProtectedRoute con roleRequired="client"
+
+La página usa:
+useGetProject(id) — info del proyecto
+useGetProjectPhotos(id) — fotos del proyecto
+
+DISEÑO:
+
+Header con logo Slably en navy
+(igual que BuilderProfile y SubProfile)
+
+Sección 1 — Hero del proyecto:
+- Nombre del proyecto en grande
+- Badge de estado:
+  active → "En progreso"
+  completed → "Completado"
+  planning → "En planificación"
+- Barra de progreso grande con % visible
+- Dirección del proyecto
+
+Sección 2 — Constructor:
+Card pequeña con:
+- Nombre del constructor
+- Empresa (si existe)
+- Teléfono (si existe)
+
+Sección 3 — Fotos recientes:
+Grid 2 columnas de las últimas 6 fotos
+donde visible_to_client = true
+Si no hay fotos:
+"No hay fotos disponibles aún."
+
+Sección 4 — Documentos pendientes:
+(por ahora placeholder)
+Card con texto:
+"Your contractor will share documents 
+here for your review."
+
+Footer:
+"Powered by Slably"
+
+CAMBIO 3 — Actualizar el redirect del cliente.
+
+En src/pages/InvitePage.tsx
+cuando el cliente accede exitosamente,
+en lugar de redirigir a /projects/:id
+redirigir a /client/projects/:id
+
+En src/App.tsx:
+- Agrega la ruta para ClientProjectView:
+  <Route path="/client/projects/:id">
+    <ProtectedRoute 
+      component={ClientProjectView} 
+      roleRequired="client" />
+  </Route>
+
+- Mantén la ruta /projects/:id 
+  solo para builders y subcontractors:
+  roleRequired={["builder", "subcontractor"]}
+
+Muéstrame el diff completo antes de aplicar.
