@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, ilike, or, inArray, desc } from "drizzle-orm";
-import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable, ratingsTable, projectsTable, photosTable } from "@workspace/db";
+import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable, ratingsTable, projectsTable, photosTable, projectVendorsTable } from "@workspace/db";
 import {
   RfqParams,
   CreateRfqBody,
@@ -346,6 +346,53 @@ router.patch("/network/rfqs/:rfqId/quotes/:quoteId", requireAuth, async (req: Au
     .returning();
 
   if (!updated) { res.status(404).json({ error: "Quote not found" }); return; }
+
+  // Auto-crear project_vendor cuando se acepta una quote ligada a un proyecto
+  if (parsed.data.status === "accepted" && rfq.projectId && rfq.organizationId) {
+    const [sub] = await db
+      .select({
+        name:        usersTable.name,
+        category:    usersTable.category,
+        email:       usersTable.email,
+        serviceCity: usersTable.serviceCity,
+      })
+      .from(usersTable)
+      .where(eq(usersTable.id, updated.subcontractorId));
+
+    if (sub) {
+      const [existingVendor] = await db
+        .select({ id: projectVendorsTable.id, contractAmount: projectVendorsTable.contractAmount })
+        .from(projectVendorsTable)
+        .where(and(
+          eq(projectVendorsTable.projectId,    rfq.projectId),
+          eq(projectVendorsTable.linkedUserId, updated.subcontractorId),
+        ));
+
+      if (existingVendor) {
+        if (existingVendor.contractAmount !== updated.amount) {
+          await db
+            .update(projectVendorsTable)
+            .set({ contractAmount: updated.amount })
+            .where(eq(projectVendorsTable.id, existingVendor.id));
+        }
+      } else {
+        await db
+          .insert(projectVendorsTable)
+          .values({
+            projectId:      rfq.projectId,
+            organizationId: rfq.organizationId,
+            createdBy:      user.id,
+            name:           sub.name,
+            type:           "subcontractor",
+            specialty:      sub.category      ?? undefined,
+            email:          sub.email         ?? undefined,
+            linkedUserId:   updated.subcontractorId,
+            contractAmount: updated.amount,
+          });
+      }
+    }
+  }
+
   res.json(updated);
 });
 
