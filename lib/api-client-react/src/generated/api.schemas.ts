@@ -775,3 +775,36 @@ export interface CreateVendorChangeOrderBody {
 export interface UpdateVendorChangeOrderBody {
   status: "approved" | "rejected";
 }
+
+export interface InviteClientBody {
+  email: string;
+}
+
+export interface InvitationResponse {
+  token: string;
+  invite_url: string;
+  email: string;
+  expires_at: string;
+}
+
+export interface InvitationInfo {
+  project_name: string;
+  builder_name: string;
+  builder_company: string | null;
+  email: string;
+  status: string;
+  expires_at: string;
+}
+
+export interface ActiveInvitation {
+  invite_url: string;
+  email: string;
+  status: string;
+  expires_at: string;
+}
+
+export interface AccessInvitationResponse {
+  token: string;
+  user: { id: number; name: string; email: string; role: string };
+  project_id: number;
+}

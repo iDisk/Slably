@@ -146,6 +146,102 @@ function buildRfqEmailHtml(p: {
 </html>`;
 }
 
+export async function sendInvitationEmail({
+  to,
+  builderName,
+  builderCompany,
+  projectName,
+  inviteUrl,
+}: {
+  to: string;
+  builderName: string;
+  builderCompany: string | null;
+  projectName: string;
+  inviteUrl: string;
+}) {
+  const displayName = builderCompany ?? builderName;
+  const { data, error } = await getResend().emails.send({
+    from: "Slably <onboarding@resend.dev>",
+    to,
+    subject: `${displayName} invited you to track the progress of ${projectName}`,
+    html: buildInvitationEmailHtml({ builderName, builderCompany, projectName, inviteUrl }),
+  });
+  if (error) console.error(`[INVITE EMAIL] ❌ Failed → ${to}`, (error as any).message);
+  else       console.log(`[INVITE EMAIL] ✅ Sent OK → ${to}`);
+  return { data, error };
+}
+
+function buildInvitationEmailHtml(p: {
+  builderName: string;
+  builderCompany: string | null;
+  projectName: string;
+  inviteUrl: string;
+}): string {
+  const displayName = p.builderCompany ?? p.builderName;
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Georgia,serif;">
+  <div style="max-width:560px;margin:40px auto;background:#ffffff;
+              border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+
+    <div style="background:#1B3A5C;padding:32px 40px;">
+      <h1 style="margin:0;color:#ffffff;font-size:22px;letter-spacing:1px;">
+        BUILD<span style="color:#F97316;">OS</span>
+      </h1>
+      <p style="margin:8px 0 0;color:#94a3b8;font-size:13px;">
+        Construction project management
+      </p>
+    </div>
+
+    <div style="padding:40px;">
+      <p style="margin:0 0 16px;font-size:16px;color:#111827;">Hi,</p>
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">
+        <strong>${displayName}</strong> has given you access to the project portal
+        for <strong>${p.projectName}</strong>.
+      </p>
+
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;
+                  border-radius:8px;padding:20px 24px;margin:24px 0;">
+        <p style="margin:0 0 8px;font-size:14px;color:#374151;font-weight:600;">
+          From this portal you can:
+        </p>
+        <ul style="margin:0;padding-left:20px;color:#374151;font-size:14px;line-height:2;">
+          <li>Track the progress of your project in real time</li>
+          <li>View photos of the work</li>
+          <li>Access documents and contracts</li>
+          <li>Stay updated with the team</li>
+        </ul>
+      </div>
+
+      <div style="text-align:center;margin:32px 0;">
+        <a href="${p.inviteUrl}"
+           style="display:inline-block;background:#F97316;color:#ffffff;
+                  text-decoration:none;padding:14px 32px;border-radius:8px;
+                  font-size:15px;font-weight:600;letter-spacing:0.02em;">
+          View my project →
+        </a>
+      </div>
+
+      <p style="margin:24px 0 0;font-size:13px;color:#6b7280;line-height:1.6;">
+        This link is personal and exclusive to you. It will be active for 90 days.
+      </p>
+    </div>
+
+    <div style="background:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;">
+      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
+        This email was sent by Slably on behalf of ${displayName}.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
 function buildEmailHtml(params: {
   clientName: string;
   contractorName: string;

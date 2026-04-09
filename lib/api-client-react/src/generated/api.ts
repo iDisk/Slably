@@ -76,6 +76,11 @@ import type {
   UpdateVendorPaymentBody,
   CreateVendorChangeOrderBody,
   UpdateVendorChangeOrderBody,
+  InviteClientBody,
+  InvitationResponse,
+  InvitationInfo,
+  ActiveInvitation,
+  AccessInvitationResponse,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -4113,4 +4118,85 @@ export function useGetFrequentVendors<TError = ErrorType<unknown>>(
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getFrequentVendors>>> =
     () => getFrequentVendors(pid, ro as RequestInit);
   return useQuery({ queryKey, queryFn, ...qo });
+}
+
+// ── INVITATIONS ───────────────────────────────────────────────────────────────
+
+const inviteClientFn = (pid: number, body: InviteClientBody, o?: RequestInit) =>
+  customFetch<InvitationResponse>(`/api/projects/${pid}/invite`, {
+    ...o,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(o?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export function useInviteClient<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof inviteClientFn>>, TError, { data: InviteClientBody }, TContext>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof inviteClientFn>>, TError, { data: InviteClientBody }, TContext> {
+  const { mutation: mo } = options ?? {};
+  return useMutation({
+    mutationKey: [`/api/projects/${pid}/invite`],
+    mutationFn: ({ data }) => inviteClientFn(pid, data),
+    ...mo,
+  });
+}
+
+export const getInvitationQueryKey = (pid: number) =>
+  [`/api/projects/${pid}/invitation`] as const;
+
+export const getInvitation = (pid: number, o?: RequestInit) =>
+  customFetch<ActiveInvitation | null>(`/api/projects/${pid}/invitation`, { ...o, method: "GET" });
+
+export function useGetInvitation<TError = ErrorType<unknown>>(
+  pid: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getInvitation>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getInvitation>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getInvitationQueryKey(pid);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getInvitation>>> =
+    () => getInvitation(pid, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
+}
+
+export const getInvitationInfoQueryKey = (token: string) =>
+  [`/api/invitations/${token}`] as const;
+
+export const getInvitationInfo = (token: string, o?: RequestInit) =>
+  customFetch<InvitationInfo>(`/api/invitations/${token}`, { ...o, method: "GET" });
+
+export function useGetInvitationInfo<TError = ErrorType<unknown>>(
+  token: string,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getInvitationInfo>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getInvitationInfo>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getInvitationInfoQueryKey(token);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getInvitationInfo>>> =
+    () => getInvitationInfo(token, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
+}
+
+const accessInvitationFn = (token: string, o?: RequestInit) =>
+  customFetch<AccessInvitationResponse>(`/api/invitations/${token}/access`, { ...o, method: "POST" });
+
+export function useAccessInvitation<TError = ErrorType<unknown>, TContext = unknown>(
+  token: string,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof accessInvitationFn>>, TError, void, TContext>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof accessInvitationFn>>, TError, void, TContext> {
+  const { mutation: mo } = options ?? {};
+  return useMutation({
+    mutationKey: [`/api/invitations/${token}/access`],
+    mutationFn: () => accessInvitationFn(token),
+    ...mo,
+  });
 }

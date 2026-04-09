@@ -843,3 +843,11 @@ export const FrequentVendor = zod.object({
   linked_user_id: zod.number().int().nullable(),
   frequency:      zod.number().int(),
 });
+
+export const InviteClientBody = zod.object({
+  email: zod.string().email(),
+});
+
+export const InvitationTokenParams = zod.object({
+  token: zod.string(),
+});
