@@ -18,8 +18,7 @@ export default function InvitePage() {
     accessMutation.mutate(undefined, {
       onSuccess: (data) => {
         localStorage.setItem("slably_token", data.token);
-        const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-        window.location.href = `${base}/client/projects/${data.project_id}`;
+        window.location.href = `/client/projects/${data.project_id}`;
       },
     });
   };
