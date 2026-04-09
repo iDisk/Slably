@@ -388,6 +388,7 @@ router.patch("/network/rfqs/:rfqId/quotes/:quoteId", requireAuth, async (req: Au
             email:          sub.email         ?? undefined,
             linkedUserId:   updated.subcontractorId,
             contractAmount: updated.amount,
+            contractNotes:  updated.message ?? undefined,
           });
       }
     }
