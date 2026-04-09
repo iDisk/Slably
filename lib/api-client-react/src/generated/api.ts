@@ -82,6 +82,10 @@ import type {
   ActiveInvitation,
   AccessInvitationResponse,
   MyWorkItem,
+  UserPhotoItem,
+  PendingPhotoItem,
+  ShareUserPhotoBody,
+  ApproveUserPhotoBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -4316,4 +4320,105 @@ export function useGetMyWork<
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
   query.queryKey = queryOptions.queryKey;
   return query;
+}
+
+// ─── User Photos ──────────────────────────────────────────────────────────────
+
+// POST /api/user-photos
+export const uploadUserPhotoUrl = () => `/api/user-photos`;
+export const uploadUserPhoto = (formData: FormData, options?: RequestInit): Promise<UserPhotoItem> =>
+  customFetch<UserPhotoItem>(uploadUserPhotoUrl(), { method: "POST", body: formData, ...options });
+export function useUploadUserPhoto<TError = ErrorType<unknown>, TContext = unknown>(
+  options?: UseMutationOptions<UserPhotoItem, TError, FormData, TContext>,
+): UseMutationResult<UserPhotoItem, TError, FormData, TContext> {
+  return useMutation({ mutationFn: (formData) => uploadUserPhoto(formData), ...options });
+}
+
+// GET /api/user-photos
+export const getUserPhotosUrl = () => `/api/user-photos`;
+export const getUserPhotos = (options?: RequestInit): Promise<UserPhotoItem[]> =>
+  customFetch<UserPhotoItem[]>(getUserPhotosUrl(), { method: "GET", ...options });
+export const getUserPhotosQueryKey = () => [`/api/user-photos`] as const;
+export const getUserPhotosQueryOptions = <TData = Awaited<ReturnType<typeof getUserPhotos>>>(
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getUserPhotos>>, ErrorType<unknown>, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getUserPhotosQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserPhotos>>> = ({ signal }) =>
+    getUserPhotos({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUserPhotos>>, ErrorType<unknown>, TData
+  >;
+};
+export function useGetUserPhotos<
+  TData = Awaited<ReturnType<typeof getUserPhotos>>,
+  TError extends ErrorType<unknown> = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getUserPhotos>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getUserPhotosQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
+
+// PATCH /api/user-photos/:photoId/share
+export const shareUserPhotoUrl = (photoId: number) => `/api/user-photos/${photoId}/share`;
+export const shareUserPhoto = (photoId: number, body: ShareUserPhotoBody, options?: RequestInit): Promise<UserPhotoItem> =>
+  customFetch<UserPhotoItem>(shareUserPhotoUrl(photoId), { method: "PATCH", body: JSON.stringify(body), ...options });
+export function useShareUserPhoto<TError = ErrorType<unknown>, TContext = unknown>(
+  options?: UseMutationOptions<UserPhotoItem, TError, { photoId: number; body: ShareUserPhotoBody }, TContext>,
+): UseMutationResult<UserPhotoItem, TError, { photoId: number; body: ShareUserPhotoBody }, TContext> {
+  return useMutation({ mutationFn: ({ photoId, body }) => shareUserPhoto(photoId, body), ...options });
+}
+
+// GET /api/projects/:projectId/pending-photos
+export const getPendingPhotosUrl = (projectId: number) => `/api/projects/${projectId}/pending-photos`;
+export const getPendingPhotos = (projectId: number, options?: RequestInit): Promise<PendingPhotoItem[]> =>
+  customFetch<PendingPhotoItem[]>(getPendingPhotosUrl(projectId), { method: "GET", ...options });
+export const getPendingPhotosQueryKey = (projectId: number) =>
+  [`/api/projects/${projectId}/pending-photos`] as const;
+export const getPendingPhotosQueryOptions = <TData = Awaited<ReturnType<typeof getPendingPhotos>>>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getPendingPhotos>>, ErrorType<unknown>, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getPendingPhotosQueryKey(projectId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPendingPhotos>>> = ({ signal }) =>
+    getPendingPhotos(projectId, { signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPendingPhotos>>, ErrorType<unknown>, TData
+  >;
+};
+export function useGetPendingPhotos<
+  TData = Awaited<ReturnType<typeof getPendingPhotos>>,
+  TError extends ErrorType<unknown> = ErrorType<unknown>,
+>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getPendingPhotos>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getPendingPhotosQueryOptions(projectId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
+
+// PATCH /api/user-photos/:photoId/approve
+export const approveUserPhotoUrl = (photoId: number) => `/api/user-photos/${photoId}/approve`;
+export const approveUserPhoto = (photoId: number, body: ApproveUserPhotoBody, options?: RequestInit): Promise<UserPhotoItem> =>
+  customFetch<UserPhotoItem>(approveUserPhotoUrl(photoId), { method: "PATCH", body: JSON.stringify(body), ...options });
+export function useApproveUserPhoto<TError = ErrorType<unknown>, TContext = unknown>(
+  options?: UseMutationOptions<UserPhotoItem, TError, { photoId: number; body: ApproveUserPhotoBody }, TContext>,
+): UseMutationResult<UserPhotoItem, TError, { photoId: number; body: ApproveUserPhotoBody }, TContext> {
+  return useMutation({ mutationFn: ({ photoId, body }) => approveUserPhoto(photoId, body), ...options });
 }

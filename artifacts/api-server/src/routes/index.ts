@@ -16,6 +16,7 @@ import dailyLogsRouter from "./daily-logs";
 import vendorsRouter from "./vendors";
 import invitationsRouter from "./invitations";
 import adminRouter from "./admin";
+import userPhotosRouter from "./user-photos";
 
 const router: IRouter = Router();
 
@@ -36,5 +37,6 @@ router.use(dailyLogsRouter);
 router.use(vendorsRouter);
 router.use(invitationsRouter);
 router.use(adminRouter);
+router.use(userPhotosRouter);
 
 export default router;

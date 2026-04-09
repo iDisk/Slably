@@ -816,6 +816,26 @@ export interface AccessInvitationResponse {
   project_id: number;
 }
 
+// ─── User Photos ──────────────────────────────────────────────────────────────
+export interface UserPhotoItem {
+  id:                number;
+  userId:            number;
+  fileUrl:           string;
+  caption:           string | null;
+  sharedWithBuilder: boolean;
+  projectId:         number | null;
+  approvalStatus:    string;
+  approvedBy:        number | null;
+  approvedAt:        string | null;
+  createdAt:         string;
+}
+export interface PendingPhotoItem extends UserPhotoItem {
+  uploaderName:  string;
+  uploaderEmail: string;
+}
+export interface ShareUserPhotoBody   { project_id: number; }
+export interface ApproveUserPhotoBody { status: "approved" | "rejected"; }
+
 // ─── MyWorkItem ───────────────────────────────────────────────────────────────
 export interface MyWorkItem {
   vendorId:       number;

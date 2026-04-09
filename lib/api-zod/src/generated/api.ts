@@ -853,3 +853,35 @@ export const InviteClientBody = zod.object({
 export const InvitationTokenParams = zod.object({
   token: zod.string(),
 });
+
+// ─── User Photos ──────────────────────────────────────────────────────────────
+export const UserPhoto = zod.object({
+  id:                zod.number().int(),
+  userId:            zod.number().int(),
+  fileUrl:           zod.string(),
+  caption:           zod.string().nullable(),
+  sharedWithBuilder: zod.boolean(),
+  projectId:         zod.number().int().nullable(),
+  approvalStatus:    zod.string(),
+  approvedBy:        zod.number().int().nullable(),
+  approvedAt:        zod.string().nullable(),
+  createdAt:         zod.string(),
+});
+
+export const PendingPhoto = zod.object({
+  id:                zod.number().int(),
+  userId:            zod.number().int(),
+  fileUrl:           zod.string(),
+  caption:           zod.string().nullable(),
+  sharedWithBuilder: zod.boolean(),
+  projectId:         zod.number().int().nullable(),
+  approvalStatus:    zod.string(),
+  approvedBy:        zod.number().int().nullable(),
+  approvedAt:        zod.string().nullable(),
+  createdAt:         zod.string(),
+  uploaderName:      zod.string(),
+  uploaderEmail:     zod.string(),
+});
+
+export const ShareUserPhotoBody   = zod.object({ project_id: zod.number().int() });
+export const ApproveUserPhotoBody = zod.object({ status: zod.enum(["approved", "rejected"]) });
