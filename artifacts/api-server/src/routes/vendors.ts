@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, ne, count } from "drizzle-orm";
 import { db, projectVendorsTable, vendorPaymentsTable, vendorChangeOrdersTable } from "@workspace/db";
 import {
   VendorProjectParams,
@@ -93,6 +93,49 @@ router.get("/projects/:projectId/vendors/alerts", requireAuth, async (req: AuthR
   }
 
   res.json(alerts);
+});
+
+// ── FREQUENT VENDORS ───────────────────────────────────────────────────────────
+
+router.get("/projects/:projectId/vendors/frequent", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const params = VendorProjectParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const user = req.user!;
+  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
+  if (!user.organizationId) { res.json([]); return; }
+
+  const rows = await db
+    .select({
+      name:           projectVendorsTable.name,
+      type:           projectVendorsTable.type,
+      specialty:      projectVendorsTable.specialty,
+      company:        projectVendorsTable.company,
+      email:          projectVendorsTable.email,
+      phone:          projectVendorsTable.phone,
+      contract_notes: projectVendorsTable.contractNotes,
+      linked_user_id: projectVendorsTable.linkedUserId,
+      frequency:      count(),
+    })
+    .from(projectVendorsTable)
+    .where(and(
+      eq(projectVendorsTable.organizationId, user.organizationId),
+      ne(projectVendorsTable.projectId, params.data.projectId),
+      ne(projectVendorsTable.status, "cancelled"),
+    ))
+    .groupBy(
+      projectVendorsTable.name,
+      projectVendorsTable.type,
+      projectVendorsTable.specialty,
+      projectVendorsTable.company,
+      projectVendorsTable.email,
+      projectVendorsTable.phone,
+      projectVendorsTable.contractNotes,
+      projectVendorsTable.linkedUserId,
+    )
+    .orderBy(desc(count()))
+    .limit(10);
+
+  res.json(rows);
 });
 
 // ── VENDORS LIST / CREATE ──────────────────────────────────────────────────────

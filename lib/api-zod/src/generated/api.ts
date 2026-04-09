@@ -831,3 +831,15 @@ export const CreateVendorChangeOrderBody = zod.object({
 export const UpdateVendorChangeOrderBody = zod.object({
   status: zod.enum(["approved", "rejected"]),
 });
+
+export const FrequentVendor = zod.object({
+  name:           zod.string(),
+  type:           zod.enum(["subcontractor", "supplier", "other"]),
+  specialty:      zod.string().nullable(),
+  company:        zod.string().nullable(),
+  email:          zod.string().nullable(),
+  phone:          zod.string().nullable(),
+  contract_notes: zod.string().nullable(),
+  linked_user_id: zod.number().int().nullable(),
+  frequency:      zod.number().int(),
+});

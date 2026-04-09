@@ -737,6 +737,12 @@ export interface VendorAlert {
   message: string; severity: VendorAlertSeverity;
 }
 
+export interface FrequentVendor {
+  name: string; type: VendorType; specialty: string | null;
+  company: string | null; email: string | null; phone: string | null;
+  contract_notes: string | null; linked_user_id: number | null; frequency: number;
+}
+
 export interface CreateVendorBody {
   name: string; type: VendorType;
   company?: string; email?: string; phone?: string; specialty?: string;

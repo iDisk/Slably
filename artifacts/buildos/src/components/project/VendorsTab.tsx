@@ -15,7 +15,9 @@ import {
   useCreateVendorChangeOrder,
   useGetVendorLedger,
   useGetVendorAlerts,
+  useGetFrequentVendors,
   getVendorsQueryKey,
+  getFrequentVendorsQueryKey,
   getVendorPaymentsQueryKey,
   getVendorChangeOrdersQueryKey,
   getVendorLedgerQueryKey,
@@ -129,6 +131,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
   const [subResults, setSubResults]             = useState<any[]>([]);
   const [subSearchLoading, setSubSearchLoading] = useState(false);
   const [subSearchOpen, setSubSearchOpen]       = useState(false);
+  const [autoCompleteOpen, setAutoCompleteOpen] = useState(false);
 
   useEffect(() => {
     if (subSearch.length < 3 || vendorForm.type !== "subcontractor") {
@@ -159,6 +162,9 @@ export function VendorsTab({ projectId }: { projectId: number }) {
 
   const { data: vendors = [], isLoading: vendorsLoading } = useGetVendors(projectId);
   const { data: alerts  = [] }                            = useGetVendorAlerts(projectId);
+  const { data: frequentVendors = [] }                    = useGetFrequentVendors(projectId, {
+    query: { enabled: createVendorOpen, queryKey: getFrequentVendorsQueryKey(projectId) },
+  });
 
   const { data: payments = [] } = useGetVendorPayments(projectId, vid, {
     query: { enabled: isDetail, queryKey: getVendorPaymentsQueryKey(projectId, vid) },
@@ -474,10 +480,82 @@ export function VendorsTab({ projectId }: { projectId: number }) {
               <DialogTitle className="font-display font-bold text-xl">Agregar Proveedor</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateVendor} className="space-y-4 mt-2">
+              {frequentVendors.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Usados anteriormente
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {frequentVendors.slice(0, 6).map((v, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className="text-xs px-3 py-1.5 rounded-full border border-border bg-slate-50 hover:bg-primary hover:text-white hover:border-primary transition-colors"
+                        onClick={() => setVendorForm(f => ({
+                          ...f,
+                          name:           v.name,
+                          type:           v.type,
+                          company:        v.company ?? "",
+                          specialty:      v.specialty ?? "",
+                          email:          v.email ?? "",
+                          phone:          v.phone ?? "",
+                          contract_notes: v.contract_notes ?? "",
+                          linked_user_id: v.linked_user_id ?? undefined,
+                        }))}
+                      >
+                        {v.name}{v.specialty ? ` · ${v.specialty}` : ""}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2 col-span-2">
                   <Label>Nombre *</Label>
-                  <Input value={vendorForm.name} onChange={e => setVendorForm(f => ({ ...f, name: e.target.value }))} placeholder="Ej. Juan García" />
+                  <div className="relative">
+                    <Input
+                      value={vendorForm.name}
+                      onChange={e => {
+                        setVendorForm(f => ({ ...f, name: e.target.value }));
+                        setAutoCompleteOpen(true);
+                      }}
+                      onBlur={() => setTimeout(() => setAutoCompleteOpen(false), 150)}
+                      placeholder="Ej. Juan García"
+                    />
+                    {autoCompleteOpen && vendorForm.name.length > 0 &&
+                      frequentVendors.filter(v => v.name.toLowerCase().includes(vendorForm.name.toLowerCase())).length > 0 && (
+                      <div className="absolute z-50 top-full left-0 right-0 mt-1 border border-border rounded-lg overflow-hidden bg-white shadow-md">
+                        {frequentVendors
+                          .filter(v => v.name.toLowerCase().includes(vendorForm.name.toLowerCase()))
+                          .slice(0, 4)
+                          .map((v, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              className="w-full flex items-center justify-between px-3 py-2 hover:bg-muted/50 transition-colors text-left border-b border-border last:border-0"
+                              onMouseDown={e => e.preventDefault()}
+                              onClick={() => {
+                                setVendorForm(f => ({
+                                  ...f,
+                                  name:           v.name,
+                                  type:           v.type,
+                                  company:        v.company ?? "",
+                                  specialty:      v.specialty ?? "",
+                                  email:          v.email ?? "",
+                                  phone:          v.phone ?? "",
+                                  contract_notes: v.contract_notes ?? "",
+                                  linked_user_id: v.linked_user_id ?? undefined,
+                                }));
+                                setAutoCompleteOpen(false);
+                              }}
+                            >
+                              <span className="text-sm font-medium">{v.name}</span>
+                              {v.specialty && <span className="text-xs text-muted-foreground">{v.specialty}</span>}
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Tipo *</Label>

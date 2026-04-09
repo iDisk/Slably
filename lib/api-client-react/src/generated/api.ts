@@ -69,6 +69,7 @@ import type {
   VendorChangeOrder,
   VendorLedger,
   VendorAlert,
+  FrequentVendor,
   CreateVendorBody,
   UpdateVendorBody,
   CreateVendorPaymentBody,
@@ -4091,5 +4092,25 @@ export function useGetVendorAlerts<TError = ErrorType<unknown>>(
   const queryKey = qo?.queryKey ?? getVendorAlertsQueryKey(pid);
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getVendorAlerts>>> =
     () => getVendorAlerts(pid, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
+}
+
+export const getFrequentVendors = (pid: number, o?: RequestInit) =>
+  customFetch<FrequentVendor[]>(`/api/projects/${pid}/vendors/frequent`, { ...o, method: "GET" });
+
+export const getFrequentVendorsQueryKey = (pid: number) =>
+  [`/api/projects/${pid}/vendors/frequent`] as const;
+
+export function useGetFrequentVendors<TError = ErrorType<unknown>>(
+  pid: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getFrequentVendors>>, TError>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<Awaited<ReturnType<typeof getFrequentVendors>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getFrequentVendorsQueryKey(pid);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getFrequentVendors>>> =
+    () => getFrequentVendors(pid, ro as RequestInit);
   return useQuery({ queryKey, queryFn, ...qo });
 }
