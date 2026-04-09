@@ -1,0 +1,90 @@
+Necesito 3 cambios en el frontend:
+
+CAMBIO 1 — Nueva página pública:
+src/pages/InvitePage.tsx
+
+Ruta: /invite/:token (sin ProtectedRoute)
+
+Esta página usa useGetInvitationInfo(token) 
+para cargar la info y useAccessInvitation(token)
+para dar acceso.
+
+ESTADOS DE LA PÁGINA:
+
+Loading:
+Spinner centrado con texto 
+"Loading your project..."
+
+Error / token inválido (404):
+Ícono de alerta rojo
+"This link is not valid or has expired."
+"Please ask your contractor to send 
+you a new link."
+
+Estado normal (token válido):
+Card centrada, máximo 480px de ancho.
+
+Header de la card:
+- Logo de Slably (img /slably-logo.png, h-8)
+- Fondo navy (#1B3A5C)
+
+Cuerpo de la card:
+- Texto: "[Builder company / Builder name] 
+  has invited you to track the progress of"
+- Nombre del proyecto en bold, tamaño grande
+- Separador
+- Lista de bullets:
+  ✓ Real-time project progress
+  ✓ Photos of the work
+  ✓ Documents and contracts
+  ✓ Direct updates from the team
+
+Botón naranja grande:
+"View my project →"
+
+Al tocar el botón:
+1. Llama a useAccessInvitation(token).mutate()
+2. Al éxito recibe { token: jwt, user, project_id }
+3. Guarda el JWT en localStorage 
+   con key 'slably_token'
+4. Navega a /projects/:project_id
+
+Estado loading del botón:
+"Accessing your project..."
+con spinner
+
+CAMBIO 2 — Conectar en App.tsx:
+import InvitePage from "@/pages/InvitePage"
+<Route path="/invite/:token" component={InvitePage} />
+(sin ProtectedRoute — es pública)
+
+CAMBIO 3 — Card de invitación en el proyecto:
+En src/pages/builder/ProjectDetails.tsx
+en el tab "Overview" (TabsContent value="overview")
+agrega al final una card "Client Portal":
+
+Usa useGetInvitation(project.id) para 
+cargar la invitación activa.
+Usa useInviteClient(project.id) para 
+generar/regenerar el link.
+
+La card muestra:
+
+SI no hay invitación activa:
+Título: "Client Portal"
+Texto: "Invite your client to track 
+the progress of this project."
+Campo de email + botón naranja 
+"Generate access link"
+
+SI hay invitación activa:
+Título: "Client Portal" 
+Badge verde "Active" o amarillo "Accessed"
+Email del cliente
+Link copiable:
+  [URL del portal]  [📋 Copy link]
+  Al copiar → toast "Link copied!"
+Botón outline pequeño: 
+"Regenerate link" → pide email de nuevo
+
+Muéstrame el diff completo antes de aplicar.
