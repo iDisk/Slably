@@ -517,6 +517,7 @@ export interface DailyLog {
   transcription?: string | null;
   aiProcessed:    boolean;
   status:         'draft' | 'confirmed';
+  shareWithClient?: boolean;
   createdAt:      string;
   updatedAt:      string;
 }
@@ -541,6 +542,7 @@ export interface UpdateDailyLogBodyParams {
   problems?:      string;
   notes?:         string;
   status?:        'draft' | 'confirmed';
+  share_with_client?: boolean;
 }
 
 export interface Rating {

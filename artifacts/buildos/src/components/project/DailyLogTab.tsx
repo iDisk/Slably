@@ -184,6 +184,11 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
                             IA
                           </span>
                         )}
+                        {log.shareWithClient && (
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full border bg-sky-100 text-sky-700 border-sky-200">
+                            👁️ Visible to client
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -398,6 +403,44 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
                   ? <><Loader2 className="w-4 h-4 animate-spin" />Confirmando…</>
                   : <><CheckCircle2 className="w-4 h-4" />Confirmar log</>}
               </Button>
+            )}
+
+            {log.status === "confirmed" && user?.role === "builder" && (
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Share with client</p>
+                  <p className="text-xs text-muted-foreground">
+                    This update will be visible in the client portal
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    patchMutation.mutate(
+                      { data: { share_with_client: !log.shareWithClient } },
+                      {
+                        onSuccess: () => {
+                          queryClient.invalidateQueries({ queryKey: getDailyLogQueryKey(projectId, log.id) });
+                          invalidateList();
+                          toast.success(
+                            log.shareWithClient
+                              ? "Removed from client portal"
+                              : "Shared with client"
+                          );
+                        },
+                      }
+                    );
+                  }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    log.shareWithClient ? "bg-[#F97316]" : "bg-slate-200"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                      log.shareWithClient ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
             )}
           </div>
         )}
