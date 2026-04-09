@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -93,6 +93,7 @@ const TIMELINE_ICON: Record<string, string> = {
 interface VendorForm {
   name: string; type: string; company: string; specialty: string;
   email: string; phone: string; contract_amount: string; contract_notes: string;
+  linked_user_id?: number;
 }
 interface PaymentForm {
   description: string; amount: string; payment_type: string;
@@ -124,6 +125,34 @@ export function VendorsTab({ projectId }: { projectId: number }) {
   const [editVendorForm, setEditVendorForm]     = useState<VendorForm>(emptyVendorForm());
   const [paymentForm, setPaymentForm]           = useState<PaymentForm>(emptyPaymentForm());
   const [coForm, setCOForm]                     = useState<COForm>(emptyCOForm());
+  const [subSearch, setSubSearch]               = useState("");
+  const [subResults, setSubResults]             = useState<any[]>([]);
+  const [subSearchLoading, setSubSearchLoading] = useState(false);
+  const [subSearchOpen, setSubSearchOpen]       = useState(false);
+
+  useEffect(() => {
+    if (subSearch.length < 3 || vendorForm.type !== "subcontractor") {
+      setSubResults([]);
+      setSubSearchOpen(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSubSearchLoading(true);
+      try {
+        const res = await fetch(
+          `/api/find?role=subcontractor&city=${encodeURIComponent(subSearch)}`
+        );
+        const data = await res.json();
+        setSubResults(data.data ?? []);
+        setSubSearchOpen(true);
+      } catch {
+        setSubResults([]);
+      } finally {
+        setSubSearchLoading(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [subSearch, vendorForm.type]);
 
   const vid      = selectedVendorId ?? 0;
   const isDetail = view === "detail" && !!selectedVendorId;
@@ -199,9 +228,15 @@ export function VendorsTab({ projectId }: { projectId: number }) {
         phone:           vendorForm.phone           || undefined,
         contract_amount: vendorForm.contract_amount ? parseFloat(vendorForm.contract_amount) : undefined,
         contract_notes:  vendorForm.contract_notes  || undefined,
+        linked_user_id:  vendorForm.linked_user_id  ?? undefined,
       },
     }, {
-      onSuccess: () => { toast.success("Proveedor agregado"); invAll(); setCreateVendorOpen(false); setVendorForm(emptyVendorForm()); },
+      onSuccess: () => {
+        toast.success("Proveedor agregado"); invAll();
+        setCreateVendorOpen(false);
+        setVendorForm(emptyVendorForm());
+        setSubSearch(""); setSubResults([]); setSubSearchOpen(false);
+      },
       onError:   () => toast.error("Error al crear proveedor"),
     });
   };
@@ -430,7 +465,10 @@ export function VendorsTab({ projectId }: { projectId: number }) {
           </div>
         )}
 
-        <Dialog open={createVendorOpen} onOpenChange={v => { if (!v) setVendorForm(emptyVendorForm()); setCreateVendorOpen(v); }}>
+        <Dialog open={createVendorOpen} onOpenChange={v => {
+          if (!v) { setVendorForm(emptyVendorForm()); setSubSearch(""); setSubResults([]); setSubSearchOpen(false); }
+          setCreateVendorOpen(v);
+        }}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="font-display font-bold text-xl">Agregar Proveedor</DialogTitle>
@@ -454,6 +492,60 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                   <Label>Empresa</Label>
                   <Input value={vendorForm.company} onChange={e => setVendorForm(f => ({ ...f, company: e.target.value }))} placeholder="Nombre de empresa" />
                 </div>
+                {vendorForm.type === "subcontractor" && (
+                  <div className="space-y-2 col-span-2">
+                    <Label>Buscar en red de Slably (opcional)</Label>
+                    <div className="relative">
+                      <Input
+                        placeholder="Escribe ciudad o nombre (mín. 3 letras)..."
+                        value={subSearch}
+                        onChange={e => setSubSearch(e.target.value)}
+                      />
+                      {subSearchLoading && (
+                        <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      )}
+                    </div>
+                    {subSearchOpen && subResults.length > 0 && (
+                      <div className="border border-border rounded-lg overflow-hidden bg-white shadow-md">
+                        {subResults.slice(0, 5).map(sub => (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors text-left border-b border-border last:border-0"
+                            onClick={() => {
+                              setVendorForm(f => ({
+                                ...f,
+                                name:           sub.name,
+                                specialty:      sub.category ?? f.specialty,
+                                linked_user_id: sub.id,
+                              }));
+                              setSubSearch(sub.name);
+                              setSubSearchOpen(false);
+                            }}
+                          >
+                            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                              <span className="text-white text-xs font-bold">
+                                {sub.name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate">{sub.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {sub.category ?? ""}{sub.serviceCity ? ` · ${sub.serviceCity}` : ""}
+                                {sub.stats?.averageRating > 0 ? ` · ★ ${sub.stats.averageRating.toFixed(1)}` : ""}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {subSearchOpen && subResults.length === 0 && !subSearchLoading && (
+                      <p className="text-xs text-muted-foreground px-1">
+                        No encontramos subs con ese filtro en Slably.
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="space-y-2 col-span-2">
                   <Label>Especialidad</Label>
                   <Input value={vendorForm.specialty} onChange={e => setVendorForm(f => ({ ...f, specialty: e.target.value }))} placeholder="Ej. Plomería, Electricidad" />
