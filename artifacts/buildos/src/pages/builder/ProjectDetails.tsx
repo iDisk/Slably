@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, MapPin, User, Mail, Calendar, FileText,
   Pencil, Trash2, Loader2, Building2, CheckCircle2,
-  Clock, XCircle, AlertCircle, TrendingUp,
+  Clock, XCircle, AlertCircle, TrendingUp, Copy, Link2,
 } from "lucide-react";
 
 import {
@@ -19,6 +19,9 @@ import {
   useDeleteProject,
   getListProjectsQueryKey,
   UpdateProjectBody,
+  useGetInvitation,
+  useInviteClient,
+  getInvitationQueryKey,
 } from "@workspace/api-client-react";
 import { BuilderLayout } from "@/components/layout/BuilderLayout";
 import { Button } from "@/components/ui/button";
@@ -65,8 +68,39 @@ export default function ProjectDetails() {
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
 
-  const [editOpen,   setEditOpen]   = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editOpen,       setEditOpen]       = useState(false);
+  const [deleteOpen,     setDeleteOpen]     = useState(false);
+  const [portalEmail,    setPortalEmail]    = useState("");
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [linkCopied,     setLinkCopied]     = useState(false);
+
+  const { data: activeInvitation, isLoading: invLoading } = useGetInvitation(projectId);
+
+  const inviteMutation = useInviteClient(projectId, {
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getInvitationQueryKey(projectId) });
+        setPortalEmail("");
+        setIsRegenerating(false);
+        toast.success("Client portal link generated!");
+      },
+      onError: () => toast.error("Failed to generate link"),
+    },
+  });
+
+  const handleGenerateLink = () => {
+    if (!portalEmail) return;
+    inviteMutation.mutate({ data: { email: portalEmail } });
+  };
+
+  const handleCopyLink = () => {
+    if (!activeInvitation?.invite_url) return;
+    navigator.clipboard.writeText(activeInvitation.invite_url).then(() => {
+      setLinkCopied(true);
+      toast.success("Link copied!");
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  };
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<EditForm>({
     resolver: zodResolver(editSchema),
@@ -279,6 +313,102 @@ export default function ProjectDetails() {
                     </p>
                   ) : (
                     <p className="text-sm text-muted-foreground italic">No notes added yet.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Client Portal */}
+              <Card className="border-none shadow-sm bg-white md:col-span-2">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
+                      <Link2 className="w-4 h-4 text-primary" /> Client Portal
+                    </h2>
+                    {activeInvitation && !isRegenerating && (
+                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
+                        activeInvitation.status === "accessed"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      }`}>
+                        {activeInvitation.status === "accessed" ? "Accessed" : "Active"}
+                      </span>
+                    )}
+                  </div>
+
+                  {invLoading ? (
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+                    </div>
+                  ) : !activeInvitation || isRegenerating ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        {isRegenerating
+                          ? "Enter a new email to regenerate the access link."
+                          : "Invite your client to track the progress of this project."}
+                      </p>
+                      <div className="flex gap-2">
+                        <Input
+                          type="email"
+                          placeholder="client@email.com"
+                          value={portalEmail}
+                          onChange={e => setPortalEmail(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={handleGenerateLink}
+                          disabled={!portalEmail || inviteMutation.isPending}
+                          className="bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap"
+                        >
+                          {inviteMutation.isPending
+                            ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Generating...</>
+                            : "Generate access link"}
+                        </Button>
+                      </div>
+                      {isRegenerating && (
+                        <button
+                          className="text-xs text-muted-foreground underline"
+                          onClick={() => setIsRegenerating(false)}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                          Client email
+                        </p>
+                        <p className="text-sm font-semibold text-foreground">{activeInvitation.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                          Portal link
+                        </p>
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-lg p-2 pl-3 border border-slate-200">
+                          <span className="text-xs text-muted-foreground flex-1 truncate font-mono">
+                            {activeInvitation.invite_url}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={handleCopyLink}
+                            className="h-7 px-2 shrink-0 text-xs"
+                          >
+                            <Copy className="w-3.5 h-3.5 mr-1" />
+                            {linkCopied ? "Copied!" : "Copy"}
+                          </Button>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsRegenerating(true)}
+                        className="text-xs mt-1"
+                      >
+                        Regenerate link
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>
