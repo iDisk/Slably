@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, and, desc, ne, count } from "drizzle-orm";
-import { db, projectVendorsTable, vendorPaymentsTable, vendorChangeOrdersTable } from "@workspace/db";
+import { eq, and, desc, ne, count, sql, inArray } from "drizzle-orm";
+import { db, projectVendorsTable, vendorPaymentsTable, vendorChangeOrdersTable, projectsTable, usersTable, organizationsTable } from "@workspace/db";
 import {
   VendorProjectParams,
   VendorParams,
@@ -489,6 +489,87 @@ router.get("/projects/:projectId/vendors/:vendorId/ledger", requireAuth, async (
   for (const tx of transactions) { running += tx.amount; tx.running_balance = running; }
 
   res.json({ contract_amount, change_orders_total, adjusted_contract, payments_made, balance_pending, transactions });
+});
+
+// ─── GET /api/my-work ─────────────────────────────────────────────────────────
+router.get("/my-work", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+  const user = req.user!;
+  if (user.role !== "subcontractor" && user.role !== "supplier") {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+
+  const vendors = await db
+    .select({
+      vendorId:        projectVendorsTable.id,
+      vendorName:      projectVendorsTable.name,
+      vendorType:      projectVendorsTable.type,
+      vendorStatus:    projectVendorsTable.status,
+      specialty:       projectVendorsTable.specialty,
+      contractAmount:  projectVendorsTable.contractAmount,
+      contractNotes:   projectVendorsTable.contractNotes,
+      createdAt:       projectVendorsTable.createdAt,
+      projectId:       projectsTable.id,
+      projectName:     projectsTable.name,
+      projectAddress:  projectsTable.address,
+      projectStatus:   projectsTable.status,
+      projectProgress: projectsTable.progress,
+      builderName:     usersTable.name,
+      companyName:     organizationsTable.name,
+    })
+    .from(projectVendorsTable)
+    .innerJoin(projectsTable,      eq(projectVendorsTable.projectId,    projectsTable.id))
+    .innerJoin(usersTable,         eq(projectsTable.builderId,          usersTable.id))
+    .innerJoin(organizationsTable, eq(projectsTable.organizationId,     organizationsTable.id))
+    .where(eq(projectVendorsTable.linkedUserId, user.id))
+    .orderBy(desc(projectVendorsTable.createdAt));
+
+  if (vendors.length === 0) { res.json([]); return; }
+
+  const vendorIds = vendors.map(v => v.vendorId);
+  const paymentRows = await db
+    .select({
+      vendorId:     vendorPaymentsTable.vendorId,
+      paymentsMade: sql<string>`coalesce(sum(${vendorPaymentsTable.amount}), '0')`,
+    })
+    .from(vendorPaymentsTable)
+    .where(and(
+      inArray(vendorPaymentsTable.vendorId, vendorIds),
+      eq(vendorPaymentsTable.status, "paid"),
+    ))
+    .groupBy(vendorPaymentsTable.vendorId);
+
+  const paymentMap = new Map(paymentRows.map(r => [r.vendorId, parseFloat(r.paymentsMade)]));
+
+  const result = vendors.map(v => {
+    const contract        = parseFloat(v.contractAmount ?? "0");
+    const payments_made   = paymentMap.get(v.vendorId) ?? 0;
+    const balance_pending = contract - payments_made;
+    return {
+      vendorId:       v.vendorId,
+      name:           v.vendorName,
+      type:           v.vendorType,
+      status:         v.vendorStatus,
+      specialty:      v.specialty,
+      contractAmount: v.contractAmount,
+      contractNotes:  v.contractNotes,
+      createdAt:      v.createdAt,
+      paymentsMade:   String(payments_made),
+      balancePending: String(balance_pending),
+      project: {
+        id:       v.projectId,
+        name:     v.projectName,
+        address:  v.projectAddress,
+        status:   v.projectStatus,
+        progress: v.projectProgress,
+      },
+      builder: {
+        name:        v.builderName,
+        companyName: v.companyName,
+      },
+    };
+  });
+
+  res.json(result);
 });
 
 export default router;

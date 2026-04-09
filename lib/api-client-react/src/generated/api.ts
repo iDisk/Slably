@@ -81,6 +81,7 @@ import type {
   InvitationInfo,
   ActiveInvitation,
   AccessInvitationResponse,
+  MyWorkItem,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -4283,4 +4284,36 @@ export function useGetClientChangeOrders<
   const queryOptions = getClientChangeOrdersQueryOptions(projectId, options);
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
   return { ...query, queryKey: queryOptions.queryKey };
+}
+
+// ─── GET /api/my-work ─────────────────────────────────────────────────────────
+export const getMyWorkUrl = () => `/api/my-work`;
+export const getMyWork = async (options?: RequestInit): Promise<MyWorkItem[]> =>
+  customFetch<MyWorkItem[]>(getMyWorkUrl(), { method: "GET", ...options });
+export const getMyWorkQueryKey = () => [`/api/my-work`] as const;
+export const getMyWorkQueryOptions = <TData = Awaited<ReturnType<typeof getMyWork>>>(
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getMyWork>>, ErrorType<unknown>, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getMyWorkQueryKey();
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyWork>>> = ({ signal }) =>
+    getMyWork({ signal, ...requestOptions });
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMyWork>>, ErrorType<unknown>, TData
+  >;
+};
+export function useGetMyWork<
+  TData = Awaited<ReturnType<typeof getMyWork>>,
+  TError extends ErrorType<unknown> = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getMyWork>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getMyWorkQueryOptions(options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  query.queryKey = queryOptions.queryKey;
+  return query;
 }

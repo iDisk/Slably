@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { LayoutDashboard, LogOut, UserCircle, Users, Search } from "lucide-react";
+import { LayoutDashboard, LogOut, UserCircle, Users, Search, Briefcase } from "lucide-react";
 import { formatInitials } from "@/lib/utils";
 
 export function BuilderLayout({ children }: { children: React.ReactNode }) {
@@ -8,10 +8,11 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
 
   const navItems = [
-    { href: "/dashboard", label: "Dashboard",  icon: LayoutDashboard },
-    { href: "/find",      label: "Directorio", icon: Search },
-    { href: "/network",   label: "Network",    icon: Users },
-    { href: "/profile",   label: "Perfil",     icon: UserCircle },
+    { href: "/dashboard",     label: "Dashboard",  icon: LayoutDashboard, roles: undefined },
+    { href: "/sub-dashboard", label: "My Work",    icon: Briefcase,       roles: ["subcontractor", "supplier"] as string[] },
+    { href: "/find",          label: "Directorio", icon: Search,          roles: undefined },
+    { href: "/network",       label: "Network",    icon: Users,           roles: undefined },
+    { href: "/profile",       label: "Perfil",     icon: UserCircle,      roles: undefined },
   ];
 
   return (
@@ -25,7 +26,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {navItems.map((item) => {
+          {navItems.filter(item => !item.roles || item.roles.includes(user?.role ?? "")).map((item) => {
             const isDirectoryActive =
               location.startsWith("/find") ||
               location.startsWith("/builder/") ||

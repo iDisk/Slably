@@ -18,6 +18,7 @@ import NotFound from "@/pages/not-found";
 import InvitePage from "@/pages/InvitePage";
 import ClientProjectView from "@/pages/ClientProjectView";
 import AdminPanel from "@/pages/AdminPanel";
+import SubDashboard from "@/pages/SubDashboard";
 
 // Patch fetch to automatically inject the JWT token and handle 401s
 const originalFetch = window.fetch;
@@ -75,7 +76,7 @@ function RootRedirect() {
   const { user, isLoading } = useAuth();
   if (isLoading) return <div className="h-screen w-full flex items-center justify-center bg-background"><div className="animate-pulse font-display font-bold text-xl text-primary">Loading...</div></div>;
   if (!user) return <Redirect to="/login" />;
-  return <Redirect to={user.role === 'builder' || user.role === 'supplier' ? '/dashboard' : user.role === 'subcontractor' ? '/network' : '/client'} />;
+  return <Redirect to={user.role === 'builder' || user.role === 'supplier' ? '/dashboard' : user.role === 'subcontractor' ? '/sub-dashboard' : '/client'} />;
 }
 
 function Router() {
@@ -89,6 +90,7 @@ function Router() {
       <Route path="/activities"><ProtectedRoute component={Activities} roleRequired="builder" /></Route>
       <Route path="/profile"><ProtectedRoute component={Profile} roleRequired={['builder', 'subcontractor', 'supplier']} /></Route>
       <Route path="/network"><ProtectedRoute component={Network} roleRequired={['builder', 'subcontractor', 'supplier']} /></Route>
+      <Route path="/sub-dashboard"><ProtectedRoute component={SubDashboard} roleRequired={['subcontractor', 'supplier']} /></Route>
       <Route path="/client"><ProtectedRoute component={ClientDashboard} roleRequired="client" /></Route>
       <Route path="/sub/:subId" component={SubProfile} />
       <Route path="/builder/:builderId" component={BuilderProfile} />

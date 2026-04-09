@@ -815,3 +815,28 @@ export interface AccessInvitationResponse {
   user: { id: number; name: string; email: string; role: string };
   project_id: number;
 }
+
+// ─── MyWorkItem ───────────────────────────────────────────────────────────────
+export interface MyWorkItem {
+  vendorId:       number;
+  name:           string;
+  type:           string;
+  status:         string;
+  specialty:      string | null;
+  contractAmount: string | null;
+  contractNotes:  string | null;
+  createdAt:      string;
+  paymentsMade:   string;
+  balancePending: string;
+  project: {
+    id:       number;
+    name:     string;
+    address:  string;
+    status:   string;
+    progress: number;
+  };
+  builder: {
+    name:        string;
+    companyName: string;
+  };
+}
