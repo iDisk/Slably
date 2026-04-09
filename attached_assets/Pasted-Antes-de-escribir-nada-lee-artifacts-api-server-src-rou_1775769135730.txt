@@ -1,0 +1,76 @@
+Antes de escribir nada, lee:
+artifacts/api-server/src/routes/uploads.ts
+— para ver el patrón de upload a R2
+
+Crea un nuevo archivo:
+artifacts/api-server/src/routes/user-photos.ts
+
+Con estos endpoints:
+
+ENDPOINT 1 — POST /api/user-photos
+requireAuth, subcontractors y suppliers únicamente
+Recibe: multipart/form-data
+  - photo: file (imagen)
+  - caption?: string
+Sube la imagen a R2 con key:
+  users/{userId}/photos/{timestamp}-{uuid}.{ext}
+Inserta en user_photos:
+  userId, fileUrl, caption
+  sharedWithBuilder: false (default)
+Devuelve el user_photo creado
+
+ENDPOINT 2 — GET /api/user-photos
+requireAuth
+Devuelve todas las fotos del usuario 
+autenticado ordenadas por createdAt DESC
+
+ENDPOINT 3 — PATCH /api/user-photos/:photoId/share
+requireAuth, subcontractors y suppliers
+Body: { project_id: number }
+Actualiza la foto:
+  sharedWithBuilder: true
+  projectId: body.project_id
+  approvalStatus: 'pending'
+Devuelve la foto actualizada
+
+ENDPOINT 4 — GET /api/projects/:projectId/pending-photos
+requireAuth, solo builders
+Devuelve todas las user_photos donde:
+  projectId = :projectId
+  sharedWithBuilder = true
+  approvalStatus = 'pending'
+Con join a users para incluir el nombre 
+del sub que subió la foto
+
+ENDPOINT 5 — PATCH /api/user-photos/:photoId/approve
+requireAuth, solo builders
+Body: { status: 'approved' | 'rejected' }
+
+Si status = 'approved':
+  - Actualiza user_photos: 
+    approvalStatus = 'approved'
+    approvedBy = user.id
+    approvedAt = now()
+  - Inserta en la tabla photos del proyecto:
+    projectId, fileUrl, caption,
+    uploadedBy = foto.userId (el sub),
+    visibleToClient = false
+    
+Si status = 'rejected':
+  - Solo actualiza approvalStatus = 'rejected'
+  - NO inserta en photos
+
+Devuelve la user_photo actualizada
+
+Registra el router en 
+artifacts/api-server/src/routes/index.ts
+
+Agrega schemas Zod en lib/api-zod
+Agrega tipos y hooks en lib/api-client-react:
+- useUploadUserPhoto()
+- useGetUserPhotos()
+- useShareUserPhoto(photoId)
+- useGetPendingPhotos(projectId)
+- useApproveUserPhoto(photoId)
+
+Muéstrame el diff completo antes de aplicar.
