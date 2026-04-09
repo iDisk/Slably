@@ -3,6 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { organizationsTable } from "./organizations";
 import { usersTable } from "./users";
+import { projectsTable } from "./projects";
 
 export const rfqsTable = pgTable(
   "rfqs",
@@ -10,6 +11,7 @@ export const rfqsTable = pgTable(
     id:             serial("id").primaryKey(),
     organizationId: integer("organization_id").references(() => organizationsTable.id, { onDelete: "cascade" }),
     createdBy:      integer("created_by").notNull().references(() => usersTable.id),
+    projectId:      integer("project_id").references(() => projectsTable.id, { onDelete: "set null" }),
     title:          text("title").notNull(),
     description:    text("description").notNull(),
     specialty:      text("specialty").notNull(),
