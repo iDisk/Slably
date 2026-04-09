@@ -64,7 +64,7 @@ function ProtectedRoute({ component: Component, roleRequired }: { component: any
   if (roleRequired) {
     const allowed = Array.isArray(roleRequired) ? roleRequired : [roleRequired];
     if (!allowed.includes(user.role)) {
-      const fallback = user.role === 'builder' ? '/dashboard' : user.role === 'subcontractor' ? '/network' : '/client';
+      const fallback = user.role === 'builder' ? '/dashboard' : user.role === 'subcontractor' ? '/sub-dashboard' : '/client';
       return <Redirect to={fallback} />;
     }
   }
