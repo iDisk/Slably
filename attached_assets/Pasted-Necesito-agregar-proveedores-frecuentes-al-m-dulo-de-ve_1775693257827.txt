@@ -1,0 +1,96 @@
+Necesito agregar "proveedores frecuentes" 
+al módulo de vendors en 2 cambios:
+
+CAMBIO 1 — Nuevo endpoint en 
+artifacts/api-server/src/routes/vendors.ts
+
+GET /api/projects/:projectId/vendors/frequent
+
+Antes del endpoint GET /api/projects/:projectId/vendors
+(para evitar conflicto de routing con /:vendorId)
+
+Lógica:
+- requireAuth, solo builders
+- Busca en project_vendors de la misma 
+  organización del usuario
+- Excluye vendors del proyecto actual 
+  (projectId del param)
+- Agrupa por name + type + specialty + company
+- Ordena por frecuencia DESC (COUNT)
+- Devuelve máximo 10 resultados únicos
+- Cada resultado incluye:
+  { name, type, specialty, company, 
+    email, phone, contract_notes,
+    linked_user_id, frequency }
+
+Query aproximada:
+SELECT name, type, specialty, company,
+  email, phone, contract_notes, 
+  linked_user_id,
+  COUNT(*) as frequency
+FROM project_vendors
+WHERE organization_id = :orgId
+  AND project_id != :projectId
+  AND status != 'cancelled'
+GROUP BY name, type, specialty, company,
+  email, phone, contract_notes, linked_user_id
+ORDER BY frequency DESC
+LIMIT 10
+
+CAMBIO 2 — En src/components/project/VendorsTab.tsx
+
+Agrega hook de frequent vendors:
+Llama a GET /api/projects/:projectId/vendors/frequent
+Solo cuando el modal de crear vendor está abierto.
+
+En el modal de crear vendor, ANTES del 
+campo "Nombre", agrega esta sección:
+
+Si hay frequent vendors → muestra:
+
+<p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+  Usados anteriormente
+</p>
+<div className="flex flex-wrap gap-2">
+  {frequentVendors.slice(0,6).map(v => (
+    <button type="button"
+      className="text-xs px-3 py-1.5 rounded-full border border-border 
+        bg-slate-50 hover:bg-primary hover:text-white hover:border-primary 
+        transition-colors"
+      onClick={() => {
+        setVendorForm(f => ({
+          ...f,
+          name:            v.name,
+          type:            v.type,
+          company:         v.company ?? "",
+          specialty:       v.specialty ?? "",
+          email:           v.email ?? "",
+          phone:           v.phone ?? "",
+          contract_notes:  v.contract_notes ?? "",
+          linked_user_id:  v.linked_user_id ?? undefined,
+        }));
+      }}
+    >
+      {v.name}
+      {v.specialty ? ` · ${v.specialty}` : ""}
+    </button>
+  ))}
+</div>
+
+También en el campo "Nombre" agrega 
+autocomplete: mientras el usuario escribe,
+filtra frequentVendors por nombre y muestra
+un dropdown simple (máximo 4 opciones) 
+que al tocar auto-llena el formulario.
+
+El dropdown de autocomplete desaparece 
+cuando el usuario selecciona una opción 
+o cuando el campo pierde el foco.
+
+Agrega el tipo FrequentVendor en 
+api-client-react/api.schemas.ts y el hook
+useGetFrequentVendors(projectId) en api.ts
+
+Agrega el schema Zod en api-zod.
+
+Muéstrame el diff completo antes de aplicar.
