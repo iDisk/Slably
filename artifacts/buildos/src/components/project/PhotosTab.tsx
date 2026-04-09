@@ -7,12 +7,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { useAuth } from "@/hooks/use-auth";
 import {
   useListPhotos,
   useCreatePhoto,
   useUpdatePhoto,
   useDeletePhoto,
   getListPhotosQueryKey,
+  useGetPendingPhotos,
+  useApproveUserPhoto,
+  getPendingPhotosQueryKey,
   type Photo,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +26,74 @@ import { Label, Textarea } from "@/components/ui/input";
 
 function getToken(): string | null {
   return localStorage.getItem("slably_token");
+}
+
+// ─── Pending Approval Section (builder only) ──────────────────────────────────
+function PendingSection({ projectId, onSettle }: { projectId: number; onSettle: () => void }) {
+  const queryClient = useQueryClient();
+  const { data: pending = [], isLoading } = useGetPendingPhotos(projectId, {
+    query: { queryKey: getPendingPhotosQueryKey(projectId) },
+  });
+  const approveMutation = useApproveUserPhoto({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getPendingPhotosQueryKey(projectId) });
+      onSettle();
+    },
+    onError: () => toast.error("Action failed"),
+  });
+
+  if (isLoading || pending.length === 0) return null;
+
+  return (
+    <div className="space-y-3 pb-4 border-b border-border">
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-50 border border-orange-200">
+        <span className="text-orange-600 text-sm font-semibold">
+          {pending.length} photo{pending.length !== 1 ? "s" : ""} pending your approval
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {pending.map(p => (
+          <div key={p.id} className="rounded-xl overflow-hidden border border-orange-200 shadow-sm bg-white">
+            <img
+              src={p.fileUrl}
+              alt={p.caption || "Pending photo"}
+              className="w-full h-40 object-cover"
+              onError={e => {
+                (e.target as HTMLImageElement).src =
+                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='160'%3E%3Crect fill='%23f1f5f9' width='400' height='160'/%3E%3C/svg%3E";
+              }}
+            />
+            <div className="p-3 space-y-2">
+              <p className="text-xs font-semibold text-foreground">{p.uploaderName}</p>
+              {p.caption && <p className="text-xs text-muted-foreground">{p.caption}</p>}
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="flex-1 gap-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                  disabled={approveMutation.isPending}
+                  onClick={() => approveMutation.mutate({ photoId: p.id, body: { status: "approved" } })}
+                >
+                  {approveMutation.isPending
+                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                    : "✓ Approve"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-red-300 text-red-600 hover:bg-red-50 text-xs"
+                  disabled={approveMutation.isPending}
+                  onClick={() => approveMutation.mutate({ photoId: p.id, body: { status: "rejected" } })}
+                >
+                  ✗ Reject
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic"] as const;
@@ -69,6 +141,7 @@ async function uploadToR2(presignedUrl: string, file: File): Promise<void> {
 }
 
 export function PhotosTab({ projectId }: { projectId: number }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: photos = [], isLoading } = useListPhotos(projectId);
   const createMutation = useCreatePhoto();
@@ -199,6 +272,9 @@ export function PhotosTab({ projectId }: { projectId: number }) {
 
   return (
     <div className="space-y-4">
+      {user?.role === "builder" && (
+        <PendingSection projectId={projectId} onSettle={invalidate} />
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">

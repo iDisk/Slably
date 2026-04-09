@@ -1,8 +1,19 @@
+import { useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { Briefcase, Loader2, MapPin, ChevronRight, Building2 } from "lucide-react";
+import { Briefcase, Loader2, MapPin, ChevronRight, Building2, Camera, ImageIcon } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-import { useGetMyWork, type MyWorkItem } from "@workspace/api-client-react";
+import {
+  useGetMyWork,
+  useUploadUserPhoto,
+  useGetUserPhotos,
+  useShareUserPhoto,
+  getUserPhotosQueryKey,
+  type MyWorkItem,
+  type UserPhotoItem,
+} from "@workspace/api-client-react";
 import { BuilderLayout } from "@/components/layout/BuilderLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +56,6 @@ function WorkCard({ item, index }: { item: MyWorkItem; index: number }) {
     >
       <Card className="border border-border shadow-sm hover:shadow-md transition-shadow">
         <CardContent className="p-5 space-y-4">
-          {/* Header */}
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-foreground font-display text-base truncate">
@@ -62,7 +72,6 @@ function WorkCard({ item, index }: { item: MyWorkItem; index: number }) {
             </div>
           </div>
 
-          {/* Builder */}
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Building2 className="w-3.5 h-3.5 shrink-0" />
             <span>{item.builder.name}</span>
@@ -71,7 +80,6 @@ function WorkCard({ item, index }: { item: MyWorkItem; index: number }) {
             )}
           </div>
 
-          {/* Address */}
           {item.project.address && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <MapPin className="w-3.5 h-3.5 shrink-0" />
@@ -79,7 +87,6 @@ function WorkCard({ item, index }: { item: MyWorkItem; index: number }) {
             </div>
           )}
 
-          {/* Progress bar */}
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Progress</span>
@@ -93,7 +100,6 @@ function WorkCard({ item, index }: { item: MyWorkItem; index: number }) {
             </div>
           </div>
 
-          {/* Contract financials */}
           {item.contractAmount && (
             <div className="rounded-lg bg-muted/50 p-3 space-y-1 text-sm">
               <div className="flex justify-between">
@@ -115,7 +121,6 @@ function WorkCard({ item, index }: { item: MyWorkItem; index: number }) {
             </div>
           )}
 
-          {/* CTA */}
           <Button
             variant="outline"
             size="sm"
@@ -127,6 +132,197 @@ function WorkCard({ item, index }: { item: MyWorkItem; index: number }) {
         </CardContent>
       </Card>
     </motion.div>
+  );
+}
+
+// ─── Photo Card ───────────────────────────────────────────────────────────────
+function PhotoCard({
+  photo, projects, isSharingOpen, selectedProjectId,
+  onOpenShare, onCloseShare, onSelectProject, onConfirmShare, isSharing,
+}: {
+  photo: UserPhotoItem;
+  projects: MyWorkItem[];
+  isSharingOpen: boolean;
+  selectedProjectId: string;
+  onOpenShare: () => void;
+  onCloseShare: () => void;
+  onSelectProject: (id: string) => void;
+  onConfirmShare: () => void;
+  isSharing: boolean;
+}) {
+  const canShare = !photo.sharedWithBuilder || photo.approvalStatus === "rejected";
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-border shadow-sm bg-white">
+      <img
+        src={photo.fileUrl}
+        alt={photo.caption || "Photo"}
+        className="w-full aspect-video object-cover"
+        onError={e => {
+          (e.target as HTMLImageElement).src =
+            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='225'%3E%3Crect fill='%23f1f5f9' width='400' height='225'/%3E%3C/svg%3E";
+        }}
+      />
+      <div className="p-2.5 space-y-2">
+        {photo.caption && (
+          <p className="text-xs text-foreground leading-snug">{photo.caption}</p>
+        )}
+
+        {photo.sharedWithBuilder && photo.approvalStatus === "pending" && (
+          <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+            ⏳ Pending approval
+          </span>
+        )}
+        {photo.approvalStatus === "approved" && (
+          <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+            ✓ Approved
+          </span>
+        )}
+        {photo.approvalStatus === "rejected" && (
+          <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+            ✗ Rejected
+          </span>
+        )}
+
+        {canShare && !isSharingOpen && (
+          <Button variant="outline" size="sm" className="w-full text-xs h-7" onClick={onOpenShare}>
+            {photo.approvalStatus === "rejected" ? "Share again" : "Share →"}
+          </Button>
+        )}
+
+        {canShare && isSharingOpen && (
+          <div className="space-y-1.5">
+            <select
+              className="w-full text-xs border border-border rounded-lg px-2 py-1.5 bg-background"
+              value={selectedProjectId}
+              onChange={e => onSelectProject(e.target.value)}
+            >
+              <option value="">Select project…</option>
+              {projects.map(p => (
+                <option key={p.vendorId} value={String(p.project.id)}>
+                  {p.project.name}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-1">
+              <Button
+                size="sm" className="flex-1 text-xs h-7"
+                disabled={!selectedProjectId || isSharing}
+                onClick={onConfirmShare}
+              >
+                {isSharing ? <Loader2 className="w-3 h-3 animate-spin" /> : "Send"}
+              </Button>
+              <Button size="sm" variant="ghost" className="text-xs h-7" onClick={onCloseShare}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── My Photos Section ────────────────────────────────────────────────────────
+function MyPhotosSection({ projects }: { projects: MyWorkItem[] }) {
+  const queryClient  = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sharingId,  setSharingId]  = useState<number | null>(null);
+  const [selectedPid, setSelectedPid] = useState<string>("");
+
+  const { data: photos = [], isLoading } = useGetUserPhotos({
+    query: { queryKey: getUserPhotosQueryKey() },
+  });
+
+  const uploadMutation = useUploadUserPhoto({
+    onSuccess: () => {
+      toast.success("Photo uploaded");
+      queryClient.invalidateQueries({ queryKey: getUserPhotosQueryKey() });
+    },
+    onError: () => toast.error("Upload failed"),
+  });
+
+  const shareMutation = useShareUserPhoto({
+    onSuccess: () => {
+      toast.success("Shared with builder. Pending approval.");
+      queryClient.invalidateQueries({ queryKey: getUserPhotosQueryKey() });
+      setSharingId(null);
+      setSelectedPid("");
+    },
+    onError: () => toast.error("Share failed"),
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("photo", file);
+    uploadMutation.mutate(fd);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-display font-bold text-foreground">My Photos</h2>
+        <Button
+          size="sm"
+          className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadMutation.isPending}
+        >
+          {uploadMutation.isPending
+            ? <Loader2 className="w-4 h-4 animate-spin" />
+            : <Camera className="w-4 h-4" />}
+          Add Photo
+        </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
+
+      {isLoading && (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      )}
+
+      {!isLoading && photos.length === 0 && (
+        <Card className="border-dashed border-2 shadow-none bg-transparent">
+          <CardContent className="p-8 flex flex-col items-center gap-3 text-center text-muted-foreground">
+            <ImageIcon className="w-8 h-8 opacity-30" />
+            <p className="text-sm">No photos yet. Add your first photo.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && photos.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {photos.map(photo => (
+            <PhotoCard
+              key={photo.id}
+              photo={photo}
+              projects={projects}
+              isSharingOpen={sharingId === photo.id}
+              selectedProjectId={sharingId === photo.id ? selectedPid : ""}
+              onOpenShare={() => { setSharingId(photo.id); setSelectedPid(""); }}
+              onCloseShare={() => setSharingId(null)}
+              onSelectProject={setSelectedPid}
+              onConfirmShare={() => {
+                const pid = parseInt(selectedPid, 10);
+                if (!pid) return;
+                shareMutation.mutate({ photoId: photo.id, body: { project_id: pid } });
+              }}
+              isSharing={shareMutation.isPending}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -185,6 +381,13 @@ export default function SubDashboard() {
             {items.map((item, i) => (
               <WorkCard key={item.vendorId} item={item} index={i} />
             ))}
+          </div>
+        )}
+
+        {/* My Photos */}
+        {!isLoading && (
+          <div className="pt-2 border-t border-border">
+            <MyPhotosSection projects={items ?? []} />
           </div>
         )}
       </div>
