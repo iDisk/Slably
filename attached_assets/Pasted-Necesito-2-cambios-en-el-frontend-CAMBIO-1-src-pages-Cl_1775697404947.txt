@@ -1,0 +1,132 @@
+Necesito 2 cambios en el frontend:
+
+CAMBIO 1 — src/pages/ClientProjectView.tsx
+Reemplaza la sección de documentos 
+placeholder con datos reales.
+
+Importa:
+useGetClientDocuments, useGetClientChangeOrders
+de @workspace/api-client-react
+
+Agrega estas secciones después de las fotos:
+
+SECCIÓN — Documentos:
+Título "Documents"
+Lista de documentos con:
+- Título del documento
+- Badge de estado:
+  signed → verde "Signed ✓"
+  sent → amarillo "Pending signature"
+- Fecha de creación
+- Si status === 'sent' → botón outline 
+  "Sign document" (por ahora solo muestra 
+  el documento, la firma la implementamos 
+  después)
+
+Estado vacío: 
+"No documents shared yet."
+
+SECCIÓN — Updates (daily logs visibles):
+Importa useListDailyLogs del hook existente
+(el endpoint ya filtra por share_with_client=true
+cuando el role es client)
+
+Título "Project Updates"
+Lista de updates ordenados por fecha:
+- Fecha del log (formato: "Monday, April 7")
+- Clima + temperatura si existen
+- Número de trabajadores si existe
+- Actividades (texto completo)
+- Materiales si existen
+- Problemas si existen (con ícono ⚠️)
+
+Estado vacío:
+"No updates shared yet. Your contractor 
+will post updates here."
+
+SECCIÓN — Change Orders:
+Título "Change Orders"
+Lista con:
+- Número + título
+- Descripción si existe
+- Monto con color (verde si positivo, 
+  rojo si negativo)
+- Badge de estado:
+  sent → amarillo "Pending your approval"
+  approved → verde "Approved"
+  rejected → rojo "Rejected"
+
+Estado vacío:
+"No change orders yet."
+
+CAMBIO 2 — src/components/project/DailyLogTab.tsx
+En la VISTA 3 (detalle del log), después 
+del botón "Confirmar log", agrega un 
+toggle para compartir con el cliente:
+
+Solo visible para builders y cuando 
+status === 'confirmed'
+
+{log.status === 'confirmed' && 
+ user?.role === 'builder' && (
+  <div className="flex items-center 
+    justify-between p-4 bg-slate-50 
+    rounded-xl border border-slate-200">
+    <div>
+      <p className="text-sm font-semibold 
+        text-foreground">
+        Share with client
+      </p>
+      <p className="text-xs text-muted-foreground">
+        This update will be visible in 
+        the client portal
+      </p>
+    </div>
+    <button
+      onClick={() => {
+        patchMutation.mutate(
+          { data: { 
+            share_with_client: !log.shareWithClient 
+          }},
+          {
+            onSuccess: () => {
+              queryClient.invalidateQueries({ 
+                queryKey: getDailyLogQueryKey(
+                  projectId, log.id
+                ) 
+              });
+              invalidateList();
+              toast.success(
+                log.shareWithClient 
+                  ? "Removed from client portal"
+                  : "Shared with client"
+              );
+            }
+          }
+        );
+      }}
+      className={`relative inline-flex h-6 w-11 
+        items-center rounded-full transition-colors
+        ${log.shareWithClient 
+          ? 'bg-[#F97316]' 
+          : 'bg-slate-200'}`}
+    >
+      <span className={`inline-block h-4 w-4 
+        transform rounded-full bg-white 
+        shadow-sm transition-transform
+        ${log.shareWithClient 
+          ? 'translate-x-6' 
+          : 'translate-x-1'}`} 
+      />
+    </button>
+  </div>
+)}
+
+También en la VISTA 1 (lista de logs),
+agrega un indicador en cada log card 
+que tenga shareWithClient === true:
+
+Un badge pequeño azul claro:
+"👁️ Visible to client"
+
+Muéstrame el diff completo antes de aplicar.
