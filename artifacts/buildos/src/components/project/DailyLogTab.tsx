@@ -482,8 +482,14 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
                 setCreatedLogId(log.id);
                 setRecState("done");
               },
-              onError: () => {
-                toast.error("Error al procesar el audio. Intenta de nuevo.");
+              onError: (err: unknown) => {
+                const status = (err as { response?: { status?: number } })?.response?.status;
+                if (status === 409) {
+                  invalidateList();
+                  toast("Ya existe un log para hoy. Ve a la lista para verlo.");
+                } else {
+                  toast.error("Error al procesar el audio. Intenta de nuevo.");
+                }
                 setRecState("idle");
               },
             }
