@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, index, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, boolean, index, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { organizationsTable } from "./organizations";
@@ -19,6 +19,7 @@ export const usersTable = pgTable(
     serviceRadius:  integer("service_radius"),
     profilePhoto:   text("profile_photo"),
     companyLogo:    text("company_logo"),
+    isActive:       boolean("is_active").notNull().default(true),
     createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
