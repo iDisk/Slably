@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { db, dailyLogsTable, projectVendorsTable, projectsTable, usersTable } from "@workspace/db";
 import multer from "multer";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
@@ -61,6 +61,15 @@ router.get("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, res
     const ok = await isVendorOfProject(params.data.id, user.id);
     if (!ok) { res.status(403).json({ error: "Forbidden" }); return; }
 
+    // Obtener linkedProjectId para incluir logs del proyecto original
+    const [proj] = await db
+      .select({ id: projectsTable.id, linkedProjectId: projectsTable.linkedProjectId })
+      .from(projectsTable)
+      .where(eq(projectsTable.id, params.data.id));
+
+    const projectIds = [params.data.id];
+    if (proj?.linkedProjectId) projectIds.push(proj.linkedProjectId);
+
     const logs = await db
       .select({
         id:             dailyLogsTable.id,
@@ -82,7 +91,7 @@ router.get("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, res
       })
       .from(dailyLogsTable)
       .where(and(
-        eq(dailyLogsTable.projectId, params.data.id),
+        inArray(dailyLogsTable.projectId, projectIds),
         eq(dailyLogsTable.createdBy, user.id),
       ))
       .orderBy(desc(dailyLogsTable.logDate));
