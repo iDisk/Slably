@@ -36,6 +36,17 @@ export async function checkProjectAccess(
     return project ?? null;
   }
 
+  // 1b. Subcontractors y suppliers → acceden a proyectos donde son builderId
+  if (user.role === "subcontractor" || user.role === "supplier") {
+    const [project] = await db
+      .select()
+      .from(projectsTable)
+      .where(eq(projectsTable.id, projectId));
+    if (!project) return null;
+    if (project.builderId === user.id) return project;
+    return null;
+  }
+
   // 2. Users without an org cannot access anything
   if (!user.organizationId) return null;
 
