@@ -231,7 +231,7 @@ export default function Profile() {
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                      Teléfono
+                      Phone
                     </Label>
                     <Input
                       id="phone"
@@ -280,12 +280,12 @@ export default function Profile() {
         <Card className="border-none shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Share2 className="w-4 h-4 text-primary" /> Tu perfil público
+              <Share2 className="w-4 h-4 text-primary" /> Your public profile
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Comparte este link para que otros vean tu perfil y calificaciones
+              Share this link so others can see your profile and ratings
             </p>
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-muted rounded-lg px-3 py-2 text-xs text-muted-foreground font-mono truncate">
@@ -297,10 +297,10 @@ export default function Profile() {
                 className="gap-1.5 shrink-0"
                 onClick={() => {
                   navigator.clipboard.writeText(profileUrl);
-                  toast.success("Link copiado al portapapeles");
+                  toast.success("Link copied to clipboard");
                 }}
               >
-                <Copy className="w-3.5 h-3.5" /> Copiar
+                <Copy className="w-3.5 h-3.5" /> Copy
               </Button>
             </div>
           </CardContent>
