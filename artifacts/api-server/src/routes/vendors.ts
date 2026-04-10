@@ -513,6 +513,7 @@ router.get("/my-work", requireAuth, async (req: AuthRequest, res): Promise<void>
       projectAddress:  projectsTable.address,
       projectStatus:   projectsTable.status,
       projectProgress: projectsTable.progress,
+      builderId:       projectsTable.builderId,
       builderName:     usersTable.name,
       companyName:     organizationsTable.name,
     })
@@ -555,6 +556,7 @@ router.get("/my-work", requireAuth, async (req: AuthRequest, res): Promise<void>
       createdAt:      v.createdAt,
       paymentsMade:   String(payments_made),
       balancePending: String(balance_pending),
+      builderId:      v.builderId,
       project: {
         id:       v.projectId,
         name:     v.projectName,

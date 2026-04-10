@@ -840,6 +840,7 @@ export interface ApproveUserPhotoBody { status: "approved" | "rejected"; }
 // ─── MyWorkItem ───────────────────────────────────────────────────────────────
 export interface MyWorkItem {
   vendorId:       number;
+  builderId:      number;
   name:           string;
   type:           string;
   status:         string;

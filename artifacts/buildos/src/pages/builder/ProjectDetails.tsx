@@ -11,6 +11,7 @@ import {
   ArrowLeft, MapPin, User, Mail, Calendar, FileText,
   Pencil, Trash2, Loader2, Building2, CheckCircle2,
   Clock, XCircle, AlertCircle, TrendingUp, Copy, Link2,
+  MessageSquare,
 } from "lucide-react";
 
 import {
@@ -22,7 +23,9 @@ import {
   useGetInvitation,
   useInviteClient,
   getInvitationQueryKey,
+  useGetVendors,
 } from "@workspace/api-client-react";
+import { useAuth } from "@/hooks/use-auth";
 import { BuilderLayout } from "@/components/layout/BuilderLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +40,7 @@ import { PhasesTab }       from "@/components/project/PhasesTab";
 import { DocumentsTab }    from "@/components/project/DocumentsTab";
 import { DailyLogTab }    from "@/components/project/DailyLogTab";
 import { VendorsTab }     from "@/components/project/VendorsTab";
+import { ChatBox }        from "@/components/chat/ChatBox";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   planning:  { label: "Planning",  color: "bg-slate-100 text-slate-700 border-slate-200",       icon: Clock },
@@ -58,6 +62,52 @@ const editSchema = z.object({
 });
 type EditForm = z.infer<typeof editSchema>;
 
+// ─── ChatContactList ──────────────────────────────────────────────────────────
+function ChatContactList({
+  contacts,
+  projectId,
+  currentUserId,
+}: {
+  contacts: { id: number; name: string }[];
+  projectId: number;
+  currentUserId: number;
+}) {
+  const [selectedId, setSelectedId] = useState<number | null>(
+    contacts.length === 1 ? contacts[0].id : null
+  );
+  const selected = contacts.find(c => c.id === selectedId);
+
+  return (
+    <div className="space-y-4">
+      {contacts.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {contacts.map(c => (
+            <button
+              key={c.id}
+              onClick={() => setSelectedId(c.id)}
+              className={`text-sm px-3 py-1.5 rounded-full border font-medium transition-colors ${
+                selectedId === c.id
+                  ? "bg-[#1B3A5C] text-white border-[#1B3A5C]"
+                  : "bg-white text-foreground border-border hover:border-[#1B3A5C]"
+              }`}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+      {selected && (
+        <ChatBox
+          projectId={projectId}
+          withUserId={selected.id}
+          withUserName={selected.name}
+          currentUserId={currentUserId}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function ProjectDetails() {
   const [, params]  = useRoute("/projects/:id");
   const [, setLocation] = useLocation();
@@ -75,6 +125,8 @@ export default function ProjectDetails() {
   const [linkCopied,     setLinkCopied]     = useState(false);
 
   const { data: activeInvitation, isLoading: invLoading } = useGetInvitation(projectId);
+  const { data: vendors = [] }                            = useGetVendors(projectId);
+  const { user }                                          = useAuth();
 
   const inviteMutation = useInviteClient(projectId, {
     mutation: {
@@ -248,6 +300,7 @@ export default function ProjectDetails() {
             <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
             <TabsTrigger value="photos">Photos</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
+            <TabsTrigger value="chat">Chat</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
@@ -474,6 +527,38 @@ export default function ProjectDetails() {
           <TabsContent value="activity">
             <div className="mt-2">
               <ActivityTab projectId={projectId} />
+            </div>
+          </TabsContent>
+
+          {/* Chat */}
+          <TabsContent value="chat">
+            <div className="mt-2">
+              {(() => {
+                const contacts: { id: number; name: string }[] = [];
+                vendors
+                  .filter(v => v.linkedUserId != null)
+                  .forEach(v => contacts.push({ id: v.linkedUserId!, name: v.name }));
+                if (project.clientId != null) {
+                  contacts.push({ id: project.clientId, name: project.clientName });
+                }
+                if (contacts.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+                      <MessageSquare className="w-10 h-10 opacity-25" />
+                      <p className="text-sm text-center">
+                        Add vendors or invite your client to start chatting.
+                      </p>
+                    </div>
+                  );
+                }
+                return (
+                  <ChatContactList
+                    contacts={contacts}
+                    projectId={projectId}
+                    currentUserId={user?.id ?? 0}
+                  />
+                );
+              })()}
             </div>
           </TabsContent>
         </Tabs>

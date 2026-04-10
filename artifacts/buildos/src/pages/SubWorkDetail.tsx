@@ -21,6 +21,7 @@ import {
   type DailyLog,
 } from "@workspace/api-client-react";
 import { MyPhotosSection } from "@/pages/SubDashboard";
+import { ChatBox }         from "@/components/chat/ChatBox";
 import { BuilderLayout } from "@/components/layout/BuilderLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -581,7 +582,7 @@ function SubLogsTab({ projectId, userId }: { projectId: number; userId: number }
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-type Tab = "overview" | "logs" | "photos" | "builder";
+type Tab = "overview" | "logs" | "photos" | "chat" | "builder";
 
 export default function SubWorkDetail() {
   const { vendorId: vidStr } = useParams<{ vendorId: string }>();
@@ -621,6 +622,7 @@ export default function SubWorkDetail() {
     { key: "overview", label: "Overview"     },
     { key: "logs",     label: "My Logs"      },
     { key: "photos",   label: "My Photos"    },
+    { key: "chat",     label: "Chat"         },
     { key: "builder",  label: "From Builder" },
   ];
 
@@ -741,6 +743,15 @@ export default function SubWorkDetail() {
 
         {tab === "photos" && (
           <MyPhotosSection projects={items ?? []} projectId={item.project.id} />
+        )}
+
+        {tab === "chat" && user && (
+          <ChatBox
+            projectId={item.project.id}
+            withUserId={item.builderId}
+            withUserName={item.builder.name}
+            currentUserId={user.id}
+          />
         )}
 
         {tab === "builder" && (
