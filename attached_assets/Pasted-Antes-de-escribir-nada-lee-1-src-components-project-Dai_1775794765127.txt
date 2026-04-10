@@ -1,0 +1,116 @@
+Antes de escribir nada, lee:
+1. src/components/project/DailyLogTab.tsx
+   — para ver el patrón de tabs internos
+2. src/pages/SubWorkDetail.tsx
+   — para ver cómo están los tabs del sub
+
+Necesito 3 cambios:
+
+CAMBIO 1 — Nuevo componente de chat:
+src/components/chat/ChatBox.tsx
+
+Props:
+  projectId: number
+  withUserId: number
+  withUserName: string
+  currentUserId: number
+
+Usa:
+  useGetMessages(projectId, withUserId)
+    — polling cada 5s automático
+  useSendMessage()
+
+DISEÑO:
+
+Contenedor principal:
+  height: 500px max
+  flex column
+  border rounded-xl overflow hidden
+
+Header:
+  Fondo navy #1B3A5C
+  Avatar con iniciales del withUserName
+  Nombre del withUserName
+  Badge "● Online" (siempre verde por ahora)
+
+Área de mensajes (flex-1, overflow-y-auto):
+  Fondo slate-50
+  Mensajes propios alineados a la derecha
+  Mensajes del otro alineados a la izquierda
+  
+  Burbuja propia:
+    Fondo naranja #F97316
+    Texto blanco
+    Border radius: todas excepto 
+    esquina inferior derecha
+    
+  Burbuja del otro:
+    Fondo blanco
+    Texto foreground
+    Border con border-slate-200
+    Border radius: todas excepto 
+    esquina inferior izquierda
+    
+  Bajo cada burbuja:
+    Hora del mensaje (format HH:mm)
+    ✓ leído / enviado (solo en mensajes propios)
+
+Auto-scroll al último mensaje cuando 
+llegan nuevos mensajes.
+Usa useRef + useEffect para el scroll.
+
+Input area:
+  Fondo blanco
+  Border-top
+  Input de texto (flex-1)
+  placeholder "Write a message..."
+  Botón send naranja (Send o ícono)
+  Enter también envía
+  Input se limpia al enviar
+
+Estado vacío (sin mensajes):
+  Ícono de chat centrado
+  "No messages yet. Start the conversation!"
+
+Estado loading:
+  Spinner centrado
+
+CAMBIO 2 — Tab "Chat" en ProjectDetails.tsx
+En src/pages/builder/ProjectDetails.tsx
+agrega un tab "Chat" en el TabsList.
+
+En el TabsContent "chat":
+  Si hay vendors del proyecto:
+    Muestra un selector de con quién chatear:
+    Lista de vendors con linkedUserId
+    (usa los vendors que ya tienes del proyecto)
+    + El cliente si tiene invitación activa
+    
+    Al seleccionar un contacto →
+    renderiza <ChatBox> con los datos correctos
+    
+  Si no hay vendors ni cliente:
+    Mensaje: "Add vendors or invite your 
+    client to start chatting."
+
+CAMBIO 3 — Tab "Chat" en SubWorkDetail.tsx
+Agrega un 5to tab "Chat" entre 
+"My Photos" y "From Builder".
+
+En el contenido:
+  <ChatBox
+    projectId={item.project.id}
+    withUserId={builderId}  ← el ID del builder
+    withUserName={item.builder.name}
+    currentUserId={user.id}
+  />
+
+Para obtener el builderId necesitas 
+añadirlo al MyWorkItem. 
+Agrega builderId al GET /api/my-work 
+en vendors.ts:
+  builderId: projectsTable.builderId
+
+Y al interface MyWorkItem en api.schemas.ts.
+
+Muéstrame el diff completo antes de aplicar.
