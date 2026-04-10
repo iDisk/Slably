@@ -510,6 +510,7 @@ export interface DailyLog {
   projectId:      number;
   organizationId: number;
   createdBy:      number;
+  createdByName?: string | null;
   logDate:        string;
   weather:        string | null;
   temperature:    number | null;

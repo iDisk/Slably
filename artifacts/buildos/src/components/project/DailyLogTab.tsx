@@ -189,6 +189,11 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
                             👁️ Visible to client
                           </span>
                         )}
+                        {log.createdByName && log.createdBy !== user?.id && (
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-full border bg-purple-50 text-purple-700 border-purple-200">
+                            👷 {log.createdByName}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc } from "drizzle-orm";
-import { db, dailyLogsTable, projectVendorsTable, projectsTable } from "@workspace/db";
+import { db, dailyLogsTable, projectVendorsTable, projectsTable, usersTable } from "@workspace/db";
 import multer from "multer";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
@@ -101,6 +101,7 @@ router.get("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, res
       projectId:       dailyLogsTable.projectId,
       organizationId:  dailyLogsTable.organizationId,
       createdBy:       dailyLogsTable.createdBy,
+      createdByName:   usersTable.name,
       logDate:         dailyLogsTable.logDate,
       weather:         dailyLogsTable.weather,
       temperature:     dailyLogsTable.temperature,
@@ -117,6 +118,7 @@ router.get("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, res
       updatedAt:       dailyLogsTable.updatedAt,
     })
     .from(dailyLogsTable)
+    .leftJoin(usersTable, eq(dailyLogsTable.createdBy, usersTable.id))
     .where(eq(dailyLogsTable.projectId, params.data.id))
     .orderBy(desc(dailyLogsTable.logDate));
 
