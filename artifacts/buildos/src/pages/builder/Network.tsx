@@ -650,17 +650,17 @@ function BuilderNetwork({ rfqs, isLoading }: { rfqs: Rfq[] | undefined; isLoadin
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Network</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Publica solicitudes y gestiona cotizaciones de subcontratistas.</p>
+          <p className="text-muted-foreground mt-1 text-sm">Post requests and manage subcontractor quotes.</p>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button className="shrink-0 gap-2">
-              <Plus className="w-4 h-4" /> Nueva Solicitud
+              <Plus className="w-4 h-4" /> New Request
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-xl font-display font-bold">Nueva Solicitud de Subcontrato</DialogTitle>
+              <DialogTitle className="text-xl font-display font-bold">New Subcontract Request</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 mt-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -759,12 +759,12 @@ function BuilderNetwork({ rfqs, isLoading }: { rfqs: Rfq[] | undefined; isLoadin
           <div className="w-14 h-14 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Wrench className="w-7 h-7 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground">No has publicado solicitudes aún</h3>
+          <h3 className="text-lg font-semibold text-foreground">You haven't posted any requests yet</h3>
           <p className="text-muted-foreground mt-1 mb-5 text-sm">
-            Publica tu primera solicitud para encontrar subcontratistas calificados.
+            Post your first request to find qualified subcontractors.
           </p>
           <Button onClick={() => setCreateOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" /> Nueva Solicitud
+            <Plus className="w-4 h-4" /> New Request
           </Button>
         </div>
       ) : (

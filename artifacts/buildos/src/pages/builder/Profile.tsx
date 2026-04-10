@@ -110,7 +110,7 @@ export default function Profile() {
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground">Profile</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Información de tu cuenta y empresa
+            Your account and company information
           </p>
         </div>
 
@@ -118,7 +118,7 @@ export default function Profile() {
         <Card className="border-none shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <User className="w-4 h-4 text-primary" /> Cuenta
+              <User className="w-4 h-4 text-primary" /> Account
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -148,7 +148,7 @@ export default function Profile() {
                   onClick={() => photoInputRef.current?.click()}
                   className="text-xs text-primary hover:underline mt-0.5"
                 >
-                  Cambiar foto
+                  Change photo
                 </button>
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function Profile() {
         <Card className="border-none shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-primary" /> Empresa
+              <Building2 className="w-4 h-4 text-primary" /> Company
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -178,7 +178,7 @@ export default function Profile() {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {/* Company logo */}
                 <div className="space-y-2">
-                  <Label>Logo de empresa</Label>
+                  <Label>Company logo</Label>
                   <button
                     type="button"
                     onClick={() => logoInputRef.current?.click()}
@@ -189,7 +189,7 @@ export default function Profile() {
                     ) : org?.companyLogo ? (
                       <img src={org.companyLogo} alt="Logo" className="w-full h-full object-contain p-1" />
                     ) : (
-                      <span className="text-xs text-muted-foreground">+ Logo de empresa</span>
+                      <span className="text-xs text-muted-foreground">+ Company logo</span>
                     )}
                   </button>
                   <input
@@ -204,7 +204,7 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label htmlFor="companyName" className="flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                    Nombre de la empresa
+                    Company name
                   </Label>
                   <Input
                     id="companyName"
@@ -220,7 +220,7 @@ export default function Profile() {
                   <div className="space-y-2">
                     <Label htmlFor="licenseNumber" className="flex items-center gap-1.5">
                       <BadgeCheck className="w-3.5 h-3.5 text-muted-foreground" />
-                      Número de licencia
+                      License number
                     </Label>
                     <Input
                       id="licenseNumber"
@@ -244,7 +244,7 @@ export default function Profile() {
                 <div className="space-y-2">
                   <Label htmlFor="state" className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                    Estado de operación
+                    Operating state
                   </Label>
                   <Select id="state" {...register("state")}>
                     <option value="">Select...</option>

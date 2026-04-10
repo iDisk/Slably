@@ -12,7 +12,7 @@ const SUPPLIER_LABELS: Record<string, string> = {
   materiales:   "Materiales",
   equipos:      "Equipos",
   herramientas: "Herramientas",
-  varios:       "Varios",
+  varios:       "Various",
 };
 
 const TRADE_LABELS: Record<string, string> = {
@@ -52,10 +52,10 @@ export default function Find() {
         {/* Heading */}
         <div className="space-y-1">
           <h1 className="text-3xl font-display font-bold text-foreground">
-            Tu red de construcción
+            Your construction network
           </h1>
           <p className="text-sm text-muted-foreground">
-            Conecta con constructores y subcontratistas verificados en tu área.
+            Connect with verified builders and subcontractors in your area.
           </p>
         </div>
 
@@ -65,9 +65,9 @@ export default function Find() {
           <div className="flex rounded-xl border border-border overflow-hidden w-fit">
             {(
               [
-                { value: "",              label: "Todos" },
-                { value: "builder",       label: "Constructores" },
-                { value: "subcontractor", label: "Subcontratistas" },
+                { value: "",              label: "All" },
+                { value: "builder",       label: "Builders" },
+                { value: "subcontractor", label: "Subcontractors" },
                 { value: "supplier",      label: "Suppliers" },
               ] as const
             ).map(opt => (
@@ -90,7 +90,7 @@ export default function Find() {
             <div className="relative flex-1 max-w-xs">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Ciudad o estado..."
+                placeholder="City or state..."
                 value={city}
                 onChange={e => setCity(e.target.value)}
                 className="pl-9"
@@ -122,7 +122,7 @@ export default function Find() {
               <Search className="w-7 h-7 text-muted-foreground" />
             </div>
             <p className="text-muted-foreground text-sm text-center">
-              No encontramos profesionales con esos filtros.
+              No professionals found with those filters.
             </p>
           </div>
         ) : (
@@ -221,7 +221,7 @@ export default function Find() {
                       className="w-full text-xs h-8"
                       onClick={() => navigate(item.role === "builder" ? `/builder/${item.id}` : `/sub/${item.id}`)}
                     >
-                      Ver perfil
+                      View profile
                     </Button>
                   </CardContent>
                 </Card>
