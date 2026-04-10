@@ -231,7 +231,7 @@ export default function Find() {
         )}
 
         <p className="text-center text-xs text-muted-foreground pb-4">
-          Powered by Slably · Gestión de construcción
+          Powered by Slably · Construction management
         </p>
       </div>
     </DirectoryLayout>
