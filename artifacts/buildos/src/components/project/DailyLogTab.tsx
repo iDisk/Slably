@@ -136,7 +136,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             Daily Log
           </h3>
-          {user?.role === "builder" && (
+          {(user?.role === "builder" || user?.role === "subcontractor" || user?.role === "supplier") && (
             <Button
               size="sm"
               className="bg-[#F97316] hover:bg-[#ea6c0a] text-white gap-1.5"
@@ -386,7 +386,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
               </CardContent>
             </Card>
 
-            {log.status === "draft" && user?.role === "builder" && (
+            {log.status === "draft" && (user?.role === "builder" || user?.role === "subcontractor" || user?.role === "supplier") && (
               <Button
                 className="w-full bg-[#F97316] hover:bg-[#ea6c0a] text-white gap-2"
                 disabled={patchMutation.isPending}
