@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db, projectsTable } from "@workspace/db";
 import {
   CreateProjectBody,
@@ -20,32 +20,43 @@ const router: IRouter = Router();
 router.get("/projects", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const user = req.user!;
 
-  // Builders without an org see nothing
+  // Subcontractors y suppliers → sus propios proyectos por builder_id
+  if (user.role === "subcontractor" || user.role === "supplier") {
+    const projects = await db
+      .select()
+      .from(projectsTable)
+      .where(eq(projectsTable.builderId, user.id))
+      .orderBy(desc(projectsTable.createdAt));
+    res.json(ListProjectsResponse.parse(projects));
+    return;
+  }
+
+  // Clients y builders sin org → array vacío
   if (!user.organizationId) {
     res.json([]);
     return;
   }
 
-  let projects;
+  // Builders → todos los proyectos de su organización
   if (user.role === "builder") {
-    // All projects in the org (not just the requesting builder's own)
-    projects = await db
+    const projects = await db
       .select()
       .from(projectsTable)
       .where(eq(projectsTable.organizationId, user.organizationId));
-  } else {
-    // Clients see only projects they are assigned to within their org
-    projects = await db
-      .select()
-      .from(projectsTable)
-      .where(
-        and(
-          eq(projectsTable.clientId, user.id),
-          eq(projectsTable.organizationId, user.organizationId)
-        )
-      );
+    res.json(ListProjectsResponse.parse(projects));
+    return;
   }
 
+  // Clients → solo proyectos donde están asignados como clientId
+  const projects = await db
+    .select()
+    .from(projectsTable)
+    .where(
+      and(
+        eq(projectsTable.clientId, user.id),
+        eq(projectsTable.organizationId, user.organizationId)
+      )
+    );
   res.json(ListProjectsResponse.parse(projects));
 });
 
