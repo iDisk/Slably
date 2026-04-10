@@ -1,0 +1,85 @@
+Antes de escribir nada, lee:
+artifacts/api-server/src/routes/vendors.ts
+— para ver el patrón de endpoints
+
+Crea un nuevo archivo:
+artifacts/api-server/src/routes/invoices.ts
+
+Con estos endpoints:
+
+ENDPOINT 1 — GET /api/projects/:projectId/invoices
+requireAuth
+Devuelve todos los invoices del proyecto
+donde sender_id = user.id OR 
+recipient_id = user.id
+Con join a users para incluir:
+  senderName, senderEmail,
+  recipientName, recipientEmail
+Con join a invoice_items para incluir
+el array de items de cada invoice
+Ordenado por created_at DESC
+
+ENDPOINT 2 — POST /api/projects/:projectId/invoices
+requireAuth, builders y subs únicamente
+Body:
+{
+  recipient_id: number,
+  title: string,
+  notes?: string,
+  due_date?: string,
+  items: [
+    { description: string, 
+      quantity: number, 
+      unit_price: number }
+  ]
+}
+
+Lógica:
+1. Verificar acceso al proyecto
+2. Calcular subtotal y total desde items
+   (quantity * unit_price por item)
+3. Generar invoice_number automático:
+   Contar invoices existentes del proyecto
+   INV-001, INV-002, etc.
+4. Insertar invoice
+5. Insertar invoice_items
+6. Devolver invoice completo con items
+
+ENDPOINT 3 — GET /api/projects/:projectId/invoices/:invoiceId
+requireAuth
+Devuelve invoice completo con items,
+senderName, recipientName
+
+ENDPOINT 4 — PATCH /api/projects/:projectId/invoices/:invoiceId
+requireAuth, solo el sender puede editar
+Body: { status?, notes?, due_date? }
+Solo permite cambiar status a:
+'sent' | 'paid' | 'cancelled'
+Cuando status = 'sent':
+  Actualiza sent_at = now()
+  Envía email al recipient via Resend:
+  Asunto: "Invoice [number] from [sender]"
+  Cuerpo: título, monto total, due date,
+  botón "View Invoice"
+  URL: {APP_URL}/projects/{projectId}/invoices/{invoiceId}
+
+ENDPOINT 5 — DELETE /api/projects/:projectId/invoices/:invoiceId
+requireAuth, solo sender puede borrar
+Solo permite borrar si status = 'draft'
+
+Registra en routes/index.ts
+
+Agrega schemas Zod en lib/api-zod:
+- CreateInvoiceBody
+- UpdateInvoiceBody
+- InvoiceItem interface
+- Invoice interface con items
+
+Agrega hooks en lib/api-client-react:
+- useGetInvoices(projectId)
+- useCreateInvoice(projectId)
+- useGetInvoice(projectId, invoiceId)
+- useUpdateInvoice(projectId, invoiceId)
+- useDeleteInvoice(projectId, invoiceId)
+
+Muéstrame el diff completo antes de aplicar.
