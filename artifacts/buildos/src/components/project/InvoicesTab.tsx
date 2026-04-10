@@ -98,8 +98,17 @@ export function InvoicesTab({ projectId }: { projectId: number }) {
   }
 
   function handleCreate() {
-    if (!recipientId || !title || lineItems.some(it => !it.description)) {
-      toast.error("Please fill in all required fields"); return;
+    if (!recipientId) {
+      toast.error("Please select a recipient"); return;
+    }
+    if (!title.trim()) {
+      toast.error("Please enter a title"); return;
+    }
+    if (lineItems.some(it => !it.description.trim())) {
+      toast.error("Please fill in all item descriptions"); return;
+    }
+    if (lineItems.some(it => it.unit_price <= 0)) {
+      toast.error("Unit price must be greater than 0"); return;
     }
     createMutation.mutate({
       data: {
