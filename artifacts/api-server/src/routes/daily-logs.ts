@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, desc } from "drizzle-orm";
-import { db, dailyLogsTable } from "@workspace/db";
+import { db, dailyLogsTable, projectVendorsTable, projectsTable } from "@workspace/db";
 import multer from "multer";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
@@ -33,40 +33,67 @@ const AUDIO_MIME_TYPES: Record<string, string> = {
   "video/webm":  "webm",
 };
 
+// Helper: verify the user is a vendor of the project
+async function isVendorOfProject(projectId: number, userId: number): Promise<boolean> {
+  const [vendor] = await db
+    .select({ id: projectVendorsTable.id })
+    .from(projectVendorsTable)
+    .where(and(
+      eq(projectVendorsTable.projectId, projectId),
+      eq(projectVendorsTable.linkedUserId, userId),
+    ));
+  return !!vendor;
+}
+
+const isSub = (role: string) => role === "subcontractor" || role === "supplier";
+
 // GET /api/projects/:id/daily-logs
 router.get("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const params = DailyLogParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role === "subcontractor") { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const project = await checkProjectAccess(params.data.id, user);
-  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  if (user.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
 
-  if (user.role === "client") {
+  // Sub/supplier: verify vendor → return only own logs (no audioUrl / transcription)
+  if (isSub(user.role)) {
+    const ok = await isVendorOfProject(params.data.id, user.id);
+    if (!ok) { res.status(403).json({ error: "Forbidden" }); return; }
+
     const logs = await db
       .select({
-        id:           dailyLogsTable.id,
-        projectId:    dailyLogsTable.projectId,
-        logDate:      dailyLogsTable.logDate,
-        weather:      dailyLogsTable.weather,
-        temperature:  dailyLogsTable.temperature,
-        workersCount: dailyLogsTable.workersCount,
-        activities:   dailyLogsTable.activities,
-        materials:    dailyLogsTable.materials,
-        problems:     dailyLogsTable.problems,
-        createdAt:    dailyLogsTable.createdAt,
+        id:             dailyLogsTable.id,
+        projectId:      dailyLogsTable.projectId,
+        organizationId: dailyLogsTable.organizationId,
+        createdBy:      dailyLogsTable.createdBy,
+        logDate:        dailyLogsTable.logDate,
+        weather:        dailyLogsTable.weather,
+        temperature:    dailyLogsTable.temperature,
+        workersCount:   dailyLogsTable.workersCount,
+        activities:     dailyLogsTable.activities,
+        materials:      dailyLogsTable.materials,
+        problems:       dailyLogsTable.problems,
+        notes:          dailyLogsTable.notes,
+        aiProcessed:    dailyLogsTable.aiProcessed,
+        status:         dailyLogsTable.status,
+        createdAt:      dailyLogsTable.createdAt,
+        updatedAt:      dailyLogsTable.updatedAt,
       })
       .from(dailyLogsTable)
       .where(and(
         eq(dailyLogsTable.projectId, params.data.id),
-        eq(dailyLogsTable.shareWithClient, true),
+        eq(dailyLogsTable.createdBy, user.id),
       ))
       .orderBy(desc(dailyLogsTable.logDate));
+
     res.json(logs);
     return;
   }
+
+  // Builder: full access
+  const project = await checkProjectAccess(params.data.id, user);
+  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
 
   const logs = await db
     .select({
@@ -102,21 +129,43 @@ router.post("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, re
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const project = await checkProjectAccess(params.data.id, user);
-  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  if (user.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  let projectOrgId: number;
+  if (isSub(user.role)) {
+    const ok = await isVendorOfProject(params.data.id, user.id);
+    if (!ok) { res.status(403).json({ error: "Forbidden" }); return; }
+    const [proj] = await db
+      .select({ organizationId: projectsTable.organizationId })
+      .from(projectsTable)
+      .where(eq(projectsTable.id, params.data.id));
+    if (!proj) { res.status(404).json({ error: "Project not found" }); return; }
+    projectOrgId = proj.organizationId;
+  } else {
+    const project = await checkProjectAccess(params.data.id, user);
+    if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+    projectOrgId = project.organizationId;
+  }
 
   const parsed = CreateDailyLogBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
 
+  const conflictWhere = isSub(user.role)
+    ? and(
+        eq(dailyLogsTable.projectId, params.data.id),
+        eq(dailyLogsTable.logDate, parsed.data.log_date),
+        eq(dailyLogsTable.createdBy, user.id),
+      )
+    : and(
+        eq(dailyLogsTable.projectId, params.data.id),
+        eq(dailyLogsTable.logDate, parsed.data.log_date),
+      );
+
   const [existing] = await db
     .select({ id: dailyLogsTable.id, status: dailyLogsTable.status })
     .from(dailyLogsTable)
-    .where(and(
-      eq(dailyLogsTable.projectId, params.data.id),
-      eq(dailyLogsTable.logDate, parsed.data.log_date),
-    ));
+    .where(conflictWhere);
 
   if (existing?.status === "confirmed") {
     res.status(409).json({ error: "Ya existe un log confirmado para esta fecha. No se puede sobreescribir." });
@@ -139,7 +188,7 @@ router.post("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, re
   } else {
     [log] = await db.insert(dailyLogsTable).values({
       projectId:      params.data.id,
-      organizationId: project.organizationId,
+      organizationId: projectOrgId,
       createdBy:      user.id,
       logDate:        parsed.data.log_date,
       weather:        parsed.data.weather       ?? null,
@@ -163,10 +212,24 @@ router.post("/projects/:id/daily-logs/from-audio", requireAuth, upload.single("a
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const project = await checkProjectAccess(params.data.id, user);
-  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  if (user.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  let projectOrgId: number;
+  if (isSub(user.role)) {
+    const ok = await isVendorOfProject(params.data.id, user.id);
+    if (!ok) { res.status(403).json({ error: "Forbidden" }); return; }
+    const [proj] = await db
+      .select({ organizationId: projectsTable.organizationId })
+      .from(projectsTable)
+      .where(eq(projectsTable.id, params.data.id));
+    if (!proj) { res.status(404).json({ error: "Project not found" }); return; }
+    projectOrgId = proj.organizationId;
+  } else {
+    const project = await checkProjectAccess(params.data.id, user);
+    if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+    projectOrgId = project.organizationId;
+  }
 
   if (!req.file) { res.status(400).json({ error: "Se requiere un archivo de audio" }); return; }
 
@@ -179,13 +242,21 @@ router.post("/projects/:id/daily-logs/from-audio", requireAuth, upload.single("a
     originalname: req.file?.originalname,
   });
 
+  const conflictWhere = isSub(user.role)
+    ? and(
+        eq(dailyLogsTable.projectId, params.data.id),
+        eq(dailyLogsTable.logDate, logDate),
+        eq(dailyLogsTable.createdBy, user.id),
+      )
+    : and(
+        eq(dailyLogsTable.projectId, params.data.id),
+        eq(dailyLogsTable.logDate, logDate),
+      );
+
   const [existing] = await db
     .select({ id: dailyLogsTable.id, status: dailyLogsTable.status })
     .from(dailyLogsTable)
-    .where(and(
-      eq(dailyLogsTable.projectId, params.data.id),
-      eq(dailyLogsTable.logDate, logDate),
-    ));
+    .where(conflictWhere);
 
   if (existing?.status === "confirmed") {
     res.status(409).json({ error: "Ya existe un log confirmado para esta fecha. No se puede sobreescribir." });
@@ -248,7 +319,7 @@ router.post("/projects/:id/daily-logs/from-audio", requireAuth, upload.single("a
   } else {
     [log] = await db.insert(dailyLogsTable).values({
       projectId:      params.data.id,
-      organizationId: project.organizationId,
+      organizationId: projectOrgId,
       createdBy:      user.id,
       logDate,
       weather:        structured.weather       ?? null,
@@ -274,10 +345,16 @@ router.get("/projects/:id/daily-logs/:logId", requireAuth, async (req: AuthReque
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role === "subcontractor" || user.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const project = await checkProjectAccess(params.data.id, user);
-  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  if (user.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  if (isSub(user.role)) {
+    const ok = await isVendorOfProject(params.data.id, user.id);
+    if (!ok) { res.status(403).json({ error: "Forbidden" }); return; }
+  } else {
+    const project = await checkProjectAccess(params.data.id, user);
+    if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  }
 
   const [log] = await db
     .select()
@@ -289,6 +366,11 @@ router.get("/projects/:id/daily-logs/:logId", requireAuth, async (req: AuthReque
 
   if (!log) { res.status(404).json({ error: "Daily log not found" }); return; }
 
+  // Subs can only read their own logs
+  if (isSub(user.role) && log.createdBy !== user.id) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+
   res.json(log);
 });
 
@@ -298,10 +380,16 @@ router.patch("/projects/:id/daily-logs/:logId", requireAuth, async (req: AuthReq
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
   const user = req.user!;
-  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
 
-  const project = await checkProjectAccess(params.data.id, user);
-  if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  if (user.role === "client") { res.status(403).json({ error: "Forbidden" }); return; }
+
+  if (isSub(user.role)) {
+    const ok = await isVendorOfProject(params.data.id, user.id);
+    if (!ok) { res.status(403).json({ error: "Forbidden" }); return; }
+  } else {
+    const project = await checkProjectAccess(params.data.id, user);
+    if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+  }
 
   const parsed = UpdateDailyLogBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
@@ -333,13 +421,22 @@ router.patch("/projects/:id/daily-logs/:logId", requireAuth, async (req: AuthReq
     return;
   }
 
+  // Subs can only update their own logs
+  const whereClause = isSub(user.role)
+    ? and(
+        eq(dailyLogsTable.id, params.data.logId),
+        eq(dailyLogsTable.projectId, params.data.id),
+        eq(dailyLogsTable.createdBy, user.id),
+      )
+    : and(
+        eq(dailyLogsTable.id, params.data.logId),
+        eq(dailyLogsTable.projectId, params.data.id),
+      );
+
   const [log] = await db
     .update(dailyLogsTable)
     .set(updates)
-    .where(and(
-      eq(dailyLogsTable.id, params.data.logId),
-      eq(dailyLogsTable.projectId, params.data.id),
-    ))
+    .where(whereClause)
     .returning();
 
   if (!log) { res.status(404).json({ error: "Daily log not found" }); return; }
