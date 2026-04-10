@@ -12,6 +12,8 @@ export const organizationsTable = pgTable(
     licenseNumber: text("license_number"),
     state:         text("state"),
     phone:         text("phone"),
+    stripeCustomerId: text("stripe_customer_id"),
+    plan:          text("plan").notNull().default("free"),
     createdAt:     timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
