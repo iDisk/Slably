@@ -224,7 +224,7 @@ function PhotoCard({
 }
 
 // ─── My Photos Section ────────────────────────────────────────────────────────
-function MyPhotosSection({ projects }: { projects: MyWorkItem[] }) {
+export function MyPhotosSection({ projects, projectId }: { projects: MyWorkItem[]; projectId?: number }) {
   const queryClient  = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [sharingId,  setSharingId]  = useState<number | null>(null);
@@ -309,7 +309,7 @@ function MyPhotosSection({ projects }: { projects: MyWorkItem[] }) {
               projects={projects}
               isSharingOpen={sharingId === photo.id}
               selectedProjectId={sharingId === photo.id ? selectedPid : ""}
-              onOpenShare={() => { setSharingId(photo.id); setSelectedPid(""); }}
+              onOpenShare={() => { setSharingId(photo.id); setSelectedPid(projectId ? String(projectId) : ""); }}
               onCloseShare={() => setSharingId(null)}
               onSelectProject={setSelectedPid}
               onConfirmShare={() => {

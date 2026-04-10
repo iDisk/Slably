@@ -19,6 +19,7 @@ import InvitePage from "@/pages/InvitePage";
 import ClientProjectView from "@/pages/ClientProjectView";
 import AdminPanel from "@/pages/AdminPanel";
 import SubDashboard from "@/pages/SubDashboard";
+import SubWorkDetail from "@/pages/SubWorkDetail";
 
 // Patch fetch to automatically inject the JWT token and handle 401s
 const originalFetch = window.fetch;
@@ -91,6 +92,7 @@ function Router() {
       <Route path="/profile"><ProtectedRoute component={Profile} roleRequired={['builder', 'subcontractor', 'supplier']} /></Route>
       <Route path="/network"><ProtectedRoute component={Network} roleRequired={['builder', 'subcontractor', 'supplier']} /></Route>
       <Route path="/sub-dashboard"><ProtectedRoute component={SubDashboard} roleRequired={['subcontractor', 'supplier']} /></Route>
+      <Route path="/my-work/:vendorId"><ProtectedRoute component={SubWorkDetail} roleRequired={['subcontractor', 'supplier']} /></Route>
       <Route path="/client"><ProtectedRoute component={ClientDashboard} roleRequired="client" /></Route>
       <Route path="/sub/:subId" component={SubProfile} />
       <Route path="/builder/:builderId" component={BuilderProfile} />
