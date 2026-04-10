@@ -1,0 +1,111 @@
+Antes de escribir nada, lee:
+src/pages/builder/ProjectDetails.tsx
+— para ver cómo están los tabs y 
+cómo se usa useGetVendors
+
+Necesito crear un tab "Invoices" en 
+el proyecto y un componente para 
+crear y ver invoices.
+
+CAMBIO 1 — Tab en ProjectDetails.tsx
+Agrega "Invoices" al TabsList después 
+de "Documents".
+
+Importa:
+useGetInvoices, useCreateInvoice, 
+useUpdateInvoice, useDeleteInvoice,
+getInvoicesQueryKey,
+type Invoice
+de @workspace/api-client-react
+
+En TabsContent "invoices":
+Renderiza <InvoicesTab projectId={projectId} />
+
+CAMBIO 2 — Nuevo componente:
+src/components/project/InvoicesTab.tsx
+
+Props: { projectId: number }
+
+Usa:
+- useGetInvoices(projectId)
+- useCreateInvoice(projectId)
+- useUpdateInvoice(projectId, selectedInvoiceId)
+- useDeleteInvoice(projectId, selectedInvoiceId)
+- useAuth() para saber el rol del usuario
+- useGetVendors(projectId) para la lista 
+  de vendors a facturar
+- useGetInvitation(projectId) para 
+  saber si hay cliente
+
+VISTAS:
+1. Lista de invoices
+2. Crear invoice (formulario)
+3. Detalle del invoice
+
+VISTA 1 — Lista:
+Header "Invoices" + botón naranja 
+"+ New Invoice" (solo para builders y subs)
+
+Cada invoice card muestra:
+- Invoice number + título
+- De: senderName → Para: recipientName
+- Total en grande
+- Badge de estado:
+  draft → gris "Draft"
+  sent → azul "Sent"
+  paid → verde "Paid ✓"
+  overdue → rojo "Overdue"
+  cancelled → gris "Cancelled"
+- Fecha de vencimiento si existe
+- Botones según estado y rol:
+  Si sender y draft → "Send" + "Delete"
+  Si sender y sent → "Mark as Paid"
+  Si recipient → "View"
+
+Estado vacío:
+"No invoices yet."
+
+VISTA 2 — Crear invoice:
+Botón "← Back"
+Título "New Invoice"
+
+Campos:
+- "Bill to" → select con:
+  * Vendors del proyecto con linkedUserId
+  * Cliente del proyecto (si hay clientId)
+- Title (text input)
+- Due date (date input, opcional)
+- Notes (textarea, opcional)
+
+Sección "Line Items":
+Tabla con columnas:
+Description | Qty | Unit Price | Total
+
+Botón "+ Add Item" agrega una fila nueva
+Cada fila tiene botón "×" para eliminar
+
+Al final de la tabla:
+TOTAL: $X,XXX.XX (calculado automáticamente)
+
+Botón naranja "Create Invoice"
+Al crear → vuelve a la lista
+
+VISTA 3 — Detalle del invoice:
+Botón "← Back"
+Muestra el invoice completo como 
+una factura real:
+
+Header con logo Slably
+DE: senderName, senderEmail
+PARA: recipientName, recipientEmail
+Invoice # | Fecha | Vence
+
+Tabla de line items
+TOTAL
+
+Botones según estado:
+Si draft y sender → "Send Invoice" (azul)
+Si sent y sender → "Mark as Paid" (verde)
+Si draft y sender → "Delete" (rojo outline)
+
+Muéstrame el diff completo antes de aplicar.
