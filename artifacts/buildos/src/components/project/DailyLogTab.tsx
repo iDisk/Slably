@@ -155,9 +155,9 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
           <Card className="border-dashed border-2 shadow-none bg-transparent">
             <CardContent className="p-10 text-center text-muted-foreground">
               <Mic className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="font-medium">No hay logs todavía</p>
+              <p className="font-medium">No logs yet</p>
               <p className="text-sm mt-1">
-                Registra el primer daily log del proyecto.
+                Record the first daily log for this project.
               </p>
             </CardContent>
           </Card>
@@ -228,7 +228,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
                     className="text-xs h-7"
                     onClick={() => { setSelectedLogId(log.id); setView("detail"); }}
                   >
-                    Ver detalle
+                    View detail
                   </Button>
                 </CardContent>
               </Card>
@@ -361,7 +361,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
                 )}
                 {log.activities && (
                   <div>
-                    <p className="text-xs text-muted-foreground">✅ Actividades</p>
+                    <p className="text-xs text-muted-foreground">✅ Activities</p>
                     <p className="text-sm text-foreground whitespace-pre-wrap">{log.activities}</p>
                   </div>
                 )}
@@ -522,7 +522,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
           onClick={() => { stopRecording(); setView("create"); }}
           className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Cancelar
+          <ArrowLeft className="w-4 h-4" /> Cancel
         </button>
 
         <div className="flex flex-col items-center gap-6 py-6">
@@ -557,7 +557,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
               className="bg-[#F97316] hover:bg-[#ea6c0a] text-white"
               onClick={() => { setSelectedLogId(createdLogId); setView("detail"); }}
             >
-              Ver log generado
+              View generated log
             </Button>
           )}
         </div>
@@ -651,7 +651,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
           </div>
 
           <div className="space-y-1">
-            <Label>Actividades realizadas *</Label>
+            <Label>Activities *</Label>
             <Textarea
               rows={3}
               placeholder="Describe las actividades del día…"
@@ -703,7 +703,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
             >
               {createMutation.isPending
                 ? <><Loader2 className="w-4 h-4 animate-spin mr-1" />Guardando…</>
-                : "Guardar log"}
+                : "Save log"}
             </Button>
           </div>
         </form>

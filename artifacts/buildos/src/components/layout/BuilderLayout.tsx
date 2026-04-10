@@ -10,9 +10,9 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/dashboard",     label: "Dashboard",  icon: LayoutDashboard, roles: undefined },
     { href: "/sub-dashboard", label: "My Work",    icon: Briefcase,       roles: ["subcontractor", "supplier"] as string[] },
-    { href: "/find",          label: "Directorio", icon: Search,          roles: undefined },
+    { href: "/find",          label: "Directory",  icon: Search,          roles: undefined },
     { href: "/network",       label: "Network",    icon: Users,           roles: undefined },
-    { href: "/profile",       label: "Perfil",     icon: UserCircle,      roles: undefined },
+    { href: "/profile",       label: "Profile",    icon: UserCircle,      roles: undefined },
   ];
 
   return (

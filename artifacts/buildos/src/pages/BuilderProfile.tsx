@@ -139,7 +139,7 @@ export default function BuilderProfile() {
               <p className="text-2xl font-display font-bold text-foreground tabular-nums">
                 {builder.stats.totalProjects}
               </p>
-              <p className="text-xs text-muted-foreground mt-1 leading-tight">Proyectos completados</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-tight">Completed projects</p>
             </CardContent>
           </Card>
           <Card className="border border-border shadow-sm">

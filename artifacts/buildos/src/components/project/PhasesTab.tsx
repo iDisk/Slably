@@ -433,7 +433,7 @@ export function PhasesTab({ projectId, projectType }: PhasesTabProps) {
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <Pencil className="w-3 h-3" />
-              Editar plan
+              Edit plan
             </button>
           </div>
         </div>

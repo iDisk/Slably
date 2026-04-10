@@ -1,0 +1,106 @@
+Traduce al inglés todos los textos 
+en español listados en estos archivos.
+Hazlo en paralelo, un archivo a la vez.
+
+TRADUCCIONES A APLICAR:
+
+BuilderLayout.tsx:
+  "Directorio" → "Directory"
+  "Perfil" → "Profile"
+
+Profile.tsx:
+  "Perfil actualizado" → "Profile updated"
+  "Perfil" (h1) → "Profile"
+  "Seleccionar..." → "Select..."
+  "Guardar cambios" → "Save changes"
+
+Activities.tsx:
+  "Actividades" → "Activities"
+  "Fases" → "Phases"
+
+Network.tsx:
+  "Cancelar" → "Cancel"
+  "Ocultar cotizaciones" → "Hide quotes"
+  "Ver cotizaciones" → "View quotes"
+  "No hay solicitudes disponibles en tu área" → 
+  "No available requests in your area"
+
+Register.tsx:
+  "Proveedor" → "Supplier"
+  "Vendo materiales y equipos" → 
+  "I sell materials and equipment"
+  "Seleccionar categoría..." → 
+  "Select category..."
+  "Seleccionar..." → "Select..."
+
+Find.tsx:
+  "Proveedores" → "Suppliers"
+  "Ver perfil" → "View profile"
+
+BuilderProfile.tsx:
+  "Proyectos completados" → 
+  "Completed projects"
+
+ClientDashboard.tsx:
+  "No hay documentos disponibles aún" → 
+  "No documents available yet"
+  "Ver y Firmar" → "View and Sign"
+
+VendorsTab.tsx:
+  "Subcontratista" → "Subcontractor"
+  "Proveedor" → "Supplier"
+  "Otro" → "Other"
+  "Proveedor agregado" → "Vendor added"
+  "Proveedor actualizado" → "Vendor updated"
+  "Proveedor cancelado" → "Vendor cancelled"
+  "Proveedores" (header) → "Vendors"
+  "Agregar Proveedor" → "Add Vendor"
+  "No hay proveedores en este proyecto" → 
+  "No vendors in this project"
+  "Ver perfil" → "View profile"
+  "Ver detalle →" → "View details →"
+  "Seleccionar…" → "Select…"
+  "Cancelar" → "Cancel"
+  "Guardar" → "Save"
+  "Editar" → "Edit"
+  "Cancelar vendor" → "Cancel vendor"
+  "Ver documento" → "View document"
+  "Editar Proveedor" → "Edit Vendor"
+  "Cancelar proveedor" → "Cancel vendor"
+  "Guardar cambios" → "Save changes"
+  "¿Cancelar a" → "Cancel"
+
+DailyLogTab.tsx:
+  "No hay logs todavía" → "No logs yet"
+  "Registra el primer daily log del proyecto." → 
+  "Record the first daily log for this project."
+  "Ver detalle" → "View detail"
+  "✅ Actividades" → "✅ Activities"
+  "Cancelar" → "Cancel"
+  "Ver log generado" → "View generated log"
+  "Actividades realizadas *" → "Activities *"
+  "Guardar log" → "Save log"
+
+DocumentsTab.tsx:
+  "Cancelar" → "Cancel"
+  "Guardar" → "Save"
+  "Atrás" → "Back"
+  "Seleccionar tipo de documento" → 
+  "Select document type"
+  "Editar campos" → "Edit fields"
+  "Guardar y Firmar" → "Save and Sign"
+  "No hay documentos todavía" → 
+  "No documents yet"
+  "Ver y Firmar" → "View and Sign"
+  "No hay contratos externos vinculados." → 
+  "No external contracts linked."
+  "Eliminar contrato" → "Delete contract"
+  "¿Eliminar..." → "Delete..."
+  "Eliminar" → "Delete"
+
+PhasesTab.tsx:
+  "Editar plan" → "Edit plan"
+
+Aplica todos los cambios en paralelo.
+Compila artifacts/buildos (tsc --noEmit)
+al final y confirma cero errores.

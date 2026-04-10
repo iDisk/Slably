@@ -103,7 +103,7 @@ export default function Register() {
     { value: "builder",       icon: HardHat, label: "Builder",    subtitle: "Construyo y administro proyectos" },
     { value: "subcontractor", icon: Wrench,  label: "Sub",        subtitle: "Ofrezco servicios de construcción" },
     { value: "client",        icon: User,    label: "Cliente",    subtitle: "Tengo un proyecto en construcción" },
-    { value: "supplier",      icon: Store,   label: "Proveedor",  subtitle: "Vendo materiales y equipos" },
+    { value: "supplier",      icon: Store,   label: "Supplier",   subtitle: "I sell materials and equipment" },
   ] as const;
 
   return (
@@ -147,7 +147,7 @@ export default function Register() {
                 <div className="space-y-2">
                   <Label htmlFor="category">Trade / Category *</Label>
                   <Select id="category" {...register("category")}>
-                    <option value="">Seleccionar categoría...</option>
+                    <option value="">Select category...</option>
                     <optgroup label="General Contractors">
                       <option value="general_contractor">General Contractor</option>
                       <option value="commercial">Commercial Builder</option>
@@ -192,18 +192,18 @@ export default function Register() {
             {selectedRole === "supplier" && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="companyName">Nombre de la empresa *</Label>
-                  <Input id="companyName" placeholder="Ferretera González S.A." {...register("companyName")} />
+                  <Label htmlFor="companyName">Company name *</Label>
+                  <Input id="companyName" placeholder="González Supply Co." {...register("companyName")} />
                   {errors.companyName && <p className="text-sm text-destructive font-medium">{errors.companyName.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="category">Categoría de productos *</Label>
+                  <Label htmlFor="category">Product category *</Label>
                   <Select id="category" {...register("category")}>
-                    <option value="">Seleccionar categoría...</option>
-                    <option value="materiales">Materiales de construcción</option>
-                    <option value="equipos">Equipos y maquinaria</option>
-                    <option value="herramientas">Herramientas</option>
-                    <option value="varios">Varios / General</option>
+                    <option value="">Select category...</option>
+                    <option value="materiales">Construction materials</option>
+                    <option value="equipos">Equipment & machinery</option>
+                    <option value="herramientas">Tools</option>
+                    <option value="varios">General / Other</option>
                   </Select>
                   {errors.category && <p className="text-sm text-destructive font-medium">{errors.category.message}</p>}
                 </div>

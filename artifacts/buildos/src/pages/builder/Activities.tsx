@@ -55,7 +55,7 @@ export default function Activities() {
 
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Actividades</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">Activities</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Selecciona el tipo de proyecto
           </p>
@@ -105,12 +105,12 @@ export default function Activities() {
             <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
               <Layers className="w-5 h-5 text-[#1B3A5C] mx-auto mb-1" />
               <p className="text-2xl font-bold font-display text-foreground">{totalPhases}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Fases</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Phases</p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
               <ListChecks className="w-5 h-5 text-[#1B3A5C] mx-auto mb-1" />
               <p className="text-2xl font-bold font-display text-foreground">{totalActivities}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Actividades</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Activities</p>
             </div>
             <div className="rounded-xl border border-border bg-card p-4 text-center shadow-sm">
               <Flag className="w-5 h-5 text-[#1B3A5C] mx-auto mb-1" />

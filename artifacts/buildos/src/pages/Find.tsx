@@ -68,7 +68,7 @@ export default function Find() {
                 { value: "",              label: "Todos" },
                 { value: "builder",       label: "Constructores" },
                 { value: "subcontractor", label: "Subcontratistas" },
-                { value: "supplier",      label: "Proveedores" },
+                { value: "supplier",      label: "Suppliers" },
               ] as const
             ).map(opt => (
               <button

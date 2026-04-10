@@ -96,7 +96,7 @@ export default function Profile() {
       },
       {
         onSuccess: () => {
-          toast.success("Perfil actualizado");
+          toast.success("Profile updated");
           queryClient.invalidateQueries({ queryKey: getGetMyOrgQueryKey() });
         },
         onError: () => toast.error("Error al guardar"),
@@ -108,7 +108,7 @@ export default function Profile() {
     <BuilderLayout>
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Perfil</h1>
+          <h1 className="text-2xl font-display font-bold text-foreground">Profile</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Información de tu cuenta y empresa
           </p>
@@ -247,7 +247,7 @@ export default function Profile() {
                     Estado de operación
                   </Label>
                   <Select id="state" {...register("state")}>
-                    <option value="">Seleccionar...</option>
+                    <option value="">Select...</option>
                     <option value="TX">Texas (TX)</option>
                     <option value="FL">Florida (FL)</option>
                     <option value="CA">California (CA)</option>
@@ -268,7 +268,7 @@ export default function Profile() {
                     {updateMutation.isPending
                       ? <Loader2 className="w-4 h-4 animate-spin" />
                       : <Save className="w-4 h-4" />}
-                    Guardar cambios
+                    Save changes
                   </Button>
                 </div>
               </form>

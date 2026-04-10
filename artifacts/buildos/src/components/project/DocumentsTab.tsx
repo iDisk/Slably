@@ -121,9 +121,9 @@ function ExtContractDialog({
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={isPending} className="gap-2 bg-orange-500 hover:bg-orange-600 text-white">
-              {isPending && <Loader2 className="w-4 h-4 animate-spin" />} Guardar
+              {isPending && <Loader2 className="w-4 h-4 animate-spin" />} Save
             </Button>
           </div>
         </form>
@@ -593,7 +593,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
             className="gap-1.5"
           >
             <ArrowLeft className="w-4 h-4" />
-            {createStep === 1 ? "Cancelar" : "Atrás"}
+            {createStep === 1 ? "Cancel" : "Back"}
           </Button>
           <div className="flex gap-2">
             {[1, 2, 3].map(s => (
@@ -615,7 +615,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         {createStep === 1 && (
           <div className="space-y-6">
             <div>
-              <h3 className="font-bold text-lg text-foreground">Seleccionar tipo de documento</h3>
+              <h3 className="font-bold text-lg text-foreground">Select document type</h3>
               <p className="text-sm text-muted-foreground mt-0.5">Elige el tipo de contrato que deseas generar</p>
             </div>
 
@@ -812,7 +812,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                 onClick={() => setCreateStep(2)}
                 className="gap-1.5"
               >
-                <ArrowLeft className="w-4 h-4" /> Editar campos
+                <ArrowLeft className="w-4 h-4" /> Edit fields
               </Button>
               <Button
                 onClick={handleSaveAndSign}
@@ -822,7 +822,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                 {createMutation.isPending
                   ? <Loader2 className="w-4 h-4 animate-spin" />
                   : <Pencil className="w-4 h-4" />}
-                Guardar y Firmar
+                Save and Sign
               </Button>
             </div>
           </div>
@@ -865,7 +865,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         <Card className="border-dashed border-2 shadow-none bg-transparent">
           <CardContent className="p-10 text-center text-muted-foreground">
             <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No hay documentos todavía</p>
+            <p className="font-medium">No documents yet</p>
             <p className="text-sm mt-1">Genera tu primer contrato o orden de cambio.</p>
             {user?.role === "builder" && (
               <Button
@@ -945,7 +945,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                         }
                       }}
                     >
-                      <Pencil className="w-3.5 h-3.5" /> Ver y Firmar
+                      <Pencil className="w-3.5 h-3.5" /> View and Sign
                     </Button>
                   </div>
                 </CardContent>
@@ -975,7 +975,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
 
         {contracts.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-6 italic">
-            No hay contratos externos vinculados.
+            No external contracts linked.
           </p>
         ) : (
           <div className="space-y-3">
@@ -1071,16 +1071,16 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display font-bold text-lg flex items-center gap-2 text-destructive">
-              <Trash2 className="w-5 h-5" /> Eliminar contrato
+              <Trash2 className="w-5 h-5" /> Delete contract
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            ¿Eliminar{" "}
+            Delete{" "}
             <span className="font-semibold text-foreground">"{confirmDeleteCtr?.title}"</span>?
-            Esta acción no se puede deshacer.
+            This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={() => setConfirmDeleteCtr(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setConfirmDeleteCtr(null)}>Cancel</Button>
             <Button
               variant="destructive"
               onClick={onDeleteContract}
@@ -1088,7 +1088,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
               className="gap-2"
             >
               {deleteContractMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              Eliminar
+              Delete
             </Button>
           </div>
         </DialogContent>

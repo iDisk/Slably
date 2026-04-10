@@ -46,7 +46,7 @@ const TYPE_BADGE = {
   supplier:      "bg-emerald-100 text-emerald-700 border-emerald-200",
   other:         "bg-slate-100 text-slate-600 border-slate-200",
 } as const;
-const TYPE_LABEL: Record<string, string> = { subcontractor: "Subcontratista", supplier: "Proveedor", other: "Otro" };
+const TYPE_LABEL: Record<string, string> = { subcontractor: "Subcontractor", supplier: "Supplier", other: "Other" };
 
 const VENDOR_STATUS_BADGE: Record<string, string> = {
   active:    "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -238,7 +238,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
       },
     }, {
       onSuccess: () => {
-        toast.success("Proveedor agregado"); invAll();
+        toast.success("Vendor added"); invAll();
         setCreateVendorOpen(false);
         setVendorForm(emptyVendorForm());
         setSubSearch(""); setSubResults([]); setSubSearchOpen(false);
@@ -262,7 +262,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
         contract_notes:  editVendorForm.contract_notes  || undefined,
       },
     }, {
-      onSuccess: () => { toast.success("Proveedor actualizado"); invAll(); setEditVendorOpen(false); },
+      onSuccess: () => { toast.success("Vendor updated"); invAll(); setEditVendorOpen(false); },
       onError:   () => toast.error("Error al actualizar proveedor"),
     });
   };
@@ -311,7 +311,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
 
   const handleCancelVendor = () => {
     patchVendorMutation.mutate({ data: { status: "cancelled" } }, {
-      onSuccess: () => { toast.success("Proveedor cancelado"); invAll(); setCancelConfirmOpen(false); goBack(); },
+      onSuccess: () => { toast.success("Vendor cancelled"); invAll(); setCancelConfirmOpen(false); goBack(); },
       onError:   () => toast.error("Error al cancelar proveedor"),
     });
   };
@@ -340,14 +340,14 @@ export function VendorsTab({ projectId }: { projectId: number }) {
       <div className="space-y-4 py-2">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Proveedores
+            Vendors
           </h3>
           <Button
             size="sm"
             className="bg-[#F97316] hover:bg-[#ea6c0a] text-white gap-1.5"
             onClick={() => { setVendorForm(emptyVendorForm()); setCreateVendorOpen(true); }}
           >
-            <Plus className="w-4 h-4" /> Agregar Proveedor
+            <Plus className="w-4 h-4" /> Add Vendor
           </Button>
         </div>
 
@@ -398,7 +398,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
           <Card className="border-dashed border-2 shadow-none bg-transparent">
             <CardContent className="p-10 text-center text-muted-foreground">
               <Building2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="font-medium">No hay proveedores en este proyecto</p>
+              <p className="font-medium">No vendors in this project</p>
               <p className="text-sm mt-1">
                 Agrega subcontratistas y proveedores para hacer seguimiento financiero.
               </p>
@@ -452,7 +452,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                           className="h-7 text-xs px-2"
                           onClick={() => setLocation(`/sub/${v.linkedUserId}`)}
                         >
-                          Ver perfil
+                          View profile
                         </Button>
                       )}
                       <Button
@@ -461,7 +461,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                         className="h-8 text-xs"
                         onClick={() => openDetail(v.id)}
                       >
-                        Ver detalle →
+                        View details →
                       </Button>
                     </div>
                   </div>
@@ -477,7 +477,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
         }}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle className="font-display font-bold text-xl">Agregar Proveedor</DialogTitle>
+              <DialogTitle className="font-display font-bold text-xl">Add Vendor</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateVendor} className="space-y-4 mt-2">
               {frequentVendors.length > 0 && (
@@ -560,10 +560,10 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                 <div className="space-y-2">
                   <Label>Tipo *</Label>
                   <Select value={vendorForm.type} onChange={e => setVendorForm(f => ({ ...f, type: e.target.value }))}>
-                    <option value="">Seleccionar…</option>
-                    <option value="subcontractor">Subcontratista</option>
-                    <option value="supplier">Proveedor</option>
-                    <option value="other">Otro</option>
+                    <option value="">Select…</option>
+                    <option value="subcontractor">Subcontractor</option>
+                    <option value="supplier">Supplier</option>
+                    <option value="other">Other</option>
                   </Select>
                 </div>
                 <div className="space-y-2">
@@ -646,10 +646,10 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <Button type="button" variant="outline" onClick={() => setCreateVendorOpen(false)}>Cancelar</Button>
+                <Button type="button" variant="outline" onClick={() => setCreateVendorOpen(false)}>Cancel</Button>
                 <Button type="submit" disabled={createVendorMutation.isPending} className="bg-[#F97316] hover:bg-[#ea6c0a] text-white">
                   {createVendorMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Guardar
+                  Save
                 </Button>
               </div>
             </form>
@@ -689,7 +689,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
           </span>
         </div>
         <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={openEdit}>Editar</Button>
+          <Button variant="outline" size="sm" onClick={openEdit}>Edit</Button>
           {selectedVendor.status === "active" && (
             <Button
               size="sm"
@@ -697,7 +697,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
               className="border-red-200 text-red-600 hover:bg-red-50"
               onClick={() => setCancelConfirmOpen(true)}
             >
-              Cancelar vendor
+              Cancel vendor
             </Button>
           )}
         </div>
@@ -977,16 +977,16 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                 <span className="text-muted-foreground w-10">W-9:</span>
                 {selectedVendor.w9Url
                   ? <a href={selectedVendor.w9Url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                      <ExternalLink className="w-3 h-3" /> Ver documento
+                      <ExternalLink className="w-3 h-3" /> View document
                     </a>
-                  : <span className="text-muted-foreground italic">No cargado</span>}
+                  : <span className="text-muted-foreground italic">Not uploaded</span>}
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground w-10">COI:</span>
                 {selectedVendor.coiUrl
                   ? <span className="flex items-center gap-2 flex-wrap">
                       <a href={selectedVendor.coiUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
-                        <ExternalLink className="w-3 h-3" /> Ver documento
+                        <ExternalLink className="w-3 h-3" /> View document
                       </a>
                       {selectedVendor.coiExpiresAt && (
                         <span className="text-xs text-muted-foreground">· Vence {selectedVendor.coiExpiresAt}</span>
@@ -1083,10 +1083,10 @@ export function VendorsTab({ projectId }: { projectId: number }) {
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setCreatePaymentOpen(false)}>Cancelar</Button>
+              <Button type="button" variant="outline" onClick={() => setCreatePaymentOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={createPaymentMutation.isPending} className="bg-[#F97316] hover:bg-[#ea6c0a] text-white">
                 {createPaymentMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Guardar
+                Save
               </Button>
             </div>
           </form>
@@ -1113,10 +1113,10 @@ export function VendorsTab({ projectId }: { projectId: number }) {
               <Textarea value={coForm.description} onChange={e => setCOForm(f => ({ ...f, description: e.target.value }))} rows={3} placeholder="Detalles del cambio…" />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setCreateCOOpen(false)}>Cancelar</Button>
+              <Button type="button" variant="outline" onClick={() => setCreateCOOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={createCOMutation.isPending} className="bg-[#F97316] hover:bg-[#ea6c0a] text-white">
                 {createCOMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Guardar
+                Save
               </Button>
             </div>
           </form>
@@ -1127,7 +1127,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
       <Dialog open={editVendorOpen} onOpenChange={setEditVendorOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-display font-bold text-xl">Editar Proveedor</DialogTitle>
+            <DialogTitle className="font-display font-bold text-xl">Edit Vendor</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEditVendor} className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-3">
@@ -1138,10 +1138,10 @@ export function VendorsTab({ projectId }: { projectId: number }) {
               <div className="space-y-2">
                 <Label>Tipo *</Label>
                 <Select value={editVendorForm.type} onChange={e => setEditVendorForm(f => ({ ...f, type: e.target.value }))}>
-                  <option value="">Seleccionar…</option>
-                  <option value="subcontractor">Subcontratista</option>
-                  <option value="supplier">Proveedor</option>
-                  <option value="other">Otro</option>
+                  <option value="">Select…</option>
+                  <option value="subcontractor">Subcontractor</option>
+                  <option value="supplier">Supplier</option>
+                  <option value="other">Other</option>
                 </Select>
               </div>
               <div className="space-y-2">
@@ -1170,10 +1170,10 @@ export function VendorsTab({ projectId }: { projectId: number }) {
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setEditVendorOpen(false)}>Cancelar</Button>
+              <Button type="button" variant="outline" onClick={() => setEditVendorOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={patchVendorMutation.isPending}>
                 {patchVendorMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Guardar cambios
+                Save changes
               </Button>
             </div>
           </form>
@@ -1184,17 +1184,17 @@ export function VendorsTab({ projectId }: { projectId: number }) {
       <Dialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-display font-bold text-lg text-destructive">Cancelar proveedor</DialogTitle>
+            <DialogTitle className="font-display font-bold text-lg text-destructive">Cancel vendor</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            ¿Cancelar a <span className="font-semibold text-foreground">{selectedVendor.name}</span>?
-            El registro se conservará pero quedará marcado como cancelado.
+            Cancel <span className="font-semibold text-foreground">{selectedVendor.name}</span>?
+            The record will be kept but marked as cancelled.
           </p>
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={() => setCancelConfirmOpen(false)}>No cancelar</Button>
+            <Button variant="outline" onClick={() => setCancelConfirmOpen(false)}>Keep</Button>
             <Button variant="destructive" onClick={handleCancelVendor} disabled={patchVendorMutation.isPending}>
               {patchVendorMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Sí, cancelar
+              Yes, cancel
             </Button>
           </div>
         </DialogContent>

@@ -333,7 +333,7 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
                   />
                 </div>
                 <div className="flex justify-end gap-3 pt-1">
-                  <Button type="button" variant="outline" onClick={() => setRatingOpen(false)}>Cancelar</Button>
+                  <Button type="button" variant="outline" onClick={() => setRatingOpen(false)}>Cancel</Button>
                   <Button
                     onClick={handleRate}
                     disabled={createRatingMut.isPending}
@@ -358,7 +358,7 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
           className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
         >
           {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          {expanded ? "Ocultar cotizaciones" : `Ver cotizaciones${quotes ? ` (${quotes.length})` : ""}`}
+          {expanded ? "Hide quotes" : `View quotes${quotes ? ` (${quotes.length})` : ""}`}
         </button>
 
         <AnimatePresence>
@@ -470,7 +470,7 @@ function SubRatingSection({ rfqId, userId, rfq }: { rfqId: number; userId: numbe
             />
           </div>
           <div className="flex justify-end gap-3 pt-1">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button
               onClick={handleRate}
               disabled={createRatingMut.isPending}
@@ -603,7 +603,7 @@ function SubRfqCard({ rfq, userId }: { rfq: Rfq; userId: number }) {
                   />
                 </div>
                 <div className="flex justify-end gap-3 pt-1">
-                  <Button type="button" variant="outline" onClick={() => setQuoteOpen(false)}>Cancelar</Button>
+                  <Button type="button" variant="outline" onClick={() => setQuoteOpen(false)}>Cancel</Button>
                   <Button type="submit" disabled={createQuote.isPending} className="gap-2">
                     {createQuote.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                     Enviar cotización
@@ -738,7 +738,7 @@ function BuilderNetwork({ rfqs, isLoading }: { rfqs: Rfq[] | undefined; isLoadin
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
+                <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
                 <Button type="submit" disabled={createRfq.isPending} className="gap-2">
                   {createRfq.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                   Publicar Solicitud
@@ -803,7 +803,7 @@ function SubNetwork({ rfqs, isLoading, userId }: { rfqs: Rfq[] | undefined; isLo
           <div className="w-14 h-14 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Users className="w-7 h-7 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground">No hay solicitudes disponibles en tu área</h3>
+          <h3 className="text-lg font-semibold text-foreground">No available requests in your area</h3>
           <p className="text-muted-foreground mt-1 text-sm">
             Te notificaremos por correo cuando llegue una solicitud que coincida con tu perfil.
           </p>

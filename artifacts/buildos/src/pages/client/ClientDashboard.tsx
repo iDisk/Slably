@@ -353,7 +353,7 @@ const ClientContracts = ({ projectId }: { projectId: number }) => {
       <Card className="border-dashed border-2 shadow-none bg-transparent">
         <CardContent className="p-10 text-center text-muted-foreground">
           <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No hay documentos disponibles aún</p>
+          <p className="font-medium">No documents available yet</p>
           <p className="text-sm mt-1">Los contratos y documentos de firma aparecerán aquí cuando tu contratista los genere.</p>
         </CardContent>
       </Card>
@@ -413,7 +413,7 @@ const ClientContracts = ({ projectId }: { projectId: number }) => {
                     disabled={loadingModal}
                   >
                     {loadingModal ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Pencil className="w-3.5 h-3.5" />}
-                    Ver y Firmar
+                    View and Sign
                   </Button>
                 </Card>
               );
