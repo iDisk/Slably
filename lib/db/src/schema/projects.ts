@@ -21,6 +21,7 @@ export const projectsTable = pgTable(
     organizationId: integer("organization_id").notNull().references(() => organizationsTable.id),
     builderId:      integer("builder_id").notNull().references(() => usersTable.id),
     clientId:       integer("client_id").references(() => usersTable.id),
+    linkedProjectId: integer("linked_project_id").references(() => projectsTable.id, { onDelete: "set null" }),
     clientName:     text("client_name").notNull(),
     clientEmail:    text("client_email"),
     name:           text("name").notNull(),
@@ -38,6 +39,7 @@ export const projectsTable = pgTable(
     index("projects_builder_id_idx").on(table.builderId),
     index("projects_client_id_idx").on(table.clientId),
     index("projects_status_idx").on(table.status),
+    index("projects_linked_project_id_idx").on(table.linkedProjectId),
   ]
 );
 
