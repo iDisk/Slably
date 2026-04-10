@@ -886,3 +886,54 @@ export interface SendMessageBodyParams {
 export interface UnreadCountResponse {
   count: number;
 }
+
+// ── Invoices ─────────────────────────────────────────────────────────────────
+export interface InvoiceItem {
+  id:          number;
+  invoiceId:   number;
+  description: string;
+  quantity:    string;
+  unitPrice:   string;
+  total:       string;
+  sortOrder:   number;
+}
+
+export interface Invoice {
+  id:                number;
+  projectId:         number;
+  organizationId:    number;
+  senderId:          number;
+  recipientId:       number;
+  invoiceNumber:     string;
+  title:             string;
+  notes:             string | null;
+  subtotal:          string;
+  total:             string;
+  status:            string;
+  dueDate:           string | null;
+  paidAt:            string | null;
+  stripePaymentLink: string | null;
+  pdfUrl:            string | null;
+  sentAt:            string | null;
+  createdAt:         string;
+  updatedAt:         string;
+  senderName:        string;
+  senderEmail:       string;
+  recipientName:     string;
+  recipientEmail:    string;
+  items:             InvoiceItem[];
+}
+
+export interface CreateInvoiceBody {
+  recipient_id: number;
+  title:        string;
+  notes?:       string;
+  due_date?:    string;
+  items: { description: string; quantity: number; unit_price: number }[];
+}
+
+export interface UpdateInvoiceBody {
+  status?:   "sent" | "paid" | "cancelled";
+  notes?:    string;
+  due_date?: string;
+}

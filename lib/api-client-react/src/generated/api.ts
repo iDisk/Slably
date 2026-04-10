@@ -89,6 +89,10 @@ import type {
   MessageItem,
   SendMessageBodyParams,
   UnreadCountResponse,
+  Invoice,
+  InvoiceItem,
+  CreateInvoiceBody,
+  UpdateInvoiceBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -4513,4 +4517,84 @@ export function useGetUnreadCount<
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
   query.queryKey = queryOptions.queryKey;
   return query;
+}
+
+// ── Invoices ──────────────────────────────────────────────────────────────────
+
+export const getInvoices = (pid: number, o?: RequestInit) =>
+  customFetch<Invoice[]>(`/api/projects/${pid}/invoices`, { ...o, method: "GET" });
+export const getInvoicesQueryKey = (pid: number) => [`/api/projects/${pid}/invoices`] as const;
+export function useGetInvoices<TError = ErrorType<unknown>>(
+  pid: number,
+  options?: { query?: UseQueryOptions<Awaited<ReturnType<typeof getInvoices>>, TError>; request?: SecondParameter<typeof customFetch> },
+): UseQueryResult<Awaited<ReturnType<typeof getInvoices>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getInvoicesQueryKey(pid);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getInvoices>>> = () => getInvoices(pid, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
+}
+
+const createInvoiceFn = (pid: number, body: CreateInvoiceBody, o?: RequestInit) =>
+  customFetch<Invoice>(`/api/projects/${pid}/invoices`, {
+    ...o, method: "POST",
+    headers: { "Content-Type": "application/json", ...(o?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+export function useCreateInvoice<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof createInvoiceFn>>, TError, { data: CreateInvoiceBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof createInvoiceFn>>, TError, { data: CreateInvoiceBody }, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({ mutationKey: [`/api/projects/${pid}/invoices`], mutationFn: (p) => createInvoiceFn(pid, p.data, ro as RequestInit), ...mo });
+}
+
+export const getInvoice = (pid: number, iid: number, o?: RequestInit) =>
+  customFetch<Invoice>(`/api/projects/${pid}/invoices/${iid}`, { ...o, method: "GET" });
+export const getInvoiceQueryKey = (pid: number, iid: number) => [`/api/projects/${pid}/invoices/${iid}`] as const;
+export function useGetInvoice<TError = ErrorType<unknown>>(
+  pid: number,
+  iid: number,
+  options?: { query?: UseQueryOptions<Awaited<ReturnType<typeof getInvoice>>, TError>; request?: SecondParameter<typeof customFetch> },
+): UseQueryResult<Awaited<ReturnType<typeof getInvoice>>, TError> {
+  const { query: qo, request: ro } = options ?? {};
+  const queryKey = qo?.queryKey ?? getInvoiceQueryKey(pid, iid);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getInvoice>>> = () => getInvoice(pid, iid, ro as RequestInit);
+  return useQuery({ queryKey, queryFn, ...qo });
+}
+
+const updateInvoiceFn = (pid: number, iid: number, body: UpdateInvoiceBody, o?: RequestInit) =>
+  customFetch<Invoice>(`/api/projects/${pid}/invoices/${iid}`, {
+    ...o, method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(o?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+export function useUpdateInvoice<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  iid: number,
+  options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof updateInvoiceFn>>, TError, { data: UpdateInvoiceBody }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<Awaited<ReturnType<typeof updateInvoiceFn>>, TError, { data: UpdateInvoiceBody }, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({ mutationKey: [`/api/projects/${pid}/invoices/${iid}`], mutationFn: (p) => updateInvoiceFn(pid, iid, p.data, ro as RequestInit), ...mo });
+}
+
+export function useDeleteInvoice<TError = ErrorType<unknown>, TContext = unknown>(
+  pid: number,
+  iid: number,
+  options?: {
+    mutation?: UseMutationOptions<void, TError, void, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseMutationResult<void, TError, void, TContext> {
+  const { mutation: mo, request: ro } = options ?? {};
+  return useMutation({
+    mutationKey: [`/api/projects/${pid}/invoices/${iid}`],
+    mutationFn: () => customFetch<void>(`/api/projects/${pid}/invoices/${iid}`, { ...(ro as RequestInit), method: "DELETE" }),
+    ...mo,
+  });
 }

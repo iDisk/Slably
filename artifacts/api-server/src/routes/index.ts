@@ -18,6 +18,7 @@ import invitationsRouter from "./invitations";
 import adminRouter from "./admin";
 import userPhotosRouter from "./user-photos";
 import messagesRouter from "./messages";
+import invoicesRouter from "./invoices";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use(invitationsRouter);
 router.use(adminRouter);
 router.use(userPhotosRouter);
 router.use(messagesRouter);
+router.use(invoicesRouter);
 
 export default router;

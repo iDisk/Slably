@@ -894,3 +894,24 @@ export const SendMessageBody = zod.object({
   recipient_id: zod.number().int(),
   body:         zod.string().min(1),
 });
+
+// ── Invoices ──────────────────────────────────────────────────────────────────
+export const InvoiceProjectParams = zod.object({ projectId: zod.coerce.number().int().positive() });
+export const InvoiceParams        = zod.object({ projectId: zod.coerce.number().int().positive(), invoiceId: zod.coerce.number().int().positive() });
+export const InvoiceItemInput = zod.object({
+  description: zod.string().min(1),
+  quantity:    zod.number().positive(),
+  unit_price:  zod.number().min(0),
+});
+export const CreateInvoiceBody = zod.object({
+  recipient_id: zod.number().int().positive(),
+  title:        zod.string().min(1),
+  notes:        zod.string().optional(),
+  due_date:     zod.string().optional(),
+  items:        zod.array(InvoiceItemInput).min(1),
+});
+export const UpdateInvoiceBody = zod.object({
+  status:   zod.enum(["sent", "paid", "cancelled"]).optional(),
+  notes:    zod.string().optional(),
+  due_date: zod.string().optional(),
+});
