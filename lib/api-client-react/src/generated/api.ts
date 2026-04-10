@@ -86,6 +86,9 @@ import type {
   PendingPhotoItem,
   ShareUserPhotoBody,
   ApproveUserPhotoBody,
+  MessageItem,
+  SendMessageBodyParams,
+  UnreadCountResponse,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -4421,4 +4424,93 @@ export function useApproveUserPhoto<TError = ErrorType<unknown>, TContext = unkn
   options?: UseMutationOptions<UserPhotoItem, TError, { photoId: number; body: ApproveUserPhotoBody }, TContext>,
 ): UseMutationResult<UserPhotoItem, TError, { photoId: number; body: ApproveUserPhotoBody }, TContext> {
   return useMutation({ mutationFn: ({ photoId, body }) => approveUserPhoto(photoId, body), ...options });
+}
+
+// ── Messages ─────────────────────────────────────────────────────────────────
+
+// GET /api/projects/:projectId/messages?with=<withUserId>
+export const getMessagesUrl = (projectId: number, withUserId: number) =>
+  `/api/projects/${projectId}/messages?with=${withUserId}`;
+export const getMessages = (projectId: number, withUserId: number, options?: RequestInit): Promise<MessageItem[]> =>
+  customFetch<MessageItem[]>(getMessagesUrl(projectId, withUserId), { method: "GET", ...options });
+export const getMessagesQueryKey = (projectId: number, withUserId: number) =>
+  [`/api/projects/${projectId}/messages`, withUserId] as const;
+export const getMessagesQueryOptions = <TData = Awaited<ReturnType<typeof getMessages>>>(
+  projectId: number,
+  withUserId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getMessages>>, ErrorType<unknown>, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getMessagesQueryKey(projectId, withUserId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMessages>>> = ({ signal }) =>
+    getMessages(projectId, withUserId, { signal, ...requestOptions });
+  return { queryKey, queryFn, refetchInterval: 5000, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMessages>>, ErrorType<unknown>, TData
+  >;
+};
+export function useGetMessages<
+  TData = Awaited<ReturnType<typeof getMessages>>,
+  TError extends ErrorType<unknown> = ErrorType<unknown>,
+>(
+  projectId: number,
+  withUserId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getMessages>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getMessagesQueryOptions(projectId, withUserId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  query.queryKey = queryOptions.queryKey;
+  return query;
+}
+
+// POST /api/projects/:projectId/messages
+export const sendMessageUrl = (projectId: number) => `/api/projects/${projectId}/messages`;
+export const sendMessage = (projectId: number, body: SendMessageBodyParams, options?: RequestInit): Promise<MessageItem> =>
+  customFetch<MessageItem>(sendMessageUrl(projectId), { method: "POST", body: JSON.stringify(body), ...options });
+export function useSendMessage<TError = ErrorType<unknown>, TContext = unknown>(
+  options?: UseMutationOptions<MessageItem, TError, { projectId: number; body: SendMessageBodyParams }, TContext>,
+): UseMutationResult<MessageItem, TError, { projectId: number; body: SendMessageBodyParams }, TContext> {
+  return useMutation({ mutationFn: ({ projectId, body }) => sendMessage(projectId, body), ...options });
+}
+
+// GET /api/projects/:projectId/messages/unread-count
+export const getUnreadCountUrl = (projectId: number) => `/api/projects/${projectId}/messages/unread-count`;
+export const getUnreadCount = (projectId: number, options?: RequestInit): Promise<UnreadCountResponse> =>
+  customFetch<UnreadCountResponse>(getUnreadCountUrl(projectId), { method: "GET", ...options });
+export const getUnreadCountQueryKey = (projectId: number) =>
+  [`/api/projects/${projectId}/messages/unread-count`] as const;
+export const getUnreadCountQueryOptions = <TData = Awaited<ReturnType<typeof getUnreadCount>>>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getUnreadCount>>, ErrorType<unknown>, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+  const queryKey = queryOptions?.queryKey ?? getUnreadCountQueryKey(projectId);
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUnreadCount>>> = ({ signal }) =>
+    getUnreadCount(projectId, { signal, ...requestOptions });
+  return { queryKey, queryFn, refetchInterval: 10000, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUnreadCount>>, ErrorType<unknown>, TData
+  >;
+};
+export function useGetUnreadCount<
+  TData = Awaited<ReturnType<typeof getUnreadCount>>,
+  TError extends ErrorType<unknown> = ErrorType<unknown>,
+>(
+  projectId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getUnreadCount>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getUnreadCountQueryOptions(projectId, options);
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+  query.queryKey = queryOptions.queryKey;
+  return query;
 }

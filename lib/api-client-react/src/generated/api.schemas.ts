@@ -861,3 +861,25 @@ export interface MyWorkItem {
     companyName: string;
   };
 }
+
+// ── Messages ─────────────────────────────────────────────────────────────────
+
+export interface MessageItem {
+  id:          number;
+  projectId:   number;
+  senderId:    number;
+  recipientId: number;
+  body:        string;
+  readAt:      string | null;
+  createdAt:   string;
+  senderName:  string | null;
+}
+
+export interface SendMessageBodyParams {
+  recipient_id: number;
+  body:         string;
+}
+
+export interface UnreadCountResponse {
+  count: number;
+}

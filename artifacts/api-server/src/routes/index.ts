@@ -17,6 +17,7 @@ import vendorsRouter from "./vendors";
 import invitationsRouter from "./invitations";
 import adminRouter from "./admin";
 import userPhotosRouter from "./user-photos";
+import messagesRouter from "./messages";
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use(vendorsRouter);
 router.use(invitationsRouter);
 router.use(adminRouter);
 router.use(userPhotosRouter);
+router.use(messagesRouter);
 
 export default router;

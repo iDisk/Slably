@@ -885,3 +885,10 @@ export const PendingPhoto = zod.object({
 
 export const ShareUserPhotoBody   = zod.object({ project_id: zod.number().int() });
 export const ApproveUserPhotoBody = zod.object({ status: zod.enum(["approved", "rejected"]) });
+
+// ── Messages ─────────────────────────────────────────────────────────────────
+
+export const SendMessageBody = zod.object({
+  recipient_id: zod.number().int(),
+  body:         zod.string().min(1),
+});
