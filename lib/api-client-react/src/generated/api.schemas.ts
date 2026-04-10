@@ -82,6 +82,8 @@ export interface Project {
   builderId: number;
   /** @nullable */
   clientId: number | null;
+  /** @nullable */
+  linkedProjectId: number | null;
   clientName: string;
   /** @nullable */
   clientEmail: string | null;

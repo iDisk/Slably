@@ -450,6 +450,7 @@ router.patch("/network/rfqs/:rfqId/quotes/:quoteId", requireAuth, async (req: Au
               .values({
                 organizationId:  subOrgId,
                 builderId:       updated.subcontractorId,
+                clientId:        user.id,
                 clientName:      builderUser?.name ?? "Constructor",
                 clientEmail:     builderUser?.email ?? null,
                 name:            originalProject.name,
