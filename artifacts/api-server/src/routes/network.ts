@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, ilike, or, inArray, desc } from "drizzle-orm";
-import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable, ratingsTable, projectsTable, photosTable, projectVendorsTable } from "@workspace/db";
+import { db, rfqsTable, rfqQuotesTable, usersTable, organizationsTable, ratingsTable, projectsTable, photosTable, projectVendorsTable, projectPhasesTable } from "@workspace/db";
 import {
   RfqParams,
   CreateRfqBody,
@@ -351,10 +351,12 @@ router.patch("/network/rfqs/:rfqId/quotes/:quoteId", requireAuth, async (req: Au
   if (parsed.data.status === "accepted" && rfq.projectId && rfq.organizationId) {
     const [sub] = await db
       .select({
-        name:        usersTable.name,
-        category:    usersTable.category,
-        email:       usersTable.email,
-        serviceCity: usersTable.serviceCity,
+        id:             usersTable.id,
+        name:           usersTable.name,
+        category:       usersTable.category,
+        email:          usersTable.email,
+        serviceCity:    usersTable.serviceCity,
+        organizationId: usersTable.organizationId,
       })
       .from(usersTable)
       .where(eq(usersTable.id, updated.subcontractorId));
@@ -391,6 +393,100 @@ router.patch("/network/rfqs/:rfqId/quotes/:quoteId", requireAuth, async (req: Au
             contractNotes:  updated.message ?? undefined,
           });
       }
+
+      // ── Auto-crear proyecto espejo para el sub ───────────────────────────
+      if (rfq.projectId) {
+        // 1. Proyecto original
+        const [originalProject] = await db
+          .select()
+          .from(projectsTable)
+          .where(eq(projectsTable.id, rfq.projectId));
+
+        if (originalProject) {
+          // 2. Info del builder para usarla como cliente en el espejo
+          const [builderUser] = await db
+            .select({ name: usersTable.name, email: usersTable.email })
+            .from(usersTable)
+            .where(eq(usersTable.id, user.id));
+
+          // 3. Obtener o crear organización del sub
+          let subOrgId = sub.organizationId;
+          if (!subOrgId) {
+            const slug = `${sub.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}-${updated.subcontractorId}`;
+            const [newOrg] = await db
+              .insert(organizationsTable)
+              .values({ name: sub.name, slug })
+              .returning({ id: organizationsTable.id });
+            subOrgId = newOrg.id;
+            await db
+              .update(usersTable)
+              .set({ organizationId: subOrgId })
+              .where(eq(usersTable.id, updated.subcontractorId));
+          }
+
+          // 4. Verificar que no existe ya un proyecto espejo
+          const [existingMirror] = await db
+            .select({ id: projectsTable.id })
+            .from(projectsTable)
+            .where(and(
+              eq(projectsTable.linkedProjectId, rfq.projectId),
+              eq(projectsTable.builderId, updated.subcontractorId),
+            ));
+
+          if (!existingMirror) {
+            // Nombre de la empresa del builder para el campo notes
+            let builderOrgName = builderUser?.name ?? "Constructor";
+            if (user.organizationId) {
+              const [builderOrg] = await db
+                .select({ name: organizationsTable.name })
+                .from(organizationsTable)
+                .where(eq(organizationsTable.id, user.organizationId));
+              if (builderOrg) builderOrgName = builderOrg.name;
+            }
+
+            // 5. Crear el proyecto espejo
+            const [mirrorProject] = await db
+              .insert(projectsTable)
+              .values({
+                organizationId:  subOrgId,
+                builderId:       updated.subcontractorId,
+                clientName:      builderUser?.name ?? "Constructor",
+                clientEmail:     builderUser?.email ?? null,
+                name:            originalProject.name,
+                address:         originalProject.address,
+                status:          "active",
+                projectType:     originalProject.projectType ?? undefined,
+                linkedProjectId: rfq.projectId,
+                progress:        0,
+                notes:           `Linked project - ${builderOrgName}`,
+              })
+              .returning();
+
+            // 6. Copiar fases del proyecto original
+            const phases = await db
+              .select()
+              .from(projectPhasesTable)
+              .where(eq(projectPhasesTable.projectId, rfq.projectId));
+
+            if (phases.length > 0) {
+              await db
+                .insert(projectPhasesTable)
+                .values(
+                  phases.map(p => ({
+                    projectId:    mirrorProject.id,
+                    phaseTitle:   p.phaseTitle,
+                    activityText: p.activityText,
+                    activityType: p.activityType ?? undefined,
+                    completed:    false,
+                    included:     p.included,
+                    sortOrder:    p.sortOrder,
+                  }))
+                );
+            }
+          }
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────────
     }
   }
 
