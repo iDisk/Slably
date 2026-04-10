@@ -19,3 +19,5 @@ export * from "./vendor_payments";
 export * from "./vendor_change_orders";
 export * from "./project_invitations";
 export * from "./messages";
+export * from "./invoices";
+export * from "./invoice_items";
