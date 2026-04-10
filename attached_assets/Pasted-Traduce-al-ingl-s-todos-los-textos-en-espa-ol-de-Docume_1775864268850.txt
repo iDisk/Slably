@@ -1,0 +1,81 @@
+Traduce al inglés todos los textos 
+en español de DocumentsTab.tsx:
+
+CONTRACT_STATUS badges (2 lugares):
+  "Borrador" → "Draft"
+  "Enviado" → "Sent"
+  "Firmado" → "Signed"
+
+Dialog "Subir contrato externo":
+  "Subir contrato externo" → "Upload external contract"
+  "Título *" → "Title *"
+  placeholder "Contrato principal v1" → "Main contract v1"
+  "URL del archivo *" → "File URL *"
+  "Versión" → "Version"
+  "Estado" → "Status"
+  option "Borrador" → "Draft"
+  option "Enviado" → "Sent"
+  option "Firmado" → "Signed"
+
+Toasts:
+  "Contrato guardado" → "Contract saved"
+  "Error al guardar el contrato" → 
+  "Error saving contract"
+  "Contrato marcado como firmado" → 
+  "Contract marked as signed"
+  "Contrato eliminado" → "Contract deleted"
+  "Firma del contratista guardada" → 
+  "Contractor signature saved"
+  "Firma del cliente guardada" → 
+  "Client signature saved"
+  "Error al guardar la firma" → 
+  "Error saving signature"
+
+Default titles:
+  "Contrato de Construcción" → 
+  "Construction Contract"
+  "Contrato de Remodelación" → 
+  "Remodeling Contract"
+
+Signature section:
+  "Documento firmado por ambas partes el" → 
+  "Document signed by both parties on"
+  "Firma del Contratista" → 
+  "Contractor Signature"
+  "Firmado el" → "Signed on"
+  "Firmar como Contratista" → 
+  "Sign as Contractor"
+  "Firmar como Cliente" → "Sign as Client"
+
+Contract type selection:
+  "Elige el tipo de contrato que deseas generar" → 
+  "Choose the type of contract to generate"
+  "Contrato Nueva Construcción" → 
+  "New Construction Contract"
+  "Contrato Remodelación" → 
+  "Remodeling Contract"
+
+Form labels:
+  "Datos de la Orden de Cambio" → 
+  "Change Order Details"
+  "Datos del Contrato" → "Contract Details"
+  "Completa los campos para generar el documento" → 
+  "Fill in the fields to generate the document"
+  "Monto del contrato *" → "Contract amount *"
+  "Revisa el documento antes de guardarlo y firmarlo" → 
+  "Review the document before saving and signing"
+  "Genera tu primer contrato o orden de cambio." → 
+  "Generate your first contract or change order."
+
+Cards:
+  "Contratista" (badge) → "Contractor"
+  "Contratos externos" → "External contracts"
+  "Subir contrato externo" (botón) → 
+  "Upload external contract"
+  "Abrir archivo" → "Open file"
+  "Abrir" → "Open"
+  "Firmar" → "Sign"
+
+Aplica todos en paralelo.
+Compila artifacts/buildos (tsc --noEmit)
+al final y confirma cero errores.

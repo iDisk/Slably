@@ -75,9 +75,9 @@ type ExtContractForm = {
 };
 
 const CONTRACT_STATUS = {
-  draft:  { label: "Borrador", className: "bg-slate-100 text-slate-600 border-slate-200", icon: FileClock },
-  sent:   { label: "Enviado",  className: "bg-blue-100 text-blue-700 border-blue-200",    icon: FileText },
-  signed: { label: "Firmado",  className: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: FileCheck },
+  draft:  { label: "Draft",   className: "bg-slate-100 text-slate-600 border-slate-200", icon: FileClock },
+  sent:   { label: "Sent",    className: "bg-blue-100 text-blue-700 border-blue-200",    icon: FileText },
+  signed: { label: "Signed",  className: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: FileCheck },
 } as const;
 
 function ExtContractDialog({
@@ -95,28 +95,28 @@ function ExtContractDialog({
     <Dialog open={open} onOpenChange={v => { if (!v) reset(); onOpenChange(v); }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-display font-bold text-xl">Subir contrato externo</DialogTitle>
+          <DialogTitle className="font-display font-bold text-xl">Upload external contract</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(d => { onSubmit(d); reset(); })} className="space-y-4 mt-2">
           <div className="space-y-2">
-            <Label>Título *</Label>
-            <Input {...register("title", { required: true })} placeholder="Contrato principal v1" />
+            <Label>Title *</Label>
+            <Input {...register("title", { required: true })} placeholder="Main contract v1" />
           </div>
           <div className="space-y-2">
-            <Label>URL del archivo *</Label>
+            <Label>File URL *</Label>
             <Input {...register("fileUrl", { required: true })} type="url" placeholder="https://drive.google.com/..." />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Versión</Label>
+              <Label>Version</Label>
               <Input {...register("version")} placeholder="1.0" />
             </div>
             <div className="space-y-2">
-              <Label>Estado</Label>
+              <Label>Status</Label>
               <Select {...register("status")}>
-                <option value="draft">Borrador</option>
-                <option value="sent">Enviado</option>
-                <option value="signed">Firmado</option>
+                <option value="draft">Draft</option>
+                <option value="sent">Sent</option>
+                <option value="signed">Signed</option>
               </Select>
             </div>
           </div>
@@ -134,9 +134,9 @@ function ExtContractDialog({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const DOC_STATUS: Record<string, { label: string; className: string }> = {
-  draft:  { label: "Borrador", className: "bg-slate-100 text-slate-600 border-slate-200" },
-  sent:   { label: "Enviado",  className: "bg-blue-100 text-blue-700 border-blue-200" },
-  signed: { label: "Firmado",  className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+  draft:  { label: "Draft",   className: "bg-slate-100 text-slate-600 border-slate-200" },
+  sent:   { label: "Sent",    className: "bg-blue-100 text-blue-700 border-blue-200" },
+  signed: { label: "Signed",  className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
 };
 
 function replaceVars(content: string, vars: Record<string, string>): string {
@@ -327,8 +327,8 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
     createContractMutation.mutate(
       { projectId, data: { title: data.title, fileUrl: data.fileUrl || null,
           version: data.version || null, status: data.status } },
-      { onSuccess: () => { toast.success("Contrato guardado"); invalidateContracts(); setExtDialogOpen(false); },
-        onError:   () => toast.error("Error al guardar el contrato") }
+      { onSuccess: () => { toast.success("Contract saved"); invalidateContracts(); setExtDialogOpen(false); },
+        onError:   () => toast.error("Error saving contract") }
     );
   };
 
@@ -336,8 +336,8 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
     setSigningContractId(id);
     updateContractMutation.mutate(
       { projectId, id, data: { status: "signed" } },
-      { onSuccess: () => { toast.success("Contrato marcado como firmado"); invalidateContracts(); setSigningContractId(null); },
-        onError:   () => { toast.error("Error al actualizar"); setSigningContractId(null); } }
+      { onSuccess: () => { toast.success("Contract marked as signed"); invalidateContracts(); setSigningContractId(null); },
+        onError:   () => { toast.error("Error updating"); setSigningContractId(null); } }
     );
   };
 
@@ -345,8 +345,8 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
     if (!confirmDeleteCtr) return;
     deleteContractMutation.mutate(
       { projectId, id: confirmDeleteCtr.id },
-      { onSuccess: () => { toast.success("Contrato eliminado"); invalidateContracts(); setConfirmDeleteCtr(null); },
-        onError:   () => { toast.error("Error al eliminar"); setConfirmDeleteCtr(null); } }
+      { onSuccess: () => { toast.success("Contract deleted"); invalidateContracts(); setConfirmDeleteCtr(null); },
+        onError:   () => { toast.error("Error deleting"); setConfirmDeleteCtr(null); } }
     );
   };
 
@@ -412,7 +412,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
           language:     selectedLang,
           title:        isChangeOrder
             ? `Orden de Cambio #${(pendingFields.co_number ?? "001")} — ${project.name}`
-            : `${selectedType === "construction" ? "Contrato de Construcción" : "Contrato de Remodelación"} — ${project.name}`,
+            : `${selectedType === "construction" ? "Construction Contract" : "Remodeling Contract"} — ${project.name}`,
           field_values: pendingFields,
         },
       },
@@ -437,9 +437,9 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         onSuccess: (updated) => {
           setSigningDoc(updated);
           invalidateDocs();
-          toast.success(role === "contractor" ? "Firma del contratista guardada" : "Firma del cliente guardada");
+          toast.success(role === "contractor" ? "Contractor signature saved" : "Client signature saved");
         },
-        onError: () => toast.error("Error al guardar la firma"),
+        onError: () => toast.error("Error saving signature"),
       }
     );
   };
@@ -504,7 +504,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
           <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
             <CheckCircle2 className="w-5 h-5 shrink-0" />
             <span className="font-medium text-sm">
-              Documento firmado por ambas partes el{" "}
+              Document signed by both parties on{" "}
               {signingDoc.signedAt ? format(new Date(signingDoc.signedAt), "PPP") : ""}
             </span>
           </div>
@@ -515,27 +515,27 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
           {/* CONTRATISTA */}
           <Card className="border-none shadow-sm bg-white">
             <CardContent className="p-5 space-y-4">
-              <h4 className="font-semibold text-sm text-foreground border-b pb-2">Firma del Contratista</h4>
+              <h4 className="font-semibold text-sm text-foreground border-b pb-2">Contractor Signature</h4>
               {signingDoc.contractorSignedAt ? (
                 <div className="space-y-2">
                   {signingDoc.contractorSignature && (
                     <img
                       src={signingDoc.contractorSignature}
-                      alt="Firma contratista"
+                      alt="Contractor signature"
                       className="border rounded bg-slate-50 w-full"
                       style={{ maxHeight: 100, objectFit: "contain" }}
                     />
                   )}
                   <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Firmado el {format(new Date(signingDoc.contractorSignedAt), "PPp")}
+                    Signed on {format(new Date(signingDoc.contractorSignedAt), "PPp")}
                   </div>
                 </div>
               ) : (
                 <SignatureCanvas
                   onSign={(url) => handleSign("contractor", url)}
                   isPending={signMutation.isPending}
-                  label="Firmar como Contratista"
+                  label="Sign as Contractor"
                 />
               )}
             </CardContent>
@@ -544,27 +544,27 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
           {/* CLIENTE */}
           <Card className="border-none shadow-sm bg-white">
             <CardContent className="p-5 space-y-4">
-              <h4 className="font-semibold text-sm text-foreground border-b pb-2">Firma del Cliente</h4>
+              <h4 className="font-semibold text-sm text-foreground border-b pb-2">Client Signature</h4>
               {signingDoc.clientSignedAt ? (
                 <div className="space-y-2">
                   {signingDoc.clientSignature && (
                     <img
                       src={signingDoc.clientSignature}
-                      alt="Firma cliente"
+                      alt="Client signature"
                       className="border rounded bg-slate-50 w-full"
                       style={{ maxHeight: 100, objectFit: "contain" }}
                     />
                   )}
                   <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Firmado el {format(new Date(signingDoc.clientSignedAt), "PPp")}
+                    Signed on {format(new Date(signingDoc.clientSignedAt), "PPp")}
                   </div>
                 </div>
               ) : (
                 <SignatureCanvas
                   onSign={(url) => handleSign("client", url)}
                   isPending={signMutation.isPending}
-                  label="Firmar como Cliente"
+                  label="Sign as Client"
                 />
               )}
             </CardContent>
@@ -616,15 +616,15 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
           <div className="space-y-6">
             <div>
               <h3 className="font-bold text-lg text-foreground">Select document type</h3>
-              <p className="text-sm text-muted-foreground mt-0.5">Elige el tipo de contrato que deseas generar</p>
+              <p className="text-sm text-muted-foreground mt-0.5">Choose the type of contract to generate</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {(
                 [
-                  { type: "construction",  icon: FileText,      label: "Contrato Nueva Construcción" },
-                  { type: "remodeling",    icon: FileText,      label: "Contrato Remodelación" },
-                  { type: "change_order",  icon: ClipboardList, label: "Orden de Cambio" },
+                  { type: "construction",  icon: FileText,      label: "New Construction Contract" },
+                  { type: "remodeling",    icon: FileText,      label: "Remodeling Contract" },
+                  { type: "change_order",  icon: ClipboardList, label: "Change Order" },
                 ] as { type: DocType; icon: typeof FileText; label: string }[]
               ).map(({ type, icon: Icon, label }) => (
                 <button
@@ -646,7 +646,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
 
             {/* Idioma */}
             <div>
-              <p className="text-sm font-medium text-muted-foreground mb-3">Idioma del documento</p>
+              <p className="text-sm font-medium text-muted-foreground mb-3">Document language</p>
               <div className="flex gap-3">
                 {(["es", "en"] as Language[]).map(lang => (
                   <button
@@ -669,7 +669,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                 onClick={() => setCreateStep(2)}
                 className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
               >
-                Continuar <ArrowRight className="w-4 h-4" />
+                Continue <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -680,10 +680,10 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
           <div className="space-y-6">
             <div>
               <h3 className="font-bold text-lg text-foreground">
-                {isChangeOrder ? "Datos de la Orden de Cambio" : "Datos del Contrato"}
+                {isChangeOrder ? "Change Order Details" : "Contract Details"}
               </h3>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Completa los campos para generar el documento
+                Fill in the fields to generate the document
               </p>
             </div>
 
@@ -692,99 +692,99 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                 <NewTotalWatcher control={coForm.control} setValue={coForm.setValue} />
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Número de CO *</Label>
+                    <Label>CO Number *</Label>
                     <Input {...coForm.register("co_number", { required: true })} placeholder="001" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Fecha efectiva *</Label>
+                    <Label>Effective date *</Label>
                     <Input type="date" {...coForm.register("effective_date", { required: true })} />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Nombre del cliente *</Label>
-                  <Input {...coForm.register("owner_name", { required: true })} placeholder="Juan López" />
+                  <Label>Client name *</Label>
+                  <Input {...coForm.register("owner_name", { required: true })} placeholder="John Smith" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Descripción del cambio *</Label>
-                  <Textarea {...coForm.register("change_description", { required: true })} rows={3} placeholder="Describe el alcance del cambio..." />
+                  <Label>Change description *</Label>
+                  <Textarea {...coForm.register("change_description", { required: true })} rows={3} placeholder="Describe the scope of the change..." />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
-                    <Label>Monto original *</Label>
+                    <Label>Original amount *</Label>
                     <Input {...coForm.register("original_amount", { required: true })} placeholder="50000" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Monto del cambio *</Label>
+                    <Label>Change amount *</Label>
                     <Input {...coForm.register("change_amount", { required: true })} placeholder="5000" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Nuevo total</Label>
+                    <Label>New total</Label>
                     <Input {...coForm.register("new_total")} placeholder="Auto" className="bg-muted/40" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Días adicionales</Label>
+                    <Label>Additional days</Label>
                     <Input {...coForm.register("additional_days")} placeholder="0" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Nueva fecha de entrega *</Label>
+                    <Label>New completion date *</Label>
                     <Input type="date" {...coForm.register("new_completion_date", { required: true })} />
                   </div>
                 </div>
                 <div className="flex justify-end pt-2">
                   <Button type="submit" className="gap-2 bg-orange-500 hover:bg-orange-600 text-white">
-                    Generar documento <ArrowRight className="w-4 h-4" />
+                    Generate document <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               </form>
             ) : (
               <form onSubmit={onContractPreview} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Nombre del cliente *</Label>
-                  <Input {...contractForm.register("owner_name", { required: true })} placeholder="Juan López" />
+                  <Label>Client name *</Label>
+                  <Input {...contractForm.register("owner_name", { required: true })} placeholder="John Smith" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Dirección del cliente *</Label>
-                  <Input {...contractForm.register("owner_address", { required: true })} placeholder="123 Calle Principal, Ciudad, TX" />
+                  <Label>Client address *</Label>
+                  <Input {...contractForm.register("owner_address", { required: true })} placeholder="123 Main St, City, TX" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Descripción del trabajo *</Label>
-                  <Textarea {...contractForm.register("project_description", { required: true })} rows={3} placeholder="Describe el alcance de la obra..." />
+                  <Label>Work description *</Label>
+                  <Textarea {...contractForm.register("project_description", { required: true })} rows={3} placeholder="Describe the scope of work..." />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Monto del contrato *</Label>
+                    <Label>Contract amount *</Label>
                     <Input {...contractForm.register("contract_amount", { required: true })} placeholder="$50,000" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Fecha efectiva *</Label>
+                    <Label>Effective date *</Label>
                     <Input type="date" {...contractForm.register("effective_date", { required: true })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Fecha de inicio *</Label>
+                    <Label>Start date *</Label>
                     <Input type="date" {...contractForm.register("start_date", { required: true })} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Fecha de entrega *</Label>
+                    <Label>End date *</Label>
                     <Input type="date" {...contractForm.register("end_date", { required: true })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Tasa de interés por mora (%)</Label>
+                    <Label>Late interest rate (%)</Label>
                     <Input {...contractForm.register("interest_rate")} placeholder="1.5" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Días para curar incumplimiento</Label>
+                    <Label>Cure period (days)</Label>
                     <Input {...contractForm.register("cure_days")} placeholder="10" />
                   </div>
                 </div>
                 <div className="flex justify-end pt-2">
                   <Button type="submit" className="gap-2 bg-orange-500 hover:bg-orange-600 text-white">
-                    Generar documento <ArrowRight className="w-4 h-4" />
+                    Generate document <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               </form>
@@ -796,8 +796,8 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         {createStep === 3 && (
           <div className="space-y-6">
             <div>
-              <h3 className="font-bold text-lg text-foreground">Vista previa del documento</h3>
-              <p className="text-sm text-muted-foreground mt-0.5">Revisa el documento antes de guardarlo y firmarlo</p>
+              <h3 className="font-bold text-lg text-foreground">Document preview</h3>
+              <p className="text-sm text-muted-foreground mt-0.5">Review the document before saving and signing</p>
             </div>
 
             <div
@@ -866,14 +866,14 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
           <CardContent className="p-10 text-center text-muted-foreground">
             <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
             <p className="font-medium">No documents yet</p>
-            <p className="text-sm mt-1">Genera tu primer contrato o orden de cambio.</p>
+            <p className="text-sm mt-1">Generate your first contract or change order.</p>
             {user?.role === "builder" && (
               <Button
                 size="sm"
                 onClick={() => { resetCreate(); setView("create"); setCreateStep(1); }}
                 className="mt-4 gap-2 bg-orange-500 hover:bg-orange-600 text-white"
               >
-                <Plus className="w-4 h-4" /> Nuevo Documento
+                <Plus className="w-4 h-4" /> New Document
               </Button>
             )}
           </CardContent>
@@ -912,13 +912,13 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                       <div className="flex flex-wrap gap-3 mt-1.5">
                         <span className={`text-xs font-medium flex items-center gap-1 ${doc.contractorSignedAt ? "text-emerald-600" : "text-slate-400"}`}>
                           {doc.contractorSignedAt
-                            ? <><CheckCircle2 className="w-3.5 h-3.5" /> Contratista</>
-                            : "○ Contratista"}
+                            ? <><CheckCircle2 className="w-3.5 h-3.5" /> Contractor</>
+                            : "○ Contractor"}
                         </span>
                         <span className={`text-xs font-medium flex items-center gap-1 ${doc.clientSignedAt ? "text-emerald-600" : "text-slate-400"}`}>
                           {doc.clientSignedAt
-                            ? <><CheckCircle2 className="w-3.5 h-3.5" /> Cliente</>
-                            : "○ Cliente"}
+                            ? <><CheckCircle2 className="w-3.5 h-3.5" /> Client</>
+                            : "○ Client"}
                         </span>
                       </div>
 
@@ -960,7 +960,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         <div className="flex items-center gap-3 mb-4">
           <div className="h-px flex-1 bg-border" />
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <Link2 className="w-3.5 h-3.5" /> Contratos externos
+            <Link2 className="w-3.5 h-3.5" /> External contracts
           </span>
           <div className="h-px flex-1 bg-border" />
         </div>
@@ -968,7 +968,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         <div className="flex justify-end mb-3">
           {user?.role === "builder" && (
             <Button size="sm" variant="outline" onClick={() => setExtDialogOpen(true)} className="gap-2">
-              <Plus className="w-4 h-4" /> Subir contrato externo
+              <Plus className="w-4 h-4" /> Upload external contract
             </Button>
           )}
         </div>
@@ -1014,7 +1014,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
                           >
-                            <ExternalLink className="w-3 h-3" /> Abrir archivo
+                            <ExternalLink className="w-3 h-3" /> Open file
                           </a>
                         )}
                       </div>
@@ -1022,7 +1022,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                         {c.fileUrl && (
                           <Button size="sm" variant="outline" asChild className="gap-1.5">
                             <a href={c.fileUrl} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="w-3.5 h-3.5" /> Abrir
+                              <ExternalLink className="w-3.5 h-3.5" /> Open
                             </a>
                           </Button>
                         )}
@@ -1037,7 +1037,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                             {signingContractId === c.id
                               ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
                               : <FileCheck className="w-3.5 h-3.5" />}
-                            Firmar
+                            Sign
                           </Button>
                         )}
                         {user?.role === "builder" && (
