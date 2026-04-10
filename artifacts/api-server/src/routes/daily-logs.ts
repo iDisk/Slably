@@ -35,6 +35,7 @@ const AUDIO_MIME_TYPES: Record<string, string> = {
 
 // Helper: verify the user is a vendor of the project
 async function isVendorOfProject(projectId: number, userId: number): Promise<boolean> {
+  // Buscar en el proyecto actual
   const [vendor] = await db
     .select({ id: projectVendorsTable.id })
     .from(projectVendorsTable)
@@ -42,7 +43,25 @@ async function isVendorOfProject(projectId: number, userId: number): Promise<boo
       eq(projectVendorsTable.projectId, projectId),
       eq(projectVendorsTable.linkedUserId, userId),
     ));
-  return !!vendor;
+  if (vendor) return true;
+
+  // Si no encontró, buscar via linkedProjectId
+  const [proj] = await db
+    .select({ linkedProjectId: projectsTable.linkedProjectId })
+    .from(projectsTable)
+    .where(eq(projectsTable.id, projectId));
+
+  if (!proj?.linkedProjectId) return false;
+
+  const [vendorInOriginal] = await db
+    .select({ id: projectVendorsTable.id })
+    .from(projectVendorsTable)
+    .where(and(
+      eq(projectVendorsTable.projectId, proj.linkedProjectId),
+      eq(projectVendorsTable.linkedUserId, userId),
+    ));
+
+  return !!vendorInOriginal;
 }
 
 const isSub = (role: string) => role === "subcontractor" || role === "supplier";
