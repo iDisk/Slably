@@ -35,8 +35,8 @@ const TYPE_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 const PROJECT_OPTIONS: { key: ProjectType; emoji: string; label: string }[] = [
-  { key: "new",  emoji: "🏗️", label: "Nueva Construcción" },
-  { key: "remo", emoji: "🔨", label: "Remodelación" },
+  { key: "new",  emoji: "🏗️", label: "New Construction" },
+  { key: "remo", emoji: "🔨", label: "Remodeling" },
 ];
 
 const PHASE_ICON_MAP: Record<string, string> = {};
@@ -168,7 +168,7 @@ export function PhasesTab({ projectId, projectType }: PhasesTabProps) {
   function handleBackToSelector() {
     const hasExistingPlan = localPhases.length > 0;
     if (hasExistingPlan) {
-      const ok = window.confirm("Esto borrará las actividades actuales. ¿Continuar?");
+      const ok = window.confirm("This will clear current activities. Continue?");
       if (!ok) return;
       setLocalPhases([]);
       setLocalType(null);
@@ -229,7 +229,7 @@ export function PhasesTab({ projectId, projectType }: PhasesTabProps) {
             Selecciona el tipo de proyecto para cargar el plan de actividades
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Se creará un checklist con todas las fases y actividades estándar
+            A checklist will be created with all standard phases and activities
           </p>
         </div>
 
@@ -414,7 +414,7 @@ export function PhasesTab({ projectId, projectType }: PhasesTabProps) {
   const completedCount = includedPhases.filter((p) => p.completed).length;
   const totalCount     = includedPhases.length;
   const progressPct    = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-  const typeLabel      = localType === "new" ? "Nueva Construcción" : "Remodelación";
+  const typeLabel      = localType === "new" ? "New Construction" : "Remodeling";
   const groups         = groupPhases(includedPhases);
 
   return (

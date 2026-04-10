@@ -75,9 +75,9 @@ const QUOTE_STATUS: Record<string, { label: string; cls: string }> = {
 
 // ─── Zod schemas ──────────────────────────────────────────────────────────────
 const rfqSchema = z.object({
-  title:       z.string().min(1, "El título es requerido"),
+  title:       z.string().min(1, "Title is required"),
   specialty:   z.string().min(1, "Selecciona una especialidad"),
-  description: z.string().min(1, "La descripción es requerida"),
+  description: z.string().min(1, "Description is required"),
   city:        z.string().min(1, "La ciudad es requerida"),
   budget_min:  z.coerce.number().optional(),
   budget_max:  z.coerce.number().optional(),
@@ -713,11 +713,11 @@ function BuilderNetwork({ rfqs, isLoading }: { rfqs: Rfq[] | undefined; isLoadin
                   {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label>Presupuesto mínimo (opcional)</Label>
+                  <Label>Minimum budget (optional)</Label>
                   <Input {...register("budget_min")} type="number" min={0} placeholder="0" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Presupuesto máximo (opcional)</Label>
+                  <Label>Maximum budget (optional)</Label>
                   <Input {...register("budget_max")} type="number" min={0} placeholder="0" />
                 </div>
                 <div className="space-y-2">
@@ -730,7 +730,7 @@ function BuilderNetwork({ rfqs, isLoading }: { rfqs: Rfq[] | undefined; isLoadin
                     {...register("project_id")}
                     className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
                   >
-                    <option value="">Sin proyecto específico</option>
+                    <option value="">No specific project</option>
                     {projects?.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}

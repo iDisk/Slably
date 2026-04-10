@@ -18,8 +18,8 @@ function cityFromAddress(address: string): string {
 }
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
-  new:  "Nueva Construcción",
-  remo: "Remodelación",
+  new:  "New Construction",
+  remo: "Remodeling",
 };
 
 function BadgePill({ type }: { type: string }) {
@@ -70,7 +70,7 @@ export default function BuilderProfile() {
         </div>
         <h1 className="text-xl font-display font-bold text-foreground">Constructor no encontrado</h1>
         <p className="text-muted-foreground text-sm text-center">
-          El perfil que buscas no existe o no está disponible.
+          This profile does not exist or is not available.
         </p>
         <Button variant="outline" onClick={() => navigate("/network")}>Ir a Network</Button>
       </div>
@@ -147,7 +147,7 @@ export default function BuilderProfile() {
               <p className="text-2xl font-display font-bold text-foreground tabular-nums">
                 {builder.stats.averageRating > 0 ? builder.stats.averageRating.toFixed(1) : "—"}
               </p>
-              <p className="text-xs text-muted-foreground mt-1 leading-tight">★ Calificación</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-tight">★ Rating</p>
             </CardContent>
           </Card>
           <Card className="border border-border shadow-sm">
@@ -155,7 +155,7 @@ export default function BuilderProfile() {
               <p className="text-2xl font-display font-bold text-foreground tabular-nums">
                 {builder.stats.totalRatings}
               </p>
-              <p className="text-xs text-muted-foreground mt-1 leading-tight">Reseñas</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-tight">Reviews</p>
             </CardContent>
           </Card>
         </div>
@@ -167,7 +167,7 @@ export default function BuilderProfile() {
             <Card className="border border-border shadow-sm">
               <CardContent className="p-8 text-center">
                 <p className="text-muted-foreground text-sm">
-                  Aún no hay proyectos en el portafolio.
+                  No projects in the portfolio yet.
                 </p>
               </CardContent>
             </Card>

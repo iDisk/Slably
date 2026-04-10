@@ -1,0 +1,166 @@
+Traduce al inglés todos los textos 
+en español encontrados. Aplica en 
+paralelo por archivo:
+
+DailyLogTab.tsx:
+  "¿Cómo quieres registrar el log?" → 
+  "How do you want to log today?"
+  "Habla 30–60 segundos describiendo 
+  el día de trabajo. La IA lo 
+  estructurará automáticamente." → 
+  "Talk 30–60 seconds about your 
+  workday. AI will structure it 
+  automatically."
+  "No se pudo acceder al micrófono" → 
+  "Could not access microphone"
+  "¡Listo!" → "Done!"
+  "Número de trabajadores" → 
+  "Number of workers"
+  "Describe las actividades del día…" → 
+  "Describe today's activities…"
+
+DocumentsTab.tsx:
+  "Firme aquí con su dedo o mouse" → 
+  "Sign here with your finger or mouse"
+
+ExpensesTab.tsx:
+  "No se pudo leer el ticket. 
+  Ingrésalo manualmente." → 
+  "Could not read the receipt. 
+  Please enter it manually."
+  "Leyendo..." → "Reading..."
+  "🖼️ Galería" → "🖼️ Gallery"
+
+PhasesTab.tsx:
+  "Nueva Construcción" → "New Construction"
+  "Remodelación" → "Remodeling"
+  "Esto borrará las actividades 
+  actuales. ¿Continuar?" → 
+  "This will clear current activities. 
+  Continue?"
+  "Se creará un checklist con todas 
+  las fases y actividades estándar" → 
+  "A checklist will be created with 
+  all standard phases and activities"
+
+VendorsTab.tsx:
+  "Descripción, monto y tipo son 
+  requeridos" → 
+  "Description, amount and type 
+  are required"
+  "Título y monto son requeridos" → 
+  "Title and amount are required"
+  "alerta" / "alertas" → 
+  "alert" / "alerts"
+  "requieren atención" → 
+  "require attention"
+  placeholder "Ej. Juan García" → 
+  "e.g. John Smith"
+  "Escribe ciudad o nombre 
+  (mín. 3 letras)..." → 
+  "Search by city or name 
+  (min. 3 characters)..."
+  placeholder "Ej. Plomería, 
+  Electricidad" → 
+  "e.g. Plumbing, Electrical"
+  "Teléfono" → "Phone"
+  "Descripción *" → "Description *"
+  "Depósito" → "Deposit"
+  "Método de pago" → "Payment method"
+  "Título *" → "Title *"
+  "Monto * (negativo = crédito)" → 
+  "Amount * (negative = credit)"
+  "Descripción" → "Description"
+
+Network.tsx:
+  "El título es requerido" → 
+  "Title is required"
+  "La descripción es requerida" → 
+  "Description is required"
+  "Presupuesto mínimo (opcional)" → 
+  "Minimum budget (optional)"
+  "Presupuesto máximo (opcional)" → 
+  "Maximum budget (optional)"
+  "Sin proyecto específico" → 
+  "No specific project"
+
+BuilderProfile.tsx:
+  "Nueva Construcción" → "New Construction"
+  "Remodelación" → "Remodeling"
+  "El perfil que buscas no existe 
+  o no está disponible." → 
+  "This profile does not exist 
+  or is not available."
+  "★ Calificación" → "★ Rating"
+  "Reseñas" → "Reviews"
+  "Aún no hay proyectos en 
+  el portafolio." → 
+  "No projects in the portfolio yet."
+  "Powered by Slably · 
+  Gestión de construcción" → 
+  "Powered by Slably · 
+  Construction management"
+
+ClientDashboard.tsx:
+  "Firme aquí con su dedo o mouse" → 
+  "Sign here with your finger or mouse"
+  "¡Documento firmado exitosamente!" → 
+  "Document signed successfully!"
+  "Los contratos y documentos de 
+  firma aparecerán aquí cuando tu 
+  contratista los genere." → 
+  "Contracts and signature documents 
+  will appear here when your 
+  contractor generates them."
+
+Find.tsx:
+  Trade labels:
+  "Plomería" → "Plumbing"
+  "Electricidad" → "Electrical"
+  "Carpintería" → "Carpentry"
+  "Albañilería" → "Masonry"
+  "Jardinería" → "Landscaping"
+  "Herrería" → "Ironwork"
+  "Vidriería" → "Glazing"
+  "Concreto" → "Concrete"
+  "Pisos" → "Flooring"
+  "Tablaroca" → "Drywall"
+  "Aislamiento" → "Insulation"
+  "Impermeabilización" → 
+  "Waterproofing"
+  "Demolición" → "Demolition"
+  "Excavación" → "Excavation"
+  "Otro" → "Other"
+  "reseña" / "reseñas" → 
+  "review" / "reviews"
+  "Powered by Slably · 
+  Gestión de construcción" → 
+  "Powered by Slably · 
+  Construction management"
+
+SubProfile.tsx:
+  Same trade labels as Find.tsx
+  "El perfil que buscas no existe 
+  o no está disponible." → 
+  "This profile does not exist 
+  or is not available."
+  "Este subcontratista aún no 
+  tiene calificaciones." → 
+  "This subcontractor has no 
+  ratings yet."
+  "basado en {N} calificación" → 
+  "based on {N} review"
+  "calificaciones" → "reviews"
+  "⭐ Comunicación" → 
+  "⭐ Communication"
+  "Reseñas" → "Reviews"
+  "Solicitar cotización" → 
+  "Request quote"
+  "Powered by Slably · 
+  Gestión de construcción" → 
+  "Powered by Slably · 
+  Construction management"
+
+Aplica todos en paralelo.
+Compila artifacts/buildos (tsc --noEmit)
+al final y confirma cero errores.

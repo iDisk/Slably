@@ -16,12 +16,12 @@ const SUPPLIER_LABELS: Record<string, string> = {
 };
 
 const TRADE_LABELS: Record<string, string> = {
-  plumber: "Plomería", electrician: "Electricidad", carpenter: "Carpintería",
+  plumber: "Plumbing", electrician: "Electrical", carpenter: "Carpentry",
   painter: "Pintura", hvac: "HVAC / Clima", roofer: "Techado",
-  mason: "Albañilería", landscaper: "Jardinería", ironworker: "Herrería",
-  glazier: "Vidriería", concrete: "Concreto", flooring: "Pisos",
-  drywall: "Tablaroca", insulation: "Aislamiento", waterproofing: "Impermeabilización",
-  demolition: "Demolición", excavation: "Excavación", other: "Otro",
+  mason: "Masonry", landscaper: "Landscaping", ironworker: "Ironwork",
+  glazier: "Glazing", concrete: "Concrete", flooring: "Flooring",
+  drywall: "Drywall", insulation: "Insulation", waterproofing: "Waterproofing",
+  demolition: "Demolition", excavation: "Excavation", other: "Other",
 };
 
 function initials(name: string) {
@@ -195,7 +195,7 @@ export default function Find() {
                         <span className="font-semibold text-foreground">
                           {item.stats.averageRating.toFixed(1)}
                         </span>
-                        {" "}({item.stats.totalRatings} reseña{item.stats.totalRatings !== 1 ? "s" : ""})
+                        {" "}({item.stats.totalRatings} review{item.stats.totalRatings !== 1 ? "s" : ""})
                       </p>
                     )}
 

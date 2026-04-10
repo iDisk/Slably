@@ -252,7 +252,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
           <ArrowLeft className="w-4 h-4" /> Volver
         </button>
 
-        <p className="text-sm font-semibold text-foreground">¿Cómo quieres registrar el log?</p>
+        <p className="text-sm font-semibold text-foreground">How do you want to log today?</p>
 
         <div className="grid grid-cols-1 gap-4">
           <Card className="cursor-pointer border-2 border-transparent hover:border-[#F97316] transition-all shadow-sm">
@@ -261,7 +261,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
               <div className="flex-1">
                 <p className="font-semibold text-foreground">Grabar audio</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Habla 30–60 segundos describiendo el día de trabajo. La IA lo estructurará automáticamente.
+                  Talk 30–60 seconds about your workday. AI will structure it automatically.
                 </p>
                 <Button
                   size="sm"
@@ -505,7 +505,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
         setElapsed(0);
         setRecState("recording");
       } catch {
-        toast.error("No se pudo acceder al micrófono");
+        toast.error("Could not access microphone");
       }
     };
 
@@ -513,7 +513,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
       idle:       { bg: "bg-slate-200 hover:bg-slate-300",  label: "Toca para grabar",            pulse: false },
       recording:  { bg: "bg-red-500 hover:bg-red-600",      label: "Grabando… toca para detener", pulse: true  },
       processing: { bg: "bg-[#F97316]",                     label: "Procesando con IA…",           pulse: false },
-      done:       { bg: "bg-emerald-500",                   label: "¡Listo!",                      pulse: false },
+      done:       { bg: "bg-emerald-500",                   label: "Done!",                        pulse: false },
     }[recState];
 
     return (
@@ -640,7 +640,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
               />
             </div>
             <div className="space-y-1 col-span-2">
-              <Label>Número de trabajadores</Label>
+              <Label>Number of workers</Label>
               <Input
                 type="number"
                 placeholder="8"
@@ -654,7 +654,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
             <Label>Activities *</Label>
             <Textarea
               rows={3}
-              placeholder="Describe las actividades del día…"
+              placeholder="Describe today's activities…"
               value={form.activities}
               onChange={(e) => setForm((f) => ({ ...f, activities: e.target.value }))}
             />

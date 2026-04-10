@@ -10,12 +10,12 @@ import { BackButton } from "@/components/BackButton";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const TRADE_LABELS: Record<string, string> = {
-  plumber: "Plomería", electrician: "Electricidad", carpenter: "Carpintería",
+  plumber: "Plumbing", electrician: "Electrical", carpenter: "Carpentry",
   painter: "Pintura", hvac: "HVAC / Clima", roofer: "Techado",
-  mason: "Albañilería", landscaper: "Jardinería", ironworker: "Herrería",
-  glazier: "Vidriería", concrete: "Concreto", flooring: "Pisos",
-  drywall: "Tablaroca", insulation: "Aislamiento", waterproofing: "Impermeabilización",
-  demolition: "Demolición", excavation: "Excavación", other: "Otro",
+  mason: "Masonry", landscaper: "Landscaping", ironworker: "Ironwork",
+  glazier: "Glazing", concrete: "Concrete", flooring: "Flooring",
+  drywall: "Drywall", insulation: "Insulation", waterproofing: "Waterproofing",
+  demolition: "Demolition", excavation: "Excavation", other: "Other",
 };
 
 function initials(name: string) {
@@ -79,7 +79,7 @@ export default function SubProfile() {
         </div>
         <h1 className="text-xl font-display font-bold text-foreground">Subcontratista no encontrado</h1>
         <p className="text-muted-foreground text-sm text-center">
-          El perfil que buscas no existe o no está disponible.
+          This profile does not exist or is not available.
         </p>
         <Button variant="outline" onClick={() => navigate("/network")}>Ir a Network</Button>
       </div>
@@ -124,7 +124,7 @@ export default function SubProfile() {
             {sub.averages.total === 0 ? (
               <div className="text-center py-6">
                 <p className="text-muted-foreground text-sm">
-                  Este subcontratista aún no tiene calificaciones.
+                  This subcontractor has no ratings yet.
                 </p>
               </div>
             ) : (
@@ -139,7 +139,7 @@ export default function SubProfile() {
                   <div className="space-y-1">
                     <DisplayStars value={sub.averages.overall} large />
                     <p className="text-xs text-muted-foreground">
-                      basado en {sub.averages.total} {sub.averages.total === 1 ? "calificación" : "calificaciones"}
+                      based on {sub.averages.total} {sub.averages.total === 1 ? "review" : "reviews"}
                     </p>
                   </div>
                 </div>
@@ -150,7 +150,7 @@ export default function SubProfile() {
                   </p>
                   <RatingBar label="⭐ Calidad"       value={sub.averages.quality} />
                   <RatingBar label="⭐ Puntualidad"   value={sub.averages.punctuality} />
-                  <RatingBar label="⭐ Comunicación"  value={sub.averages.communication} />
+                  <RatingBar label="⭐ Communication"  value={sub.averages.communication} />
                 </div>
               </div>
             )}
@@ -160,7 +160,7 @@ export default function SubProfile() {
         {/* ── Reviews ── */}
         {sub.ratings.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-base font-display font-semibold text-foreground px-1">Reseñas</h2>
+            <h2 className="text-base font-display font-semibold text-foreground px-1">Reviews</h2>
             {sub.ratings.map((r, i) => (
               <Card key={i} className="border border-border shadow-sm">
                 <CardContent className="p-4 space-y-2">
@@ -184,7 +184,7 @@ export default function SubProfile() {
           className="w-full gap-2 bg-[#F97316] hover:bg-[#ea6c0a] text-white font-semibold h-12 text-base"
           onClick={() => navigate("/network")}
         >
-          Solicitar cotización <ArrowRight className="w-5 h-5" />
+          Request quote <ArrowRight className="w-5 h-5" />
         </Button>
 
         <p className="text-center text-xs text-muted-foreground pb-4">

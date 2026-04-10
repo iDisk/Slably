@@ -246,7 +246,7 @@ function SignatureCanvas({
         className="w-full border-2 border-dashed border-slate-300 rounded-lg bg-slate-50 touch-none cursor-crosshair"
         style={{ maxHeight: 150 }}
       />
-      <p className="text-xs text-muted-foreground text-center">Firme aquí con su dedo o mouse</p>
+      <p className="text-xs text-muted-foreground text-center">Sign here with your finger or mouse</p>
       <div className="flex gap-2">
         <Button type="button" variant="outline" size="sm" onClick={clear} className="gap-1.5">
           <X className="w-3.5 h-3.5" /> Limpiar

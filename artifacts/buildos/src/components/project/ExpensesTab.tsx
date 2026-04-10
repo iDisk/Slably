@@ -212,7 +212,7 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
           setCreateOpen(true);
         },
         onError: () => {
-          toast.error("No se pudo leer el ticket. Ingrésalo manualmente.");
+          toast.error("Could not read the receipt. Please enter it manually.");
           setOcrProcessing(false);
         },
       }
@@ -338,7 +338,7 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
               ? <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
               : <Camera className="w-4 h-4" />
             }
-            {ocrProcessing ? "Leyendo..." : "Cámara"}
+            {ocrProcessing ? "Reading..." : "Camera"}
           </Button>
           <Button
             size="sm"
@@ -347,7 +347,7 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
             disabled={ocrProcessing}
             className="gap-2"
           >
-            🖼️ Galería
+            🖼️ Gallery
           </Button>
           <Button
             size="sm"
@@ -388,7 +388,7 @@ export function ExpensesTab({ projectId }: { projectId: number }) {
         <div className="flex items-center gap-3 p-4 rounded-xl bg-orange-50 border border-orange-200 text-orange-700">
           <Loader2 className="w-5 h-5 animate-spin shrink-0" />
           <div>
-            <p className="font-semibold text-sm">Leyendo ticket con IA...</p>
+            <p className="font-semibold text-sm">Reading receipt with AI...</p>
             <p className="text-xs opacity-75">Esto puede tomar unos segundos</p>
           </div>
         </div>

@@ -270,7 +270,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
   const handleCreatePayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!paymentForm.description.trim() || !paymentForm.amount || !paymentForm.payment_type) {
-      toast.error("Descripción, monto y tipo son requeridos"); return;
+      toast.error("Description, amount and type are required"); return;
     }
     createPaymentMutation.mutate({
       data: {
@@ -293,7 +293,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
 
   const handleCreateCO = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!coForm.title.trim() || !coForm.amount) { toast.error("Título y monto son requeridos"); return; }
+    if (!coForm.title.trim() || !coForm.amount) { toast.error("Title and amount are required"); return; }
     createCOMutation.mutate({
       data: {
         title:       coForm.title,
@@ -358,7 +358,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
               className="flex items-center justify-between w-full"
             >
               <span className={`font-semibold text-sm ${hasHighAlerts ? "text-red-700" : "text-orange-700"}`}>
-                ⚠️ {alerts.length} alerta{alerts.length !== 1 ? "s" : ""} requieren atención
+                ⚠️ {alerts.length} alert{alerts.length !== 1 ? "s" : ""} require attention
               </span>
               {alertsOpen
                 ? <ChevronUp className={`w-4 h-4 ${hasHighAlerts ? "text-red-500" : "text-orange-500"}`} />
@@ -520,7 +520,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                         setAutoCompleteOpen(true);
                       }}
                       onBlur={() => setTimeout(() => setAutoCompleteOpen(false), 150)}
-                      placeholder="Ej. Juan García"
+                      placeholder="e.g. John Smith"
                     />
                     {autoCompleteOpen && vendorForm.name.length > 0 &&
                       frequentVendors.filter(v => v.name.toLowerCase().includes(vendorForm.name.toLowerCase())).length > 0 && (
@@ -575,7 +575,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                     <Label>Buscar en red de Slably (opcional)</Label>
                     <div className="relative">
                       <Input
-                        placeholder="Escribe ciudad o nombre (mín. 3 letras)..."
+                        placeholder="Search by city or name (min. 3 characters)..."
                         value={subSearch}
                         onChange={e => setSubSearch(e.target.value)}
                       />
@@ -626,14 +626,14 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                 )}
                 <div className="space-y-2 col-span-2">
                   <Label>Especialidad</Label>
-                  <Input value={vendorForm.specialty} onChange={e => setVendorForm(f => ({ ...f, specialty: e.target.value }))} placeholder="Ej. Plomería, Electricidad" />
+                  <Input value={vendorForm.specialty} onChange={e => setVendorForm(f => ({ ...f, specialty: e.target.value }))} placeholder="e.g. Plumbing, Electrical" />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
                   <Input type="email" value={vendorForm.email} onChange={e => setVendorForm(f => ({ ...f, email: e.target.value }))} placeholder="email@ejemplo.com" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Teléfono</Label>
+                  <Label>Phone</Label>
                   <Input value={vendorForm.phone} onChange={e => setVendorForm(f => ({ ...f, phone: e.target.value }))} placeholder="(555) 000-0000" />
                 </div>
                 <div className="space-y-2 col-span-2">
@@ -947,7 +947,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
             )}
             {selectedVendor.phone && (
               <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Teléfono</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-0.5">Phone</p>
                 <p className="text-sm font-medium">{selectedVendor.phone}</p>
               </div>
             )}
@@ -1039,7 +1039,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
           <form onSubmit={handleCreatePayment} className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2 col-span-2">
-                <Label>Descripción *</Label>
+                <Label>Description *</Label>
                 <Input value={paymentForm.description} onChange={e => setPaymentForm(f => ({ ...f, description: e.target.value }))} placeholder="Ej. Anticipo Fase 1" />
               </div>
               <div className="space-y-2">
@@ -1051,7 +1051,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                 <Select value={paymentForm.payment_type} onChange={e => setPaymentForm(f => ({ ...f, payment_type: e.target.value }))}>
                   <option value="">Seleccionar…</option>
                   <option value="draw">Draw</option>
-                  <option value="deposit">Depósito</option>
+                  <option value="deposit">Deposit</option>
                   <option value="final">Final</option>
                   <option value="other">Otro</option>
                 </Select>
@@ -1068,7 +1068,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                 <Input type="date" value={paymentForm.due_date} onChange={e => setPaymentForm(f => ({ ...f, due_date: e.target.value }))} />
               </div>
               <div className="space-y-2 col-span-2">
-                <Label>Método de pago</Label>
+                <Label>Payment method</Label>
                 <Select value={paymentForm.payment_method} onChange={e => setPaymentForm(f => ({ ...f, payment_method: e.target.value }))}>
                   <option value="">Ninguno</option>
                   <option value="check">Check</option>
@@ -1101,16 +1101,16 @@ export function VendorsTab({ projectId }: { projectId: number }) {
           </DialogHeader>
           <form onSubmit={handleCreateCO} className="space-y-4 mt-2">
             <div className="space-y-2">
-              <Label>Título *</Label>
-              <Input value={coForm.title} onChange={e => setCOForm(f => ({ ...f, title: e.target.value }))} placeholder="Ej. Trabajo adicional en cocina" />
+              <Label>Title *</Label>
+              <Input value={coForm.title} onChange={e => setCOForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Additional kitchen work" />
             </div>
             <div className="space-y-2">
-              <Label>Monto * (negativo = crédito)</Label>
+              <Label>Amount * (negative = credit)</Label>
               <Input type="number" step="0.01" value={coForm.amount} onChange={e => setCOForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
             </div>
             <div className="space-y-2">
-              <Label>Descripción</Label>
-              <Textarea value={coForm.description} onChange={e => setCOForm(f => ({ ...f, description: e.target.value }))} rows={3} placeholder="Detalles del cambio…" />
+              <Label>Description</Label>
+              <Textarea value={coForm.description} onChange={e => setCOForm(f => ({ ...f, description: e.target.value }))} rows={3} placeholder="Change details…" />
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setCreateCOOpen(false)}>Cancel</Button>
@@ -1157,7 +1157,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                 <Input type="email" value={editVendorForm.email} onChange={e => setEditVendorForm(f => ({ ...f, email: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label>Teléfono</Label>
+                <Label>Phone</Label>
                 <Input value={editVendorForm.phone} onChange={e => setEditVendorForm(f => ({ ...f, phone: e.target.value }))} />
               </div>
               <div className="space-y-2 col-span-2">
