@@ -41,6 +41,7 @@ import { DocumentsTab }    from "@/components/project/DocumentsTab";
 import { DailyLogTab }    from "@/components/project/DailyLogTab";
 import { VendorsTab }     from "@/components/project/VendorsTab";
 import { ChatBox }        from "@/components/chat/ChatBox";
+import { InvoicesTab }    from "@/components/project/InvoicesTab";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   planning:  { label: "Planning",  color: "bg-slate-100 text-slate-700 border-slate-200",       icon: Clock },
@@ -298,6 +299,7 @@ export default function ProjectDetails() {
             <TabsTrigger value="vendors">Vendors</TabsTrigger>
             <TabsTrigger value="daily-log">Daily Log</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="invoices">Invoices</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
             <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
             <TabsTrigger value="photos">Photos</TabsTrigger>
@@ -501,6 +503,13 @@ export default function ProjectDetails() {
                 projectId={project.id}
                 project={project}
               />
+            </div>
+          </TabsContent>
+
+          {/* Invoices */}
+          <TabsContent value="invoices">
+            <div className="mt-2">
+              <InvoicesTab projectId={project.id} />
             </div>
           </TabsContent>
 
