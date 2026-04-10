@@ -294,10 +294,10 @@ export default function ProjectDetails() {
         <Tabs defaultValue="overview">
           <TabsList className="w-full overflow-x-auto flex-nowrap justify-start">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="phases">Fases</TabsTrigger>
-            <TabsTrigger value="vendors">Proveedores</TabsTrigger>
+            <TabsTrigger value="phases">Schedule</TabsTrigger>
+            <TabsTrigger value="vendors">Vendors</TabsTrigger>
             <TabsTrigger value="daily-log">Daily Log</TabsTrigger>
-            <TabsTrigger value="documents">Documentos</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
             <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
             <TabsTrigger value="photos">Photos</TabsTrigger>
