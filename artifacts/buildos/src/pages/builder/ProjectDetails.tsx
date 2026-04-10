@@ -66,10 +66,12 @@ type EditForm = z.infer<typeof editSchema>;
 function ChatContactList({
   contacts,
   projectId,
+  chatProjectId,
   currentUserId,
 }: {
   contacts: { id: number; name: string }[];
   projectId: number;
+  chatProjectId: number;
   currentUserId: number;
 }) {
   const [selectedId, setSelectedId] = useState<number | null>(
@@ -98,7 +100,7 @@ function ChatContactList({
       )}
       {selected && (
         <ChatBox
-          projectId={projectId}
+          projectId={chatProjectId}
           withUserId={selected.id}
           withUserName={selected.name}
           currentUserId={currentUserId}
@@ -534,6 +536,7 @@ export default function ProjectDetails() {
           <TabsContent value="chat">
             <div className="mt-2">
               {(() => {
+                const chatProjectId = project.linkedProjectId ?? project.id;
                 const contacts: { id: number; name: string }[] = [];
                 vendors
                   .filter(v => v.linkedUserId != null)
@@ -555,6 +558,7 @@ export default function ProjectDetails() {
                   <ChatContactList
                     contacts={contacts}
                     projectId={projectId}
+                    chatProjectId={chatProjectId}
                     currentUserId={user?.id ?? 0}
                   />
                 );
