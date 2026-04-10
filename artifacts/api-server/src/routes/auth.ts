@@ -5,6 +5,7 @@ import { rateLimit } from "express-rate-limit";
 import { db, usersTable, organizationsTable } from "@workspace/db";
 import { RegisterBody, LoginBody, LoginResponse, GetMeResponse } from "@workspace/api-zod";
 import { signToken, requireAuth, type AuthRequest } from "../lib/auth.js";
+import { createStripeCustomer } from "../lib/stripe.js";
 
 const router: IRouter = Router();
 
@@ -111,6 +112,20 @@ router.post("/auth/register", registerLimiter, async (req, res): Promise<void> =
       serviceRadius: serviceRadius || null,
     })
     .returning();
+
+  // Fire-and-forget: crear Stripe customer (no bloquea el registro)
+  if (organizationId !== null) {
+    void (async () => {
+      try {
+        const stripeCustomerId = await createStripeCustomer(email, name, organizationId);
+        await db.update(organizationsTable)
+          .set({ stripeCustomerId })
+          .where(eq(organizationsTable.id, organizationId));
+      } catch (err) {
+        console.error("[Stripe] Failed to create customer:", err);
+      }
+    })();
+  }
 
   const token = signToken({ id: user.id, email: user.email, role: user.role, organizationId, organizationSlug });
 
