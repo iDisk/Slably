@@ -208,7 +208,7 @@ export default function Profile() {
                   </Label>
                   <Input
                     id="companyName"
-                    placeholder="López Construction"
+                    placeholder="Smith Construction"
                     {...register("companyName")}
                   />
                   {errors.companyName && (

@@ -642,7 +642,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label>Notas del contrato</Label>
-                  <Textarea value={vendorForm.contract_notes} onChange={e => setVendorForm(f => ({ ...f, contract_notes: e.target.value }))} rows={2} placeholder="Condiciones, términos, etc." />
+                  <Textarea value={vendorForm.contract_notes} onChange={e => setVendorForm(f => ({ ...f, contract_notes: e.target.value }))} rows={2} placeholder="Conditions, terms, etc." />
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
@@ -937,7 +937,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
       {/* Información */}
       <Card className="border border-border shadow-sm bg-white">
         <CardContent className="p-5 space-y-4">
-          <h4 className="font-semibold text-foreground">Información</h4>
+          <h4 className="font-semibold text-foreground">Information</h4>
           <div className="grid grid-cols-2 gap-4">
             {selectedVendor.email && (
               <div>

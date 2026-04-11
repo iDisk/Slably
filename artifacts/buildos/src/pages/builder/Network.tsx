@@ -52,12 +52,12 @@ const TRADE_COLORS: Record<string, string> = {
 };
 
 const TRADE_LABELS: Record<string, string> = {
-  plumber: "Plomería", electrician: "Electricidad", carpenter: "Carpintería",
-  painter: "Pintura", hvac: "HVAC / Clima", roofer: "Techado",
-  mason: "Albañilería", landscaper: "Jardinería", ironworker: "Herrería",
-  glazier: "Vidriería", concrete: "Concreto", flooring: "Pisos",
-  drywall: "Tablaroca", insulation: "Aislamiento", waterproofing: "Impermeabilización",
-  demolition: "Demolición", excavation: "Excavación", other: "Otro",
+  plumber: "Plumbing", electrician: "Electrical", carpenter: "Carpentry",
+  painter: "Painting", hvac: "HVAC / Climate", roofer: "Roofing",
+  mason: "Masonry", landscaper: "Landscaping", ironworker: "Ironwork",
+  glazier: "Glazing", concrete: "Concrete", flooring: "Flooring",
+  drywall: "Drywall", insulation: "Insulation", waterproofing: "Waterproofing",
+  demolition: "Demolition", excavation: "Excavation", other: "Other",
 };
 
 const RFQ_STATUS: Record<string, { label: string; cls: string }> = {
@@ -143,7 +143,7 @@ function QuoteRow({ quote, rfqId, onAction }: { quote: RfqQuote; rfqId: number; 
     patchQuote.mutate({ data: { status: "rejected" } }, {
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: getRfqQuotesQueryKey(rfqId) });
-        toast.success("Cotización rechazada");
+        toast.success("Quote rejected");
       },
       onError: (e: any) => toast.error(e.message || "Error al rechazar"),
     });
@@ -314,9 +314,9 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
               )}
               <div className="space-y-4 mt-2">
                 {([
-                  { label: "⭐ Calidad del trabajo", val: quality,       set: setQuality },
-                  { label: "⭐ Puntualidad",          val: punctuality,   set: setPunctuality },
-                  { label: "⭐ Comunicación",         val: communication, set: setCommunication },
+                  { label: "⭐ Work quality",   val: quality,       set: setQuality },
+                  { label: "⭐ Punctuality",    val: punctuality,   set: setPunctuality },
+                  { label: "⭐ Communication",  val: communication, set: setCommunication },
                 ] as const).map(({ label, val, set }) => (
                   <div key={label} className="space-y-1">
                     <p className="text-sm font-medium text-foreground">{label}</p>
@@ -340,7 +340,7 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
                     className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
                   >
                     {createRatingMut.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Enviar calificación
+                    Submit rating
                   </Button>
                 </div>
               </div>
@@ -376,7 +376,7 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
                   </div>
                 ) : quotes?.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-3 italic">
-                    Aún no hay cotizaciones para esta solicitud.
+                    No quotes yet for this request.
                   </p>
                 ) : (
                   quotes?.map(q => (
@@ -420,10 +420,10 @@ function SubRatingSection({ rfqId, userId, rfq }: { rfqId: number; userId: numbe
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: [`/api/network/rfqs/${rfqId}/ratings`] });
-          toast.success("Calificación enviada");
+          toast.success("Rating submitted");
           setOpen(false);
         },
-        onError: (e: any) => toast.error(e.message || "Error al enviar calificación"),
+        onError: (e: any) => toast.error(e.message || "Error submitting rating"),
       },
     );
   };
@@ -451,9 +451,9 @@ function SubRatingSection({ rfqId, userId, rfq }: { rfqId: number; userId: numbe
         )}
         <div className="space-y-4 mt-2">
           {([
-            { label: "⭐ Claridad del trabajo", val: quality,       set: setQuality },
-            { label: "⭐ Pago a tiempo",         val: punctuality,   set: setPunctuality },
-            { label: "⭐ Comunicación",          val: communication, set: setCommunication },
+            { label: "⭐ Work clarity",    val: quality,       set: setQuality },
+            { label: "⭐ On-time payment", val: punctuality,   set: setPunctuality },
+            { label: "⭐ Communication",   val: communication, set: setCommunication },
           ] as const).map(({ label, val, set }) => (
             <div key={label} className="space-y-1">
               <p className="text-sm font-medium text-foreground">{label}</p>
@@ -477,7 +477,7 @@ function SubRatingSection({ rfqId, userId, rfq }: { rfqId: number; userId: numbe
               className="bg-amber-500 hover:bg-amber-600 text-white gap-2"
             >
               {createRatingMut.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              Enviar calificación
+              Submit rating
             </Button>
           </div>
         </div>
@@ -503,11 +503,11 @@ function SubRfqCard({ rfq, userId }: { rfq: Rfq; userId: number }) {
     createQuote.mutate({ data }, {
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: getRfqQuotesQueryKey(rfq.id) });
-        toast.success("Cotización enviada correctamente");
+        toast.success("Quote submitted successfully");
         setQuoteOpen(false);
         reset();
       },
-      onError: (e: any) => toast.error(e.message || "Error al enviar cotización"),
+      onError: (e: any) => toast.error(e.message || "Error submitting quote"),
     });
   };
 
@@ -567,7 +567,7 @@ function SubRfqCard({ rfq, userId }: { rfq: Rfq; userId: number }) {
         {/* My quote or Cotizar button */}
         {myQuote ? (
           <div className="p-3 bg-secondary/40 rounded-xl border border-border space-y-1">
-            <p className="text-xs font-semibold text-foreground">Tu cotización</p>
+            <p className="text-xs font-semibold text-foreground">Your quote</p>
             <p className="text-sm font-bold text-primary">{fmt(myQuote.amount)}</p>
             {myQuote.message && <p className="text-xs text-muted-foreground italic">"{myQuote.message}"</p>}
           </div>
@@ -580,7 +580,7 @@ function SubRfqCard({ rfq, userId }: { rfq: Rfq; userId: number }) {
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle className="font-display font-bold text-xl">Enviar cotización</DialogTitle>
+                <DialogTitle className="font-display font-bold text-xl">Submit quote</DialogTitle>
               </DialogHeader>
               <p className="text-sm text-muted-foreground -mt-1">{rfq.title}</p>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
@@ -606,7 +606,7 @@ function SubRfqCard({ rfq, userId }: { rfq: Rfq; userId: number }) {
                   <Button type="button" variant="outline" onClick={() => setQuoteOpen(false)}>Cancel</Button>
                   <Button type="submit" disabled={createQuote.isPending} className="gap-2">
                     {createQuote.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Enviar cotización
+                    Submit quote
                   </Button>
                 </div>
               </form>
@@ -665,40 +665,40 @@ function BuilderNetwork({ rfqs, isLoading }: { rfqs: Rfq[] | undefined; isLoadin
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 mt-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>Título *</Label>
-                  <Input {...register("title")} placeholder="Ej. Plomería para residencia nueva" />
+                  <Label>Title *</Label>
+                  <Input {...register("title")} placeholder="e.g. Plumbing for new residence" />
                   {errors.title && <p className="text-xs text-destructive">{errors.title.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Especialidad *</Label>
                   <Select {...register("specialty")}>
-                    <option value="">Selecciona...</option>
-                    <optgroup label="Instalaciones">
-                      <option value="plumber">Plomería</option>
-                      <option value="electrician">Electricidad</option>
-                      <option value="hvac">HVAC / Clima</option>
+                    <option value="">Select...</option>
+                    <optgroup label="Mechanical &amp; Utilities">
+                      <option value="plumber">Plumbing</option>
+                      <option value="electrician">Electrical</option>
+                      <option value="hvac">HVAC / Climate</option>
                     </optgroup>
-                    <optgroup label="Estructura y Acabados">
-                      <option value="carpenter">Carpintería</option>
-                      <option value="painter">Pintura</option>
-                      <option value="roofer">Techado</option>
-                      <option value="mason">Albañilería</option>
-                      <option value="drywall">Tablaroca</option>
-                      <option value="flooring">Pisos</option>
-                      <option value="insulation">Aislamiento</option>
+                    <optgroup label="Structure &amp; Finishes">
+                      <option value="carpenter">Carpentry</option>
+                      <option value="painter">Painting</option>
+                      <option value="roofer">Roofing</option>
+                      <option value="mason">Masonry</option>
+                      <option value="drywall">Drywall</option>
+                      <option value="flooring">Flooring</option>
+                      <option value="insulation">Insulation</option>
                     </optgroup>
-                    <optgroup label="Especializado">
-                      <option value="ironworker">Herrería</option>
-                      <option value="glazier">Vidriería</option>
-                      <option value="waterproofing">Impermeabilización</option>
-                      <option value="concrete">Concreto</option>
+                    <optgroup label="Specialized">
+                      <option value="ironworker">Ironwork</option>
+                      <option value="glazier">Glazing</option>
+                      <option value="waterproofing">Waterproofing</option>
+                      <option value="concrete">Concrete</option>
                     </optgroup>
-                    <optgroup label="Obras preliminares">
-                      <option value="demolition">Demolición</option>
-                      <option value="excavation">Excavación</option>
-                      <option value="landscaper">Jardinería</option>
+                    <optgroup label="Site Work">
+                      <option value="demolition">Demolition</option>
+                      <option value="excavation">Excavation</option>
+                      <option value="landscaper">Landscaping</option>
                     </optgroup>
-                    <option value="other">Otro</option>
+                    <option value="other">Other</option>
                   </Select>
                   {errors.specialty && <p className="text-xs text-destructive">{errors.specialty.message}</p>}
                 </div>
@@ -708,8 +708,8 @@ function BuilderNetwork({ rfqs, isLoading }: { rfqs: Rfq[] | undefined; isLoadin
                   {errors.city && <p className="text-xs text-destructive">{errors.city.message}</p>}
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label>Descripción *</Label>
-                  <Textarea {...register("description")} placeholder="Describe el trabajo requerido, especificaciones, condiciones de acceso..." rows={3} />
+                  <Label>Description *</Label>
+                  <Textarea {...register("description")} placeholder="Describe the required work, specifications, access conditions..." rows={3} />
                   {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
                 </div>
                 <div className="space-y-2">
