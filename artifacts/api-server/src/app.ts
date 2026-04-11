@@ -1,19 +1,25 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 
 const app: Express = express();
+app.use(helmet());
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
 
+const PRODUCTION_ORIGINS = ["https://slably.app"];
+
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow server-to-server calls (no origin header) and same-origin proxied calls
       if (!origin) return callback(null, true);
+      // Always allow production origins
+      if (PRODUCTION_ORIGINS.includes(origin)) return callback(null, true);
       // Allow all *.replit.dev and *.repl.co subdomains in development
       if (
         process.env.NODE_ENV !== "production" &&

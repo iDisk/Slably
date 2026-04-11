@@ -20,6 +20,7 @@ const EXTENSION_MAP: Record<string, string> = {
   "image/png":  "png",
   "image/webp": "webp",
   "image/heic": "heic",
+  "image/heif": "heic",
 };
 
 // ─── POST /api/uploads/presigned-url ─────────────────────────────────────────
