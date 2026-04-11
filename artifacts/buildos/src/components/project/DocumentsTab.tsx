@@ -3,11 +3,11 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, FileText, ClipboardList, Loader2,
+  Plus, FileText, Loader2,
   ArrowLeft, ArrowRight, CheckCircle2, Pencil, X,
   ExternalLink, FileCheck, FileClock, Trash2, Link2,
 } from "lucide-react";
-import { useForm, useWatch, type Control } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import {
   useListDocuments,
@@ -32,7 +32,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input, Label, Select, Textarea } from "@/components/ui/input";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type DocType  = "construction" | "remodeling" | "change_order";
+type DocType  = "construction" | "remodeling";
 type Language = "en" | "es";
 
 type ProjectInfo = {
@@ -55,17 +55,7 @@ type ContractFields = {
   cure_days: string;
 };
 
-type ChangeOrderFields = {
-  co_number: string;
-  owner_name: string;
-  change_description: string;
-  original_amount: string;
-  change_amount: string;
-  new_total: string;
-  additional_days: string;
-  new_completion_date: string;
-  effective_date: string;
-};
+
 
 type ExtContractForm = {
   title: string;
@@ -266,17 +256,6 @@ function SignatureCanvas({
   );
 }
 
-// ─── New Total Auto-Calculator ────────────────────────────────────────────────
-function NewTotalWatcher({ control, setValue }: { control: Control<ChangeOrderFields>; setValue: (name: "new_total", v: string) => void }) {
-  const [orig, change] = useWatch({ control, name: ["original_amount", "change_amount"] });
-  useEffect(() => {
-    const o = parseFloat(orig  ?? "");
-    const c = parseFloat(change ?? "");
-    if (!isNaN(o) && !isNaN(c)) setValue("new_total", (o + c).toFixed(2));
-  }, [orig, change, setValue]);
-  return null;
-}
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function DocumentsTab({ projectId, project }: { projectId: number; project: ProjectInfo }) {
   const queryClient = useQueryClient();
@@ -365,22 +344,6 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
     },
   });
 
-  const coForm = useForm<ChangeOrderFields>({
-    defaultValues: {
-      co_number:           "001",
-      owner_name:          project.clientName ?? "",
-      change_description:  "",
-      original_amount:     "",
-      change_amount:       "",
-      new_total:           "",
-      additional_days:     "0",
-      new_completion_date: "",
-      effective_date:      today(),
-    },
-  });
-
-  const isChangeOrder = selectedType === "change_order";
-
   // ── step 2 → preview ──
   const handleGeneratePreview = (fields: Record<string, string>) => {
     if (!templateDetail) return;
@@ -398,10 +361,6 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
     handleGeneratePreview({ ...data })
   );
 
-  const onCoPreview = coForm.handleSubmit((data) =>
-    handleGeneratePreview({ ...data })
-  );
-
   // ── step 3 → save & sign ──
   const handleSaveAndSign = () => {
     if (!templateId) return;
@@ -410,9 +369,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         data: {
           template_id:  templateId,
           language:     selectedLang,
-          title:        isChangeOrder
-            ? `Orden de Cambio #${(pendingFields.co_number ?? "001")} — ${project.name}`
-            : `${selectedType === "construction" ? "Construction Contract" : "Remodeling Contract"} — ${project.name}`,
+          title:        `${selectedType === "construction" ? "Construction Contract" : "Remodeling Contract"} — ${project.name}`,
           field_values: pendingFields,
         },
       },
@@ -460,17 +417,6 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
       effective_date: today(),
       interest_rate: "1.5",
       cure_days: "10",
-    });
-    coForm.reset({
-      co_number: "001",
-      owner_name: project.clientName ?? "",
-      change_description: "",
-      original_amount: "",
-      change_amount: "",
-      new_total: "",
-      additional_days: "0",
-      new_completion_date: "",
-      effective_date: today(),
     });
   };
 
@@ -619,12 +565,11 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
               <p className="text-sm text-muted-foreground mt-0.5">Choose the type of contract to generate</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(
                 [
-                  { type: "construction",  icon: FileText,      label: "New Construction Contract" },
-                  { type: "remodeling",    icon: FileText,      label: "Remodeling Contract" },
-                  { type: "change_order",  icon: ClipboardList, label: "Change Order" },
+                  { type: "construction", icon: FileText, label: "New Construction Contract" },
+                  { type: "remodeling",   icon: FileText, label: "Remodeling Contract" },
                 ] as { type: DocType; icon: typeof FileText; label: string }[]
               ).map(({ type, icon: Icon, label }) => (
                 <button
@@ -679,67 +624,13 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         {createStep === 2 && (
           <div className="space-y-6">
             <div>
-              <h3 className="font-bold text-lg text-foreground">
-                {isChangeOrder ? "Change Order Details" : "Contract Details"}
-              </h3>
+              <h3 className="font-bold text-lg text-foreground">Contract Details</h3>
               <p className="text-sm text-muted-foreground mt-0.5">
                 Fill in the fields to generate the document
               </p>
             </div>
 
-            {isChangeOrder ? (
-              <form onSubmit={onCoPreview} className="space-y-4">
-                <NewTotalWatcher control={coForm.control} setValue={coForm.setValue} />
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>CO Number *</Label>
-                    <Input {...coForm.register("co_number", { required: true })} placeholder="001" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Effective date *</Label>
-                    <Input type="date" {...coForm.register("effective_date", { required: true })} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Client name *</Label>
-                  <Input {...coForm.register("owner_name", { required: true })} placeholder="John Smith" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Change description *</Label>
-                  <Textarea {...coForm.register("change_description", { required: true })} rows={3} placeholder="Describe the scope of the change..." />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Original amount *</Label>
-                    <Input {...coForm.register("original_amount", { required: true })} placeholder="50000" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Change amount *</Label>
-                    <Input {...coForm.register("change_amount", { required: true })} placeholder="5000" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>New total</Label>
-                    <Input {...coForm.register("new_total")} placeholder="Auto" className="bg-muted/40" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Additional days</Label>
-                    <Input {...coForm.register("additional_days")} placeholder="0" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>New completion date *</Label>
-                    <Input type="date" {...coForm.register("new_completion_date", { required: true })} />
-                  </div>
-                </div>
-                <div className="flex justify-end pt-2">
-                  <Button type="submit" className="gap-2 bg-orange-500 hover:bg-orange-600 text-white">
-                    Generate document <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={onContractPreview} className="space-y-4">
+            <form onSubmit={onContractPreview} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Client name *</Label>
                   <Input {...contractForm.register("owner_name", { required: true })} placeholder="John Smith" />
@@ -788,7 +679,6 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                   </Button>
                 </div>
               </form>
-            )}
           </div>
         )}
 
@@ -866,7 +756,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
           <CardContent className="p-10 text-center text-muted-foreground">
             <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
             <p className="font-medium">No documents yet</p>
-            <p className="text-sm mt-1">Generate your first contract or change order.</p>
+            <p className="text-sm mt-1">Generate your first contract.</p>
             {user?.role === "builder" && (
               <Button
                 size="sm"
@@ -882,7 +772,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
         <div className="space-y-3">
           {docs.map((doc: DocumentListItemType) => {
             const cfg  = DOC_STATUS[doc.status] ?? DOC_STATUS.draft;
-            const Icon = doc.type === "change_order" ? ClipboardList : FileText;
+            const Icon = FileText;
             return (
               <Card key={doc.id} className="border-none shadow-sm bg-white">
                 <CardContent className="p-5">
