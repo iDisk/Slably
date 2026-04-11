@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { format } from "date-fns";
+import { useState, useMemo, useEffect } from "react";
+import { format, isToday, isYesterday, differenceInMinutes } from "date-fns";
 import { toast } from "sonner";
 import { Loader2, LogOut, Users, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,7 @@ interface AdminUser {
   createdAt: string;
   organizationId: number | null;
   companyName: string | null;
+  lastActiveAt: string | null;
 }
 
 type RoleFilter = "all" | "builder" | "subcontractor" | "supplier" | "client";
@@ -31,6 +32,19 @@ const ROLE_BADGE: Record<string, string> = {
   supplier:      "bg-amber-100 text-amber-700 border border-amber-200",
   client:        "bg-slate-100 text-slate-600 border border-slate-200",
 };
+
+// ─── Last active formatter ─────────────────────────────────────────────────────
+
+function formatLastActive(val: string | null): React.ReactNode {
+  if (!val) return <span className="text-muted-foreground">Never</span>;
+  const d = new Date(val);
+  const mins = differenceInMinutes(new Date(), d);
+  if (mins < 5)  return <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />Online</span>;
+  if (mins < 60) return <span className="text-muted-foreground text-xs">{mins}m ago</span>;
+  if (isToday(d))     return <span className="text-muted-foreground text-xs">Today, {format(d, "HH:mm")}</span>;
+  if (isYesterday(d)) return <span className="text-muted-foreground text-xs">Yesterday</span>;
+  return <span className="text-muted-foreground text-xs">{format(d, "MMM d")}</span>;
+}
 
 // ─── Fetch helper (bypasses app's patched window.fetch to avoid 401 redirect) ─
 
@@ -117,6 +131,16 @@ function AdminPanelView({ secret, initialUsers }: { secret: string; initialUsers
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [showInactive, setShowInactive] = useState(false);
   const [loadingId, setLoadingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try {
+        const res = await adminFetch(secret, "/admin/users");
+        if (res.ok) setUsers(await res.json());
+      } catch { /* silencioso */ }
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [secret]);
 
   const filtered = useMemo(() => {
     let list = users;
@@ -232,7 +256,7 @@ function AdminPanelView({ secret, initialUsers }: { secret: string; initialUsers
             <table className="w-full text-sm min-w-[820px]">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
-                  {["ID", "Name / Email", "Role", "Company", "City", "Status", "Registered", "Actions"].map(h => (
+                  {["ID", "Name / Email", "Role", "Company", "City", "Status", "Last Active", "Registered", "Actions"].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                       {h}
                     </th>
@@ -242,7 +266,7 @@ function AdminPanelView({ secret, initialUsers }: { secret: string; initialUsers
               <tbody className="divide-y divide-slate-50">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-10 text-muted-foreground text-sm italic">
+                    <td colSpan={9} className="text-center py-10 text-muted-foreground text-sm italic">
                       No users found.
                     </td>
                   </tr>
@@ -265,6 +289,9 @@ function AdminPanelView({ secret, initialUsers }: { secret: string; initialUsers
                         ? <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Active</span>
                         : <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">Inactive</span>
                       }
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {formatLastActive(u.lastActiveAt)}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
                       {format(new Date(u.createdAt), "MMM d, yyyy")}

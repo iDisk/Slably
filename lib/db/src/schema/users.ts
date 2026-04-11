@@ -22,6 +22,7 @@ export const usersTable = pgTable(
     isActive:       boolean("is_active").notNull().default(true),
     createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+    lastActiveAt:   timestamp("last_active_at", { withTimezone: true }),
   },
   (table) => [
     index("users_email_idx").on(table.email),

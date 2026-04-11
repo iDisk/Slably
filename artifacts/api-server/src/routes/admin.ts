@@ -27,6 +27,7 @@ router.get("/admin/users", requireAdminSecret, async (_req, res): Promise<void> 
       createdAt:      usersTable.createdAt,
       organizationId: usersTable.organizationId,
       companyName:    organizationsTable.companyName,
+      lastActiveAt:   usersTable.lastActiveAt,
     })
     .from(usersTable)
     .leftJoin(organizationsTable, eq(usersTable.organizationId, organizationsTable.id))

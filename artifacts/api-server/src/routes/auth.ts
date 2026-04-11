@@ -176,6 +176,8 @@ router.post("/auth/login", loginLimiter, async (req, res): Promise<void> => {
     return;
   }
 
+  void db.update(usersTable).set({ lastActiveAt: new Date() }).where(eq(usersTable.id, rawUser.id));
+
   const organizationId = user.organizationId ?? null;
   const organizationSlug = user.organizationSlug ?? null;
 
@@ -207,6 +209,8 @@ router.get("/auth/me", requireAuth, async (req: AuthRequest, res): Promise<void>
     res.status(401).json({ error: "User not found" });
     return;
   }
+
+  void db.update(usersTable).set({ lastActiveAt: new Date() }).where(eq(usersTable.id, userId));
 
   res.json(GetMeResponse.parse({
     id: user.id,
