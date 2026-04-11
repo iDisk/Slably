@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "6VOTnEvPexYD_YUtd4nG9"
+uri = "file://artifacts/mockup-sandbox/public/images/fieldsun-bg.png"
+type = "image"
+title = "Warm textural abstract landscape"
