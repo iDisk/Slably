@@ -21,7 +21,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex w-64 flex-col bg-sidebar border-r border-sidebar-border shadow-xl z-10 sticky top-0 h-screen">
         <div className="h-20 flex items-center px-6 border-b border-sidebar-border">
           <div className="flex items-center">
-            <img src="/slably-logo-dark.png" alt="Slably" className="h-10 w-auto" />
+            <img src="/slably-logo-dark.png" alt="Slably" className="h-16 w-auto" />
           </div>
         </div>
 
@@ -64,7 +64,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile Nav */}
       <header className="md:hidden flex items-center justify-between p-4 bg-sidebar border-b border-sidebar-border sticky top-0 z-10">
         <div className="flex items-center">
-          <img src="/slably-logo-dark.png" alt="Slably" className="h-10 w-auto" />
+          <img src="/slably-logo-dark.png" alt="Slably" className="h-16 w-auto" />
         </div>
         <button onClick={logout} className="p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground">
           <LogOut className="h-5 w-5" />
