@@ -29,7 +29,7 @@ export async function sendDocumentSigningRequest({
   const signingUrl = `${appUrl}/client?tab=contracts`;
 
   return getResend().emails.send({
-    from: "Slably <onboarding@resend.dev>",
+    from: "Slably <hello@slably.app>",
     to,
     subject: `${contractorCompany} te envió un documento para firmar: ${documentTitle}`,
     html: buildEmailHtml({
@@ -60,7 +60,7 @@ export async function sendRfqNotification({
 }) {
   const appUrl = process.env.APP_URL ?? "http://localhost:5173";
   const { data, error } = await getResend().emails.send({
-    from: "Slably <onboarding@resend.dev>",
+    from: "Slably <hello@slably.app>",
     to,
     subject: `Nueva solicitud de trabajo: ${rfqTitle}`,
     html: buildRfqEmailHtml({
@@ -161,7 +161,7 @@ export async function sendInvitationEmail({
 }) {
   const displayName = builderCompany ?? builderName;
   const { data, error } = await getResend().emails.send({
-    from: "Slably <onboarding@resend.dev>",
+    from: "Slably <hello@slably.app>",
     to,
     subject: `${displayName} invited you to track the progress of ${projectName}`,
     html: buildInvitationEmailHtml({ builderName, builderCompany, projectName, inviteUrl }),
@@ -263,7 +263,7 @@ export async function sendInvoiceEmail({
 }) {
   const formatted = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(parseFloat(totalAmount));
   const { data, error } = await getResend().emails.send({
-    from: "Slably <onboarding@resend.dev>",
+    from: "Slably <hello@slably.app>",
     to,
     subject: `Invoice ${invoiceNumber} from ${senderName}`,
     html: buildInvoiceEmailHtml({ recipientName, senderName, invoiceNumber, invoiceTitle, totalAmount: formatted, dueDate, invoiceUrl }),
