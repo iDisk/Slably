@@ -211,7 +211,6 @@ router.get("/auth/me", requireAuth, async (req: AuthRequest, res): Promise<void>
   }
 
   void db.update(usersTable).set({ lastActiveAt: new Date() }).where(eq(usersTable.id, userId));
-  console.log("[AUTH] Updating lastActiveAt for user:", userId);
 
   res.json(GetMeResponse.parse({
     id: user.id,
