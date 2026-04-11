@@ -307,6 +307,40 @@ export default function ProjectDetails() {
 
           {/* Overview */}
           <TabsContent value="overview">
+            {/* Quick status selector */}
+            {user?.role !== "client" && (
+              <div className="flex flex-wrap gap-1.5 mt-2 mb-4">
+                {(["planning", "active", "on_hold", "completed", "cancelled"] as const).map(s => {
+                  const cfg = STATUS_CONFIG[s];
+                  const isActive = project.status === s;
+                  return (
+                    <button
+                      key={s}
+                      disabled={updateProject.isPending}
+                      onClick={() => {
+                        if (isActive) return;
+                        updateProject.mutate(
+                          { id: projectId, data: { status: s } as UpdateProjectBody },
+                          {
+                            onSuccess: () => {
+                              queryClient.invalidateQueries({ queryKey: getListProjectsQueryKey() });
+                              toast.success("Project status updated");
+                            },
+                          }
+                        );
+                      }}
+                      className={`h-7 px-3 rounded-full text-xs font-semibold border transition-all disabled:opacity-50 ${
+                        isActive
+                          ? cfg.color
+                          : "bg-white text-muted-foreground border-border hover:border-slate-400"
+                      }`}
+                    >
+                      {cfg.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
               <Card className="border-none shadow-sm bg-white">
                 <CardContent className="p-6">
