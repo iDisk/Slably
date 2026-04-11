@@ -100,9 +100,9 @@ export default function Register() {
   };
 
   const roleCards = [
-    { value: "builder",       icon: HardHat, label: "Builder",    subtitle: "Construyo y administro proyectos" },
-    { value: "subcontractor", icon: Wrench,  label: "Sub",        subtitle: "Ofrezco servicios de construcción" },
-    { value: "client",        icon: User,    label: "Cliente",    subtitle: "Tengo un proyecto en construcción" },
+    { value: "builder",       icon: HardHat, label: "Builder",    subtitle: "I build and manage projects" },
+    { value: "subcontractor", icon: Wrench,  label: "Sub",        subtitle: "I offer construction services" },
+    { value: "client",        icon: User,    label: "Client",     subtitle: "I have a construction project" },
     { value: "supplier",      icon: Store,   label: "Supplier",   subtitle: "I sell materials and equipment" },
   ] as const;
 
@@ -193,7 +193,7 @@ export default function Register() {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="companyName">Company name *</Label>
-                  <Input id="companyName" placeholder="González Supply Co." {...register("companyName")} />
+                  <Input id="companyName" placeholder="Smith Supply Co." {...register("companyName")} />
                   {errors.companyName && <p className="text-sm text-destructive font-medium">{errors.companyName.message}</p>}
                 </div>
                 <div className="space-y-2">
@@ -209,12 +209,12 @@ export default function Register() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="serviceCity">Ciudad principal *</Label>
+                    <Label htmlFor="serviceCity">Primary city *</Label>
                     <Input id="serviceCity" placeholder="Houston, TX" {...register("serviceCity")} />
                     {errors.serviceCity && <p className="text-sm text-destructive font-medium">{errors.serviceCity.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Teléfono</Label>
+                    <Label htmlFor="phone">Phone</Label>
                     <Input id="phone" placeholder="(555) 123-4567" {...register("phone")} />
                   </div>
                 </div>
@@ -232,15 +232,15 @@ export default function Register() {
             {selectedRole === "builder" && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="companyName">Nombre de la empresa *</Label>
-                  <Input id="companyName" placeholder="López Construction" {...register("companyName")} />
+                  <Label htmlFor="companyName">Company name *</Label>
+                  <Input id="companyName" placeholder="Smith Construction" {...register("companyName")} />
                   {errors.companyName && <p className="text-sm text-destructive font-medium">{errors.companyName.message}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor="state">Estado *</Label>
+                    <Label htmlFor="state">State *</Label>
                     <Select id="state" {...register("state")}>
-                      <option value="">Seleccionar...</option>
+                      <option value="">Select...</option>
                       <option value="TX">Texas (TX)</option>
                       <option value="FL">Florida (FL)</option>
                       <option value="CA">California (CA)</option>
@@ -248,12 +248,12 @@ export default function Register() {
                       <option value="AZ">Arizona (AZ)</option>
                       <option value="NV">Nevada (NV)</option>
                       <option value="CO">Colorado (CO)</option>
-                      <option value="other">Otro</option>
+                      <option value="other">Other</option>
                     </Select>
                     {errors.state && <p className="text-sm text-destructive font-medium">{errors.state.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Teléfono</Label>
+                    <Label htmlFor="phone">Phone</Label>
                     <Input id="phone" placeholder="(555) 123-4567" {...register("phone")} />
                   </div>
                 </div>

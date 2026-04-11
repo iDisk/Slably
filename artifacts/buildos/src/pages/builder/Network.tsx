@@ -130,7 +130,7 @@ function QuoteRow({ quote, rfqId, onAction }: { quote: RfqQuote; rfqId: number; 
           onSuccess: () => {
             qc.invalidateQueries({ queryKey: getNetworkRfqsQueryKey() });
             qc.invalidateQueries({ queryKey: getRfqQuotesQueryKey(rfqId) });
-            toast.success("Cotización aceptada y RFQ adjudicado");
+            toast.success("Quote accepted and request awarded");
             onAction();
           },
         });
@@ -223,10 +223,10 @@ function BuilderRfqCard({ rfq }: { rfq: Rfq }) {
       {
         onSuccess: () => {
           qc.invalidateQueries({ queryKey: [`/api/network/rfqs/${rfq.id}/ratings`] });
-          toast.success("Calificación enviada");
+          toast.success("Rating submitted");
           setRatingOpen(false);
         },
-        onError: (e: any) => toast.error(e.message || "Error al enviar calificación"),
+        onError: (e: any) => toast.error(e.message || "Error submitting rating"),
       },
     );
   };

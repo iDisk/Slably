@@ -56,7 +56,7 @@ export default function Login() {
           {sessionExpired && (
             <div className="mb-6 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>Tu sesión expiró. Por favor inicia sesión de nuevo.</span>
+              <span>Your session has expired. Please sign in again.</span>
             </div>
           )}
 

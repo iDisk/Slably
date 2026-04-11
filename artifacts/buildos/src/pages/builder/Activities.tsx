@@ -31,8 +31,8 @@ const TYPE_BADGE: Partial<Record<ActivityType, { label: string; className: strin
 };
 
 const PROJECT_OPTIONS: { key: ProjectType; emoji: string; label: string }[] = [
-  { key: "new",  emoji: "🏗️", label: "Nueva Construcción" },
-  { key: "remo", emoji: "🔨", label: "Remodelación" },
+  { key: "new",  emoji: "🏗️", label: "New Construction" },
+  { key: "remo", emoji: "🔨", label: "Remodeling" },
 ];
 
 export default function Activities() {

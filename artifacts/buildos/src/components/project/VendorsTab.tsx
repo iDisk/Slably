@@ -934,7 +934,7 @@ export function VendorsTab({ projectId }: { projectId: number }) {
         )}
       </div>
 
-      {/* Información */}
+      {/* Information */}
       <Card className="border border-border shadow-sm bg-white">
         <CardContent className="p-5 space-y-4">
           <h4 className="font-semibold text-foreground">Information</h4>
