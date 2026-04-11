@@ -176,7 +176,7 @@ router.post("/auth/login", loginLimiter, async (req, res): Promise<void> => {
     return;
   }
 
-  void db.update(usersTable).set({ lastActiveAt: new Date() }).where(eq(usersTable.id, rawUser.id));
+  await db.update(usersTable).set({ lastActiveAt: new Date() }).where(eq(usersTable.id, rawUser.id));
 
   const organizationId = user.organizationId ?? null;
   const organizationSlug = user.organizationSlug ?? null;
@@ -210,7 +210,7 @@ router.get("/auth/me", requireAuth, async (req: AuthRequest, res): Promise<void>
     return;
   }
 
-  void db.update(usersTable).set({ lastActiveAt: new Date() }).where(eq(usersTable.id, userId));
+  await db.update(usersTable).set({ lastActiveAt: new Date() }).where(eq(usersTable.id, userId));
 
   res.json(GetMeResponse.parse({
     id: user.id,
