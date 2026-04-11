@@ -299,9 +299,7 @@ export default function ProjectDetails() {
             <TabsTrigger value="vendors">Vendors</TabsTrigger>
             <TabsTrigger value="daily-log">Daily Log</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="invoices">Invoices</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
-            <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
             <TabsTrigger value="photos">Photos</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="chat">Chat</TabsTrigger>
@@ -499,17 +497,22 @@ export default function ProjectDetails() {
           {/* Documentos */}
           <TabsContent value="documents">
             <div className="mt-2">
-              <DocumentsTab
-                projectId={project.id}
-                project={project}
-              />
-            </div>
-          </TabsContent>
-
-          {/* Invoices */}
-          <TabsContent value="invoices">
-            <div className="mt-2">
-              <InvoicesTab projectId={project.id} />
+              <Tabs defaultValue="contracts">
+                <TabsList className="w-full">
+                  <TabsTrigger value="contracts">Contracts</TabsTrigger>
+                  <TabsTrigger value="invoices">Invoices</TabsTrigger>
+                  <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
+                </TabsList>
+                <TabsContent value="contracts">
+                  <DocumentsTab projectId={project.id} project={project} />
+                </TabsContent>
+                <TabsContent value="invoices">
+                  <InvoicesTab projectId={project.id} />
+                </TabsContent>
+                <TabsContent value="change-orders">
+                  <ChangeOrdersTab projectId={project.id} />
+                </TabsContent>
+              </Tabs>
             </div>
           </TabsContent>
 
@@ -517,13 +520,6 @@ export default function ProjectDetails() {
           <TabsContent value="expenses">
             <div className="mt-2">
               <ExpensesTab projectId={projectId} />
-            </div>
-          </TabsContent>
-
-          {/* Change Orders */}
-          <TabsContent value="change-orders">
-            <div className="mt-2">
-              <ChangeOrdersTab projectId={projectId} />
             </div>
           </TabsContent>
 
