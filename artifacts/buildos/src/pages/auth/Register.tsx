@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowRight, Loader2, User, HardHat, Wrench, Store } from "lucide-react";
+import { ArrowRight, Loader2, User, HardHat, Wrench, Store, Calculator } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -15,7 +15,7 @@ const registerSchema = z.object({
   name:          z.string().min(2, "Name is required"),
   email:         z.string().email("Please enter a valid email"),
   password:      z.string().min(6, "Password must be at least 6 characters"),
-  role:          z.enum(["builder", "client", "subcontractor", "supplier"]),
+  role:          z.enum(["builder", "client", "subcontractor", "supplier", "accountant"]),
   companyName:   z.string().optional(),
   state:         z.string().optional(),
   phone:         z.string().optional(),
@@ -103,7 +103,8 @@ export default function Register() {
     { value: "builder",       icon: HardHat, label: "Builder",    subtitle: "I build and manage projects" },
     { value: "subcontractor", icon: Wrench,  label: "Sub",        subtitle: "I offer construction services" },
     { value: "client",        icon: User,    label: "Client",     subtitle: "I have a construction project" },
-    { value: "supplier",      icon: Store,   label: "Supplier",   subtitle: "I sell materials and equipment" },
+    { value: "supplier",      icon: Store,      label: "Supplier",   subtitle: "I sell materials and equipment" },
+    { value: "accountant",    icon: Calculator, label: "Accountant", subtitle: "I manage finances and books" },
   ] as const;
 
   return (
