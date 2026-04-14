@@ -73,7 +73,7 @@ export default function Register() {
           name:        data.name,
           email:       data.email,
           password:    data.password,
-          role:          data.role as "builder" | "client" | "subcontractor" | "supplier",
+          role:          data.role as "builder" | "client" | "subcontractor" | "supplier" | "accountant",
           companyName:   data.companyName   || undefined,
           state:         data.state         || undefined,
           phone:         data.phone         || undefined,
