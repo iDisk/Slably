@@ -1,0 +1,79 @@
+Rediseña el empty state de 
+src/pages/taxPro/TaxProDashboard.tsx
+cuando el Tax Pro no tiene clientes.
+
+DISEÑO PREMIUM con este contenido:
+
+HERO BANNER (fondo navy gradiente):
+  Logo: /slably-logo-dark.png
+  height: 44px
+  
+  Título (texto blanco, text-2xl bold):
+  "Welcome, [firstName]!"
+  
+  Subtítulo (texto blanco/70, text-sm):
+  "Your financial hub for contractor clients"
+
+STATS ROW (3 cards debajo del banner):
+  Card 1 — ícono Users, color azul:
+  "0 Clients"
+  "Connected contractors"
+  
+  Card 2 — ícono FileText, color verde:
+  "Tax Season Ready"
+  "Organized financials"
+  
+  Card 3 — ícono Shield, color naranja:
+  "Secure Access"
+  "Read-only client data"
+
+GETTING STARTED SECTION:
+  Título: "Get Started in 2 Steps"
+  
+  Step 1 card (con número "1" en círculo navy):
+  Título: "Invite your contractor clients"
+  Descripción: "Send an invitation to your 
+  clients who use Slably. They'll grant you 
+  read-only access to their financial data."
+  Botón naranja: "+ Add Your First Client"
+  → abre el modal existente de Add Client
+  
+  Step 2 card (con número "2" en círculo gris):
+  Título: "Share your Tax Pro link"
+  Descripción: "Share this link with your 
+  clients so they can find and connect 
+  with you directly on Slably."
+  
+  Link copiable:
+  URL: slably.app/tax-pro/[userId] 
+  (o la URL actual del perfil)
+  Botón: "Copy Link" con ícono Copy
+  → copia al clipboard
+  → toast: "Link copied to clipboard!"
+
+FEATURES ROW (3 columnas):
+  "📊 Financial Summary"
+  "See P&L, expenses and income 
+  for each client in one place"
+  
+  "🧾 1099 Reports"
+  "Track W-9 status and identify 
+  contractors who need a 1099"
+  
+  "📁 Export Ready"
+  "Download expense and income 
+  reports as CSV for tax prep"
+
+DISEÑO GENERAL:
+  Fondo: bg-gradient-to-b from-slate-50 to-white
+  Max width: max-w-4xl mx-auto
+  Banner: rounded-2xl, padding py-8 px-8
+  Cards con sombra suave shadow-sm
+  Botones pill shape rounded-full
+
+Para el nombre en el saludo usa:
+  const firstName = user?.name?.split(' ')[0] ?? 'there'
+  "Welcome, {firstName}!"
+
+Aplica directamente sin mostrar diff.
+Compila artifacts/buildos (tsc --noEmit).

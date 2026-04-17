@@ -86,6 +86,17 @@ function WorkCard({ item, index }: { item: MyWorkItem; index: number }) {
               <span className="truncate">{item.project.address}</span>
             </div>
           )}
+          {item.project.address && (
+            <a
+              href={`https://maps.google.com/?q=${encodeURIComponent(item.project.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#1B3A5C] hover:text-orange-500 transition-colors"
+            >
+              <MapPin className="w-4 h-4" />
+              Get Directions
+            </a>
+          )}
 
           <div className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">

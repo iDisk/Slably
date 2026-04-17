@@ -433,7 +433,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
             onClick={() => { setView("list"); setSigningDoc(null); }}
             className="gap-1.5"
           >
-            <ArrowLeft className="w-4 h-4" /> Volver a documentos
+            <ArrowLeft className="w-4 h-4" /> Back to documents
           </Button>
           <h3 className="font-semibold text-foreground">{signingDoc.title}</h3>
         </div>
@@ -737,7 +737,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
       {/* Header */}
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          {docs.length} {docs.length === 1 ? "Documento" : "Documentos"}
+          {docs.length} {docs.length === 1 ? "Document" : "Documents"}
         </h3>
         {user?.role === "builder" && (
           <Button
@@ -745,7 +745,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
             onClick={() => { resetCreate(); setView("create"); setCreateStep(1); }}
             className="gap-2 bg-orange-500 hover:bg-orange-600 text-white"
           >
-            <Plus className="w-4 h-4" /> Nuevo Documento
+            <Plus className="w-4 h-4" /> New Document
           </Button>
         )}
       </div>
@@ -813,7 +813,7 @@ export function DocumentsTab({ projectId, project }: { projectId: number; projec
                       </div>
 
                       <p className="text-xs text-muted-foreground mt-1.5">
-                        Creado {format(new Date(doc.createdAt), "MMM d, yyyy")}
+                        Created {format(new Date(doc.createdAt), "MMM d, yyyy")}
                       </p>
                     </div>
 

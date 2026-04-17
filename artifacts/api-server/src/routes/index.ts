@@ -19,6 +19,9 @@ import adminRouter from "./admin";
 import userPhotosRouter from "./user-photos";
 import messagesRouter from "./messages";
 import invoicesRouter from "./invoices";
+import quotesRouter from "./quotes";
+import taxProRouter from "./taxPro";
+import eventsRouter from "./events";
 
 const router: IRouter = Router();
 
@@ -42,5 +45,8 @@ router.use(adminRouter);
 router.use(userPhotosRouter);
 router.use(messagesRouter);
 router.use(invoicesRouter);
+router.use(quotesRouter);
+router.use(taxProRouter);
+router.use(eventsRouter);
 
 export default router;

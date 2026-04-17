@@ -1,0 +1,111 @@
+Antes de escribir nada, lee completo:
+src/pages/quotes/NewQuote.tsx
+
+Necesito reestructurar el wizard de 
+4 pasos a 7 pasos con este nuevo flujo:
+
+PASO 1 — "Where is the job?"
+  - address: text input required
+    placeholder: "123 Main St"
+  - city: text input required  
+    placeholder: "Houston"
+  - state: select default "TX"
+
+PASO 2 — "Who is the client?"
+  - clientName: text required
+    placeholder: "John Smith"
+  - clientEmail: text optional
+    placeholder: "john@email.com"
+  - clientPhone: text optional
+    placeholder: "(555) 123-4567"
+
+PASO 3 — "What type of project?"
+  Grid 2x4 de cards visuales:
+  🏠 New Construction
+  🔨 Full Remodel
+  🚿 Bathroom Remodel
+  🍳 Kitchen Remodel
+  🎨 Interior Painting
+  🏗️ Addition
+  🪟 Windows & Doors
+  📋 Other
+  
+  Al seleccionar → resalta naranja
+  projectType se guarda en state
+
+PASO 4 — "Describe the work"
+  - Textarea para descripción libre
+    placeholder: "Describe the work 
+    in detail. Two bathrooms, first 
+    full remodel replacing tub with 
+    shower, new tile, plumbing, 
+    electrical. Second bathroom 
+    new flooring only."
+  - Botón de micrófono para audio
+    (mismo patrón que DailyLogTab:
+    MediaRecorder → Whisper → 
+    transcripción en el textarea)
+  - Botón naranja "Analyze with AI →"
+    Llama POST /api/quotes/analyze con:
+    { rawInput, city, state, address,
+      clientName, projectType }
+
+PASO 5 — "Review & Edit Scope"
+  Por cada área muestra:
+  
+  Header del área con nombre editable
+  
+  INCLUDED TASKS:
+  Cada tarea tiene:
+  - Checkbox para incluir/excluir
+  - Nombre editable inline (click para editar)
+  - Botón 🗑️ para eliminar
+  - Badge del trade (color según TRADE_COLORS)
+  
+  DID YOU FORGET?
+  Lista de isAiSuggested=true tasks
+  con botón "+ Add" para moverlas 
+  a included tasks
+  
+  Botón "+ Add custom task" al final
+  de cada área → abre input inline 
+  para escribir nombre de tarea custom
+  
+  Botón "+ Add new area" al fondo
+  de todas las áreas → input para 
+  nombre del área nueva, luego 
+  permite agregar tareas manualmente
+
+PASO 6 — "Set your prices"
+  (igual que el paso 3 actual)
+  Labor + Material por tarea
+  Sticky bar: Markup % | Client Price | Margin
+
+PASO 7 — "Quote ready"
+  Pre-llenado con info de pasos 1 y 2:
+  - Quote title (editable)
+  - Client name (pre-llenado)
+  - Client email (pre-llenado)  
+  - Address (pre-llenado)
+  - Botones: [Save Draft] [Send to Client]
+
+CAMBIOS EN EL STATE:
+Agregar al state existente:
+  address: string
+  clientPhone: string
+  projectType: string
+  (los demás ya existen)
+
+CAMBIOS EN EL ENDPOINT:
+En artifacts/api-server/src/routes/quotes.ts
+en POST /api/quotes/analyze,
+agrega address, clientName, projectType
+al contexto del prompt de GPT-4o:
+
+"Project type: ${projectType}
+Location: ${address}, ${city}, ${state}
+Client: ${clientName}"
+
+Esto mejora la calidad del análisis de la IA.
+
+Muéstrame el diff completo antes de aplicar.

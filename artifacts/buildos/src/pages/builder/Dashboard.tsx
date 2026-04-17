@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -46,6 +46,7 @@ const projectSchema = z.object({
 });
 
 export default function BuilderDashboard() {
+  const [, navigate] = useLocation();
   const { data: projects, isLoading } = useListProjects();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteId, setDeleteId]     = useState<number | null>(null);
@@ -95,6 +96,14 @@ export default function BuilderDashboard() {
             <h1 className="text-3xl font-display font-bold text-foreground">Projects</h1>
             <p className="text-muted-foreground mt-1 text-sm">Manage all your construction projects in one place.</p>
           </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              className="gap-2 border-[#1B3A5C] text-[#1B3A5C] hover:bg-[#1B3A5C] hover:text-white shrink-0"
+              onClick={() => navigate("/quotes/new")}
+            >
+              📋 Get a Quote
+            </Button>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button className="shrink-0 gap-2">
@@ -161,6 +170,7 @@ export default function BuilderDashboard() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Stats */}

@@ -34,6 +34,7 @@ import { Input, Label, Select, Textarea } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChangeOrdersTab } from "@/components/project/ChangeOrdersTab";
 import { PhotosTab }       from "@/components/project/PhotosTab";
+import CalendarView        from "@/components/calendar/CalendarView";
 import { ActivityTab }     from "@/components/project/ActivityTab";
 import { ExpensesTab }     from "@/components/project/ExpensesTab";
 import { PhasesTab }       from "@/components/project/PhasesTab";
@@ -256,6 +257,17 @@ export default function ProjectDetails() {
                   <MapPin className="w-4 h-4 shrink-0" />
                   {project.address}
                 </p>
+                {project.address && (
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(project.address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-[#1B3A5C] hover:text-orange-500 transition-colors"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Get Directions
+                  </a>
+                )}
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
@@ -303,6 +315,7 @@ export default function ProjectDetails() {
             <TabsTrigger value="photos">Photos</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="chat">Chat</TabsTrigger>
+            <TabsTrigger value="calendar">Calendar</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
@@ -603,6 +616,11 @@ export default function ProjectDetails() {
                 );
               })()}
             </div>
+          </TabsContent>
+
+          {/* Calendar */}
+          <TabsContent value="calendar" className="mt-4">
+            <CalendarView projectId={project.id} projectName={project.name} />
           </TabsContent>
         </Tabs>
 

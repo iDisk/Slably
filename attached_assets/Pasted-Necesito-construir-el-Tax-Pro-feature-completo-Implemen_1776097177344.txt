@@ -1,0 +1,246 @@
+Necesito construir el Tax Pro feature 
+completo. Implementa en este orden:
+
+PASO 1 — DB Schema
+En lib/db/src/schema/users.ts
+Agrega "accountant" al enum de roles:
+DE: ["builder", "client", "subcontractor", "supplier"]
+A:  ["builder", "client", "subcontractor", "supplier", "accountant"]
+
+Crea nueva tabla en lib/db/src/schema/
+archivo: taxPro.ts
+
+export const taxProClients = pgTable('tax_pro_clients', {
+  id: serial('id').primaryKey(),
+  taxProId: integer('tax_pro_id').notNull()
+    .references(() => users.id),
+  builderId: integer('builder_id').notNull()
+    .references(() => users.id),
+  status: text('status').notNull()
+    .default('pending'),
+    // pending | active | revoked
+  invitedAt: timestamp('invited_at')
+    .defaultNow().notNull(),
+  acceptedAt: timestamp('accepted_at'),
+  createdAt: timestamp('created_at')
+    .defaultNow().notNull(),
+});
+
+Exporta la tabla desde lib/db/src/index.ts
+
+Actualiza lib/api-zod/src/index.ts:
+Agrega "accountant" al roleEnum de Zod
+
+Haz db push para aplicar los cambios.
+
+PASO 2 — Backend Routes
+Crea artifacts/api-server/src/routes/taxPro.ts
+con estos endpoints:
+
+GET /api/tax-pro/clients
+  → Lista todos los builders conectados 
+    al tax pro autenticado
+  → Para cada builder devuelve:
+    { id, name, email, companyName,
+      projectCount, totalInvoiced,
+      totalExpenses, totalCollected,
+      pendingW9Count }
+
+GET /api/tax-pro/clients/:builderId/summary
+  → Resumen financiero del builder
+    para el año fiscal (query param: year)
+  → Devuelve:
+    { totalInvoiced, totalCollected,
+      totalExpenses, estimatedProfit,
+      marginPercent,
+      expensesByCategory: {
+        materials, labor, equipment,
+        permits, other
+      },
+      projectCount, invoiceCount,
+      expenseCount }
+
+GET /api/tax-pro/clients/:builderId/expenses
+  → Lista paginada de gastos
+  → Filtros: year, category, projectId
+  → Incluye: amount, vendor, category,
+    date, projectName, receiptUrl
+
+GET /api/tax-pro/clients/:builderId/invoices
+  → Lista paginada de invoices
+  → Filtros: year, status
+  → Incluye: invoiceNumber, title,
+    total, status, paidAt, projectName
+
+GET /api/tax-pro/clients/:builderId/vendors
+  → Lista de vendors/subcontratistas
+    con totales pagados en el año
+  → Incluye: name, totalPaid, w9Status,
+    needs1099 (totalPaid > 600)
+
+POST /api/tax-pro/invite/:builderEmail
+  → Tax pro invita a un builder por email
+  → Crea registro en tax_pro_clients 
+    con status='pending'
+  → Envía email al builder con link 
+    para aceptar
+
+POST /api/tax-pro/accept/:taxProId
+  → Builder acepta la invitación
+  → Actualiza status='active' y acceptedAt
+
+POST /api/tax-pro/vendors/:vendorId/request-w9
+  → Envía email al vendor solicitando W-9
+  → Email desde hello@slably.app:
+    "Subject: W-9 Request from [Builder Name]"
+    Body: "[Builder] is requesting your W-9 
+    for tax purposes. Please reply to this 
+    email with your completed W-9 form."
+
+Registra el router en 
+artifacts/api-server/src/routes/index.ts:
+import taxProRouter from "./taxPro";
+router.use(taxProRouter);
+
+PASO 3 — Frontend
+3A. Agrega card en Register.tsx:
+{ value: "accountant",
+  icon: Calculator,
+  label: "Tax Pro",
+  subtitle: "I manage finances for contractors" }
+
+Importa Calculator desde lucide-react.
+
+Cuando role="accountant":
+- Oculta: companyName, state, 
+  serviceCity, category
+- Muestra solo: name, email, 
+  password, phone (opcional)
+- Agrega campo: firmName (opcional)
+  placeholder: "Smith Tax Services"
+
+3B. Crea src/pages/taxPro/TaxProDashboard.tsx
+Layout con header navy + logo Slably
+
+VISTA PRINCIPAL — lista de clientes:
+  Título: "My Clients"
+  Botón: "+ Add Client" (abre modal)
+  
+  Por cada cliente card:
+  ┌─────────────────────────────┐
+  │ Avatar  Carlos Mendoza      │
+  │         Constructora Mendoza│
+  │                             │
+  │ Revenue    Expenses  Profit │
+  │ $245K      $180K     $65K   │
+  │                    27% ✅   │
+  │                             │
+  │ ⚠️ 2 W-9s missing           │
+  │ [View Details →]            │
+  └─────────────────────────────┘
+
+Modal "+ Add Client":
+  Input: "Client email address"
+  placeholder: "contractor@email.com"
+  Botón: "Send Invitation"
+  → POST /api/tax-pro/invite/:email
+
+VISTA DETALLE — /tax-pro/:builderId
+5 tabs:
+
+Tab 1 — Summary:
+  Selector de año fiscal (2024/2025/2026)
+  4 stat cards: 
+    Invoiced | Collected | Expenses | Profit
+  Breakdown de gastos por categoría
+  (barras de progreso por categoría)
+
+Tab 2 — Expenses:
+  Tabla con columnas:
+  Date | Project | Vendor | Category | 
+  Amount | Receipt
+  Filtros: Year | Category | Project
+  Botón: "Export CSV"
+
+Tab 3 — Income:
+  Tabla con columnas:
+  Invoice # | Project | Amount | 
+  Status | Date
+  Click en fila → modal con detalle
+  del invoice completo
+  Botón: "Export CSV"
+
+Tab 4 — 1099 Report:
+  Tabla con columnas:
+  Vendor/Sub | Total Paid | W-9 Status | 
+  Needs 1099 | Action
+  
+  W-9 Status badge:
+  ✅ "On File" (verde) si w9_url existe
+  ⏳ "Requested" (amarillo) 
+  ❌ "Missing" (rojo)
+  
+  Needs 1099 badge:
+  ⚠️ "Yes" (naranja) si total > $600
+  "No" (gris) si total <= $600
+  
+  Action button:
+  Si Missing → "Request W-9" 
+    → POST /api/tax-pro/vendors/:id/request-w9
+    → Toast: "W-9 request sent to [vendor]"
+  Si On File → "Download W-9"
+
+Tab 5 — Documents:
+  Lista de contratos firmados
+  Lista de change orders aprobados
+  Solo lectura
+
+3C. Registra rutas en App.tsx:
+import TaxProDashboard from 
+  "@/pages/taxPro/TaxProDashboard";
+
+<Route path="/tax-pro">
+  <ProtectedRoute component={TaxProDashboard}
+    roleRequired="accountant" />
+</Route>
+
+Agrega redirect en RootRedirect:
+role === "accountant" → "/tax-pro"
+
+3D. En src/pages/builder/Profile.tsx
+Agrega sección "Tax Pro Access" 
+al final (antes de Integrations):
+
+<div className="space-y-4">
+  <h2>"Tax Pro Access"</h2>
+  <Card>
+    <CardContent>
+      <p>Give your tax preparer or 
+      accountant read-only access to 
+      your financial data for tax 
+      preparation.</p>
+      
+      Si ya tiene tax pro conectado:
+        Muestra nombre + email del tax pro
+        Botón "Revoke Access"
+        → POST /api/tax-pro/revoke/:taxProId
+      
+      Si no tiene tax pro:
+        Input: email del tax pro
+        Botón: "Invite Tax Pro"
+        → GET /api/tax-pro/invite-by-builder
+           con el email ingresado
+    </CardContent>
+  </Card>
+</div>
+
+PASO 4 — Compilación
+Compila en orden:
+1. lib/db (tsc --build)
+2. lib/api-zod (tsc --build)
+3. lib/api-client-react (tsc --build)
+4. artifacts/api-server (tsc --noEmit)
+5. artifacts/buildos (tsc --noEmit)
+
+Reinicia el servidor.
+Confirma cero errores en todos los paquetes.

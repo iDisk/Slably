@@ -24,6 +24,7 @@ export const UserRole = {
   client:        "client",
   subcontractor: "subcontractor",
   supplier:      "supplier",
+  accountant:    "accountant",
 } as const;
 
 export interface User {
@@ -42,6 +43,7 @@ export const RegisterBodyRole = {
   client:        "client",
   subcontractor: "subcontractor",
   supplier:      "supplier",
+  accountant:    "accountant",
 } as const;
 
 export interface RegisterBody {

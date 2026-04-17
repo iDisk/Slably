@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Save, Building2, Phone, MapPin, BadgeCheck, User, Share2, Copy, Camera } from "lucide-react";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { Loader2, Save, Building2, Phone, MapPin, BadgeCheck, User, Share2, Copy, Camera, Calculator, XCircle } from "lucide-react";
 
 import { useGetMyOrg, useUpdateMyOrg, getGetMyOrgQueryKey, useUploadProfilePhoto, useUploadCompanyLogo } from "@workspace/api-client-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -276,6 +276,9 @@ export default function Profile() {
           </CardContent>
         </Card>
 
+        {/* Tax Pro Access */}
+        <TaxProAccessSection />
+
         {/* Public profile link */}
         <Card className="border-none shadow-sm">
           <CardHeader className="pb-3">
@@ -307,5 +310,113 @@ export default function Profile() {
         </Card>
       </div>
     </BuilderLayout>
+  );
+}
+
+// ── Tax Pro Access Section ─────────────────────────────────────────────────
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function TaxProAccessSection() {
+  const [inviteEmail, setInviteEmail] = useState("");
+  const qc = useQueryClient();
+
+  const { data: taxPro, isLoading } = useQuery({
+    queryKey: ["my-tax-pro"],
+    queryFn: async () => {
+      const res = await fetch(`${BASE}/api/tax-pro/my-tax-pro`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await fetch(`${BASE}/api/tax-pro/invite/${encodeURIComponent(email)}`, { method: "POST" });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed"); }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Invitation sent to your tax pro!");
+      setInviteEmail("");
+      qc.invalidateQueries({ queryKey: ["my-tax-pro"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: async (taxProId: number) => {
+      const res = await fetch(`${BASE}/api/tax-pro/revoke/${taxProId}`, { method: "POST" });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error ?? "Failed"); }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Access revoked");
+      qc.invalidateQueries({ queryKey: ["my-tax-pro"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <Card className="border-none shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Calculator className="w-4 h-4 text-primary" /> Tax Pro Access
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Give your tax preparer or accountant read-only access to your financial data for tax preparation.
+        </p>
+
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+          </div>
+        ) : taxPro ? (
+          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                {taxPro.name?.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="font-semibold text-sm">{taxPro.name}</p>
+                <p className="text-xs text-muted-foreground">{taxPro.email}</p>
+                {taxPro.status === "pending" && (
+                  <span className="text-xs text-amber-600">Invitation pending</span>
+                )}
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-red-200 text-red-600 hover:bg-red-50 gap-1.5"
+              onClick={() => revokeMutation.mutate(taxPro.id)}
+              disabled={revokeMutation.isPending}
+            >
+              {revokeMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+              Revoke Access
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="taxpro@email.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              className="bg-[#1B3A5C] hover:bg-[#152d4a] text-white gap-1.5 shrink-0"
+              onClick={() => inviteMutation.mutate(inviteEmail)}
+              disabled={inviteMutation.isPending || !inviteEmail.trim()}
+            >
+              {inviteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Invite Tax Pro
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -1,0 +1,84 @@
+Rediseña el empty state de 
+src/pages/client/ClientDashboard.tsx
+cuando el cliente no tiene proyectos.
+
+Diseño premium con este contenido:
+
+HERO SECTION:
+  Imagen del logo:
+  <img src="/slably-logo.png" 
+    alt="Slably" 
+    style={{ height: '48px', width: 'auto' }}
+    className="mb-6" />
+  
+  Título grande (text-3xl font-bold 
+  text-[#1B3A5C]):
+  "Your Home, Your Project."
+  
+  Subtítulo (text-muted-foreground, max-w-lg):
+  "Connect with verified contractors, 
+  track your renovation in real time, 
+  and sign documents digitally — 
+  all in one place."
+
+FEATURES ROW (3 cards en grid):
+
+  Card 1 — ícono Search en círculo azul:
+  "Find Professionals"
+  "Browse verified builders and 
+  specialists rated by real clients"
+
+  Card 2 — ícono ClipboardList en 
+  círculo naranja:
+  "Post Your Project"
+  "Describe your job and receive 
+  quotes from local contractors"
+
+  Card 3 — ícono CheckCircle en 
+  círculo verde:
+  "Track Everything"
+  "Photos, documents, updates and 
+  chat — once your contractor 
+  invites you"
+
+2 BOTONES GRANDES debajo:
+
+  Botón 1 — navy #1B3A5C, h-12, 
+  rounded-full, text-white, w-full 
+  max-w-xs:
+  <Search className="w-4 h-4" />
+  "Browse Professionals"
+  onClick → navigate("/find")
+
+  Botón 2 — orange #F97316, h-12,
+  rounded-full, text-white, w-full 
+  max-w-xs:
+  <Plus className="w-4 h-4" />
+  "Post a Job"
+  onClick → navigate("/post-job")
+
+LAYOUT GENERAL:
+  Fondo: bg-gradient-to-b 
+    from-slate-50 to-white
+  Todo centrado: text-center
+  Padding: py-16 px-6
+  Max width contenido: max-w-3xl mx-auto
+  
+  Banner superior con gradiente navy:
+  <div className="w-full bg-gradient-to-r 
+    from-[#1B3A5C] to-[#2d5a8e] 
+    py-8 px-6 flex items-center 
+    justify-center mb-12 rounded-2xl">
+    [Logo aquí]
+    [Título y subtítulo en texto blanco]
+  </div>
+
+  Features en grid:
+  grid grid-cols-1 md:grid-cols-3 gap-4 mb-10
+
+  Botones en fila:
+  flex flex-col sm:flex-row gap-3 
+  justify-center
+
+Aplica directamente sin mostrar diff.
+Compila artifacts/buildos (tsc --noEmit).

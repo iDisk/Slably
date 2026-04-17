@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import {
@@ -13,12 +14,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, FileSignature, CheckCircle2, XCircle, Image as ImageIcon, DollarSign, FileText, ClipboardList, X, Pencil, ExternalLink } from "lucide-react";
+import { Loader2, FileSignature, CheckCircle2, XCircle, Image as ImageIcon, DollarSign, FileText, ClipboardList, X, Pencil, ExternalLink, Search, Plus, MapPin } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function ClientDashboard() {
+  const [, navigate] = useLocation();
   const { data: projects, isLoading } = useListProjects();
   const project = projects?.[0];
   const tabFromUrl = new URLSearchParams(window.location.search).get("tab") ?? "updates";
@@ -27,9 +29,81 @@ export default function ClientDashboard() {
 
   if (!project) return (
     <ClientLayout>
-      <div className="text-center p-12 bg-white rounded-2xl shadow-sm border border-border">
-        <h2 className="text-2xl font-bold font-display text-foreground">Welcome to Slably!</h2>
-        <p className="text-muted-foreground mt-2">You don't have any active projects assigned to your account yet.</p>
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white py-16 px-6 text-center">
+        <div className="max-w-3xl mx-auto">
+
+          {/* Hero banner */}
+          <div className="w-full bg-gradient-to-r from-[#1B3A5C] to-[#2d5a8e] py-8 px-6 flex flex-col items-center justify-center mb-12 rounded-2xl">
+            <img
+              src="/slably-logo-dark.png"
+              alt="Slably"
+              style={{ height: "48px", width: "auto" }}
+              className="mb-6"
+            />
+            <h1 className="text-3xl font-bold text-white mb-3">Your Home, Your Project.</h1>
+            <p className="text-white/80 max-w-lg text-base leading-relaxed">
+              Connect with verified contractors, track your renovation in real time, and sign documents digitally — all in one place.
+            </p>
+          </div>
+
+          {/* Features row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+            <Card className="border-border shadow-sm">
+              <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
+                <div className="w-12 h-12 rounded-full bg-[#1B3A5C]/10 flex items-center justify-center">
+                  <Search className="w-6 h-6 text-[#1B3A5C]" />
+                </div>
+                <h3 className="font-semibold text-foreground">Find Professionals</h3>
+                <p className="text-sm text-muted-foreground">
+                  Browse verified builders and specialists rated by real clients
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border shadow-sm">
+              <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
+                <div className="w-12 h-12 rounded-full bg-[#F97316]/10 flex items-center justify-center">
+                  <ClipboardList className="w-6 h-6 text-[#F97316]" />
+                </div>
+                <h3 className="font-semibold text-foreground">Post Your Project</h3>
+                <p className="text-sm text-muted-foreground">
+                  Describe your job and receive quotes from local contractors
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border shadow-sm">
+              <CardContent className="p-6 flex flex-col items-center gap-3 text-center">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                </div>
+                <h3 className="font-semibold text-foreground">Track Everything</h3>
+                <p className="text-sm text-muted-foreground">
+                  Photos, documents, updates and chat — once your contractor invites you
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* CTA buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              className="h-12 rounded-full bg-[#1B3A5C] hover:bg-[#152d4a] text-white w-full max-w-xs gap-2"
+              onClick={() => navigate("/find")}
+            >
+              <Search className="w-4 h-4" />
+              Browse Professionals
+            </Button>
+            <Button
+              className="h-12 rounded-full bg-[#F97316] hover:bg-[#ea6c0e] text-white w-full max-w-xs gap-2"
+              onClick={() => navigate("/post-job")}
+            >
+              <Plus className="w-4 h-4" />
+              Post a Job
+            </Button>
+          </div>
+
+        </div>
       </div>
     </ClientLayout>
   );
@@ -42,6 +116,17 @@ export default function ClientDashboard() {
             <Badge variant="outline" className="mb-2 uppercase tracking-widest text-[10px] text-primary border-primary">Active Project</Badge>
             <h1 className="text-3xl font-display font-extrabold text-foreground">{project.name}</h1>
             <p className="text-muted-foreground mt-1">{project.address}</p>
+            {project.address && (
+              <a
+                href={`https://maps.google.com/?q=${encodeURIComponent(project.address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#1B3A5C] hover:text-orange-500 transition-colors mt-1"
+              >
+                <MapPin className="w-4 h-4" />
+                Get Directions
+              </a>
+            )}
           </div>
           <div className="w-full md:w-64">
             <div className="flex justify-between text-sm font-bold mb-2">

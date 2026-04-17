@@ -139,7 +139,7 @@ router.get("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise<
 // ─── POST /api/network/rfqs ───────────────────────────────────────────────────
 router.post("/network/rfqs", requireAuth, async (req: AuthRequest, res): Promise<void> => {
   const user = req.user!;
-  if (user.role !== "builder") { res.status(403).json({ error: "Forbidden" }); return; }
+  if (user.role !== "builder" && user.role !== "client") { res.status(403).json({ error: "Forbidden" }); return; }
 
   const parsed = CreateRfqBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }

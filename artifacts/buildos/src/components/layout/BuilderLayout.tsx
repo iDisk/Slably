@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { LayoutDashboard, LogOut, UserCircle, Users, Search, Briefcase } from "lucide-react";
+import { LayoutDashboard, LogOut, UserCircle, Users, Search, Briefcase, FileText, CalendarDays, Store } from "lucide-react";
 import { formatInitials } from "@/lib/utils";
 
 export function BuilderLayout({ children }: { children: React.ReactNode }) {
@@ -8,11 +8,14 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
 
   const navItems = [
-    { href: "/dashboard",     label: "Dashboard",  icon: LayoutDashboard, roles: undefined },
-    { href: "/sub-dashboard", label: "My Work",    icon: Briefcase,       roles: ["subcontractor", "supplier"] as string[] },
-    { href: "/find",          label: "Directory",  icon: Search,          roles: undefined },
-    { href: "/network",       label: "Network",    icon: Users,           roles: undefined },
-    { href: "/profile",       label: "Profile",    icon: UserCircle,      roles: undefined },
+    { href: "/dashboard",     label: "Projects",      icon: LayoutDashboard, roles: undefined },
+    { href: "/quotes",        label: "Quotes",         icon: FileText,        roles: ["builder"] as string[] },
+    { href: "/sub-dashboard", label: "My Work",        icon: Briefcase,       roles: ["subcontractor", "supplier"] as string[] },
+    { href: "/calendar",      label: "Calendar",       icon: CalendarDays,    roles: ["builder"] as string[] },
+    { href: "/network",       label: "Work Network",   icon: Users,           roles: undefined },
+    { href: "/find",          label: "Find Pros",      icon: Search,          roles: undefined },
+    { href: "/marketplace",   label: "Marketplace",    icon: Store,           roles: undefined },
+    { href: "/profile",       label: "Profile",        icon: UserCircle,      roles: undefined },
   ];
 
   return (

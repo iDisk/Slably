@@ -21,3 +21,6 @@ export * from "./project_invitations";
 export * from "./messages";
 export * from "./invoices";
 export * from "./invoice_items";
+export * from "./quotes";
+export * from "./taxPro";
+export * from "./events";

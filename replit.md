@@ -4,6 +4,11 @@
 
 A SaaS MVP for small/medium construction companies to centralize project management and improve client experience.
 
+## Key Features
+- **AI Quote Generator**: 4-step wizard (`/quotes/new`) — describe job → GPT-4o analyzes scope by area & task → review inclusions → set prices → save/convert to project. Routes: `GET/POST /api/quotes`, `GET/PATCH /api/quotes/:id`, `PATCH /api/quotes/:id/tasks/:taskId`, `POST /api/quotes/:id/convert`, `POST /api/quotes/analyze`
+- **Quote History learning**: `quote_price_history` table learns from past quotes per city/org and feeds GPT-4o context for more accurate pricing
+- **Role access**: Quotes features are builder-only (`roleRequired="builder"`)
+
 ## Stack
 
 - **Monorepo**: pnpm workspaces

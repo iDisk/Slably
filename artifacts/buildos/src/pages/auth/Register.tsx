@@ -1,9 +1,10 @@
+import React from "react";
 import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowRight, Loader2, User, HardHat, Wrench, Store, Calculator } from "lucide-react";
+import { ArrowRight, Loader2, User, HardHat, Wrench, Store, House, Calculator } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -22,6 +23,7 @@ const registerSchema = z.object({
   category:      z.string().optional(),
   serviceCity:   z.string().optional(),
   serviceRadius: z.coerce.number().optional(),
+  firmName:      z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.role === "builder") {
     if (!data.companyName || data.companyName.trim().length < 2) {
@@ -35,7 +37,7 @@ const registerSchema = z.object({
     if (!data.category) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Category is required", path: ["category"] });
     }
-    if (!data.serviceCity || data.serviceCity.trim().length < 2) {
+    if (data.category !== "handyman" && (!data.serviceCity || data.serviceCity.trim().length < 2)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Service city is required", path: ["serviceCity"] });
     }
   }
@@ -89,6 +91,7 @@ export default function Register() {
           setLocation(
             res.user.role === "builder" ? "/dashboard"
             : res.user.role === "client" ? "/client"
+            : res.user.role === "accountant" ? "/tax-pro"
             : "/network"
           );
         },
@@ -99,13 +102,21 @@ export default function Register() {
     );
   };
 
-  const roleCards = [
-    { value: "builder",       icon: HardHat, label: "Builder",    subtitle: "I build and manage projects" },
-    { value: "subcontractor", icon: Wrench,  label: "Sub",        subtitle: "I offer construction services" },
-    { value: "client",        icon: User,    label: "Client",     subtitle: "I have a construction project" },
-    { value: "supplier",      icon: Store,      label: "Supplier",   subtitle: "I sell materials and equipment" },
-    { value: "accountant",    icon: Calculator, label: "Accountant", subtitle: "I manage finances and books" },
-  ] as const;
+  const roleCards: Array<{
+    value: "builder" | "client" | "subcontractor" | "supplier" | "accountant";
+    icon: React.ElementType;
+    label: string;
+    subtitle?: string;
+    category?: string;
+  }> = [
+    { value: "builder",       icon: HardHat,    label: "Builder" },
+    { value: "subcontractor", icon: Wrench,     label: "Sub" },
+    { value: "client",        icon: User,       label: "Home Owner" },
+    { value: "supplier",      icon: Store,      label: "Supplier" },
+    { value: "subcontractor", icon: Wrench,     label: "Handyman",  category: "handyman" },
+    { value: "builder",       icon: House,      label: "Flipper",   category: "flipper" },
+    { value: "accountant",    icon: Calculator, label: "Tax Pro",   subtitle: "I manage finances for contractors" },
+  ];
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -124,26 +135,35 @@ export default function Register() {
           </p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Role selector — 2×2 grid */}
+            {/* Role selector — 2×3 grid */}
             <div className="grid grid-cols-2 gap-3 mb-2">
-              {roleCards.map(({ value, icon: Icon, label }) => (
-                <div
-                  key={value}
-                  onClick={() => setValue("role", value)}
-                  className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${
-                    selectedRole === value
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border hover:border-primary/30 text-muted-foreground"
-                  }`}
-                >
-                  <Icon className="h-6 w-6" />
-                  <span className="font-semibold text-sm">{label}</span>
-                </div>
-              ))}
+              {roleCards.map((card, i) => {
+                const Icon = card.icon;
+                const isSelected = selectedRole === card.value &&
+                  (card.category ? watch("category") === card.category : !["handyman","flipper"].includes(watch("category") ?? ""));
+                return (
+                  <div
+                    key={`${card.value}-${i}`}
+                    onClick={() => {
+                      setValue("role", card.value);
+                      setValue("category", card.category ?? "");
+                    }}
+                    className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 text-center transition-all ${
+                      isSelected
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border hover:border-primary/30 text-muted-foreground"
+                    }`}
+                  >
+                    <Icon className="h-6 w-6" />
+                    <span className="font-semibold text-sm">{card.label}</span>
+                    {card.subtitle && <span className="text-[10px] leading-tight opacity-70">{card.subtitle}</span>}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Subcontractor fields */}
-            {selectedRole === "subcontractor" && (
+            {selectedRole === "subcontractor" && watch("category") !== "handyman" && (
               <>
                 <div className="space-y-2">
                   <Label htmlFor="category">Trade / Category *</Label>
@@ -228,6 +248,28 @@ export default function Register() {
               <Input id="name" placeholder="John Doe" {...register("name")} />
               {errors.name && <p className="text-sm text-destructive font-medium">{errors.name.message}</p>}
             </div>
+
+            {/* Home Owner fields */}
+            {selectedRole === "client" && (
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                <Input id="phone" placeholder="(555) 123-4567" {...register("phone")} />
+              </div>
+            )}
+
+            {/* Tax Pro fields */}
+            {selectedRole === "accountant" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="firmName">Firm Name <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                  <Input id="firmName" placeholder="Smith Tax Services" {...register("firmName")} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone <span className="text-muted-foreground text-xs">(optional)</span></Label>
+                  <Input id="phone" placeholder="(555) 123-4567" {...register("phone")} />
+                </div>
+              </>
+            )}
 
             {/* Builder fields */}
             {selectedRole === "builder" && (

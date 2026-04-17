@@ -1,0 +1,452 @@
+# Replit Prompt — Slably Quote Generator Feature
+
+Paste everything below this line into Replit AI:
+
+---
+
+I need to implement a full AI-powered Quote Generator feature in Slably. This is a 4-step wizard that lets builders describe a job (by typing) and get back a fully itemized quote broken down by area and task, with AI-suggested prices and smart task suggestions for things they might have forgotten.
+
+Everything must be in English — all UI text, labels, buttons, placeholders, error messages.
+
+---
+
+## STEP 1 — DATABASE SCHEMA (lib/db/schema.ts)
+
+Add these 4 new tables and 2 enums to the existing schema file. Do NOT remove or modify any existing tables.
+
+```typescript
+// Add these enums
+export const quoteStatusEnum = pgEnum('quote_status', [
+  'draft', 'sent', 'approved', 'rejected', 'expired', 'converted'
+]);
+
+export const taskTradeEnum = pgEnum('task_trade', [
+  'demo', 'framing', 'drywall', 'tile', 'flooring', 'plumbing',
+  'electrical', 'hvac', 'painting', 'cabinetry', 'countertops',
+  'roofing', 'windows', 'doors', 'insulation', 'concrete',
+  'landscaping', 'cleanup', 'permits', 'general'
+]);
+
+// Table 1: quotes
+export const quotes = pgTable('quotes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  createdBy: uuid('created_by').notNull().references(() => users.id),
+  title: text('title').notNull(),
+  clientName: text('client_name'),
+  clientEmail: text('client_email'),
+  clientPhone: text('client_phone'),
+  address: text('address'),
+  city: text('city'),
+  state: text('state').default('TX'),
+  rawInput: text('raw_input'),
+  audioUrl: text('audio_url'),
+  transcription: text('transcription'),
+  projectType: text('project_type'),
+  scopeSummary: text('scope_summary'),
+  totalLaborCost: decimal('total_labor_cost', { precision: 12, scale: 2 }).default('0'),
+  totalMaterialCost: decimal('total_material_cost', { precision: 12, scale: 2 }).default('0'),
+  totalCost: decimal('total_cost', { precision: 12, scale: 2 }).default('0'),
+  markupPercent: decimal('markup_percent', { precision: 5, scale: 2 }).default('25'),
+  clientPrice: decimal('client_price', { precision: 12, scale: 2 }).default('0'),
+  estimatedMarginPercent: decimal('estimated_margin_percent', { precision: 5, scale: 2 }),
+  status: quoteStatusEnum('status').default('draft'),
+  sentAt: timestamp('sent_at'),
+  approvedAt: timestamp('approved_at'),
+  expiresAt: timestamp('expires_at'),
+  projectId: uuid('project_id').references(() => projects.id),
+  convertedAt: timestamp('converted_at'),
+  pdfUrl: text('pdf_url'),
+  aiModel: text('ai_model'),
+  aiProcessedAt: timestamp('ai_processed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+});
+
+// Table 2: quote_areas
+export const quoteAreas = pgTable('quote_areas', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  quoteId: uuid('quote_id').notNull().references(() => quotes.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').notNull(),
+  name: text('name').notNull(),
+  scopeSummary: text('scope_summary'),
+  sortOrder: integer('sort_order').default(0),
+  totalLaborCost: decimal('total_labor_cost', { precision: 12, scale: 2 }).default('0'),
+  totalMaterialCost: decimal('total_material_cost', { precision: 12, scale: 2 }).default('0'),
+  totalCost: decimal('total_cost', { precision: 12, scale: 2 }).default('0'),
+  clientPrice: decimal('client_price', { precision: 12, scale: 2 }).default('0'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Table 3: quote_tasks
+export const quoteTasks = pgTable('quote_tasks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  quoteId: uuid('quote_id').notNull().references(() => quotes.id, { onDelete: 'cascade' }),
+  areaId: uuid('area_id').notNull().references(() => quoteAreas.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').notNull(),
+  name: text('name').notNull(),
+  description: text('description'),
+  trade: taskTradeEnum('trade').default('general'),
+  unit: text('unit'),
+  quantity: decimal('quantity', { precision: 10, scale: 2 }),
+  laborCost: decimal('labor_cost', { precision: 12, scale: 2 }).default('0'),
+  materialCost: decimal('material_cost', { precision: 12, scale: 2 }).default('0'),
+  totalCost: decimal('total_cost', { precision: 12, scale: 2 }).default('0'),
+  marketLaborMin: decimal('market_labor_min', { precision: 12, scale: 2 }),
+  marketLaborMax: decimal('market_labor_max', { precision: 12, scale: 2 }),
+  marketMaterialMin: decimal('market_material_min', { precision: 12, scale: 2 }),
+  marketMaterialMax: decimal('market_material_max', { precision: 12, scale: 2 }),
+  marketNote: text('market_note'),
+  isIncluded: boolean('is_included').default(true),
+  isAiDetected: boolean('is_ai_detected').default(true),
+  isAiSuggested: boolean('is_ai_suggested').default(false),
+  suggestionReason: text('suggestion_reason'),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Table 4: quote_price_history (for learning over time)
+export const quotePriceHistory = pgTable('quote_price_history', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  organizationId: uuid('organization_id').notNull(),
+  quoteId: uuid('quote_id').references(() => quotes.id),
+  projectId: uuid('project_id').references(() => projects.id),
+  taskName: text('task_name').notNull(),
+  trade: taskTradeEnum('trade'),
+  city: text('city'),
+  state: text('state'),
+  unit: text('unit'),
+  quantity: decimal('quantity', { precision: 10, scale: 2 }),
+  laborCostPerUnit: decimal('labor_cost_per_unit', { precision: 10, scale: 2 }),
+  materialCostPerUnit: decimal('material_cost_per_unit', { precision: 10, scale: 2 }),
+  laborCostTotal: decimal('labor_cost_total', { precision: 12, scale: 2 }),
+  materialCostTotal: decimal('material_cost_total', { precision: 12, scale: 2 }),
+  actualLaborCost: decimal('actual_labor_cost', { precision: 12, scale: 2 }),
+  actualMaterialCost: decimal('actual_material_cost', { precision: 12, scale: 2 }),
+  variancePercent: decimal('variance_percent', { precision: 7, scale: 2 }),
+  wasAiSuggested: boolean('was_ai_suggested').default(false),
+  wasAccepted: boolean('was_accepted').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+```
+
+After adding the schema, run:
+```bash
+cd lib/db && npm run build
+npx drizzle-kit generate
+npx drizzle-kit migrate
+```
+
+---
+
+## STEP 2 — BACKEND ROUTE (artifacts/api-server/routes/quotes.ts)
+
+Create this file with the following endpoints:
+
+### POST /api/quotes/analyze
+Accepts `{ rawInput: string, city: string, state: string }` from the builder.
+Fetches the builder's price history from `quote_price_history` for that city/org.
+Calls GPT-4o with this exact system + user prompt:
+
+**System prompt:**
+```
+You are an expert construction estimator in the United States with 20+ years of experience in residential remodeling and new construction. You specialize in the Latino contractor market in Texas, Florida, and California.
+
+Your job: break down a job described in free-form text into areas and tasks with realistic market prices.
+
+CRITICAL RULES:
+1. Tasks the contractor explicitly mentioned → isAiDetected: true, isAiSuggested: false
+2. Tasks you think of that they did NOT mention → isAiDetected: false, isAiSuggested: true, with a clear suggestionReason in English explaining why it matters
+3. Prices must be REALISTIC for the given city and current year
+4. Always separate labor vs material costs
+5. If a task has a measurable unit (sqft, lf, ea), include quantity and unit price
+6. Maximum 12 tasks per area — be specific but not excessive
+7. RESPOND ONLY WITH VALID JSON. No text before or after. No markdown.
+```
+
+**User prompt (dynamic):**
+```
+BUILDER'S PRICE HISTORY FOR THIS CITY (use as primary reference if available):
+[inject builder history here, or "No previous history — use market prices for [city], [state]"]
+
+BUILDER INPUT:
+"[rawInput]"
+
+Respond with this exact JSON structure:
+{
+  "projectType": "remodel" | "new_construction" | "repair" | "addition",
+  "city": "[city]",
+  "state": "[state]",
+  "scopeSummary": "1-2 sentence summary of the total job scope",
+  "areas": [
+    {
+      "name": "descriptive area name",
+      "scopeSummary": "what specifically is being done in this area",
+      "tasks": [
+        {
+          "name": "task name",
+          "trade": "demo|framing|drywall|tile|flooring|plumbing|electrical|hvac|painting|cabinetry|countertops|cleanup|permits|general",
+          "unit": "sqft|lf|ea|hr|null",
+          "quantity": number or null,
+          "laborCost": total_labor_dollars,
+          "materialCost": total_material_dollars,
+          "marketLaborMin": market_min,
+          "marketLaborMax": market_max,
+          "marketMaterialMin": market_min,
+          "marketMaterialMax": market_max,
+          "marketNote": "Market [city]: $X–$Y per sqft" or null,
+          "isAiDetected": true,
+          "isAiSuggested": false,
+          "suggestionReason": null
+        }
+      ]
+    }
+  ]
+}
+```
+
+Use `response_format: { type: 'json_object' }` and `temperature: 0.3`.
+Return the parsed JSON directly to the frontend.
+
+### POST /api/quotes
+Accepts the full quote data with areas and tasks. Calculates totals. Inserts into `quotes`, `quote_areas`, `quote_tasks`, and `quote_price_history` in a single DB transaction. Returns the created quote.
+
+### GET /api/quotes
+Returns all quotes for the authenticated builder's organization, ordered by `createdAt` DESC. Include `status`, `title`, `clientName`, `clientPrice`, `createdAt`.
+
+### GET /api/quotes/:id
+Returns the full quote with nested areas and tasks (use Drizzle's `with` for relations).
+
+### PATCH /api/quotes/:id
+Updates quote-level fields (markup, status, clientName, etc.). Recalculates `clientPrice` if `markupPercent` changes.
+
+### PATCH /api/quotes/:id/tasks/:taskId
+Updates a single task (laborCost, materialCost, isIncluded). Recalculates area and quote totals after update.
+
+### POST /api/quotes/:id/convert
+Creates a new project from the quote data. Updates the quote status to `'converted'` and stores the `projectId`. Returns `{ quote, project }`.
+
+Register the router in `artifacts/api-server/index.ts`:
+```typescript
+import quotesRouter from './routes/quotes';
+app.use('/api/quotes', quotesRouter);
+```
+
+---
+
+## STEP 3 — FRONTEND PAGES (artifacts/buildos/src)
+
+Use the existing Slably design system: navy `#1B3A5C`, orange `#F97316`, Tailwind CSS, Shadcn/UI components, TanStack Query for data fetching. All text in English.
+
+### 3A — Add "Get a Quote" button to the Dashboard
+
+Find the existing dashboard page where the "New Project" button lives. Add a second button right next to it:
+
+```tsx
+// Existing button (keep as-is):
+<Button onClick={() => navigate('/projects/new')}>
+  + New Project
+</Button>
+
+// New button (add right next to it):
+<Button 
+  variant="outline"
+  className="border-[#1B3A5C] text-[#1B3A5C] hover:bg-[#1B3A5C] hover:text-white"
+  onClick={() => navigate('/quotes/new')}
+>
+  📋 Get a Quote
+</Button>
+```
+
+Also add a "My Quotes" link in the sidebar navigation, below Projects.
+
+### 3B — Quotes List Page (/quotes)
+
+Simple list page showing all quotes. Each quote card shows:
+- Title
+- Client name (or "No client yet" in gray)
+- Client price formatted as currency
+- Status badge (draft = gray, sent = blue, approved = green, converted = navy)
+- Date created
+- Click → navigates to `/quotes/:id`
+
+Empty state: "No quotes yet. Create your first quote to get started." with a "Get a Quote" button.
+
+### 3C — Quote Wizard (/quotes/new) — 4 Steps
+
+Use local React state to manage the wizard. DO NOT save to DB until Step 4. Show a step indicator at the top: Step 1 → Step 2 → Step 3 → Step 4.
+
+---
+
+**STEP 1: Describe the Job**
+
+Page title: "What are you quoting?"
+Subtitle: "Describe the job in plain language — type naturally."
+
+Show a large textarea (min 4 rows) with placeholder:
+`"2 bathroom remodel in Houston — full gut on bathroom 1, replace tub with shower, new tile, vanity, plumbing. Bathroom 2 just needs new floor tile."`
+
+Below the textarea, show two small input fields side by side:
+- City (text input, default to builder's city from their profile)
+- State (text input, default to builder's state)
+
+Primary button: "Analyze with AI →"
+
+On click:
+1. Show a loading state: spinner + "AI is analyzing your job..." message
+2. Call `POST /api/quotes/analyze` with `{ rawInput, city, state }`
+3. On success → advance to Step 2 with the response data
+4. On error → show toast "Something went wrong. Please try again."
+
+---
+
+**STEP 2: Review Areas & Tasks**
+
+Page title: "Review your scope of work"
+Subtitle: "AI broke down your job by area. Review and customize."
+
+For each area returned by the AI, show an expandable card:
+
+```
+┌─────────────────────────────────────────┐
+│ ▼  Bathroom 1 — Full Remodel            │
+│    Subtotal: $9,420                     │
+├─────────────────────────────────────────┤
+│                                         │
+│  DETECTED IN YOUR DESCRIPTION:          │
+│  ✅ Demolition                          │
+│  ✅ Tile floor and walls                │
+│  ✅ Shower door / enclosure             │
+│  ✅ Vanity installation                 │
+│  ✅ Plumbing (supply + drain)           │
+│  ✅ Electrical (GFCI, lighting)         │
+│                                         │
+│  💡 AI SUGGESTIONS (often forgotten):  │
+│  ☐ Faucet + shower valve               │
+│     "Usually quoted separately but     │
+│      should be in scope"               │
+│  ☐ Debris removal                      │
+│     "Client always expects clean site" │
+│  ☐ Paint                               │
+│     "Almost always needed after tile"  │
+│                                         │
+│  [+ Add custom task]                    │
+└─────────────────────────────────────────┘
+```
+
+Detected tasks (isAiDetected: true) → show with green checkbox ✅, pre-checked, toggleable
+AI suggestions (isAiSuggested: true) → show with gray checkbox ☐, unchecked by default, toggleable. Show the suggestionReason in small gray text below the task name.
+
+"+ Add custom task" → opens a small inline form: task name input + trade dropdown + Add button.
+
+At the bottom: summary of total areas and tasks included, then "Continue to Pricing →" button.
+
+---
+
+**STEP 3: Set Prices**
+
+Page title: "Set your prices"
+Subtitle: "AI suggested market rates. Adjust to match your numbers."
+
+For each area, show a collapsible section. For each included task inside it:
+
+```
+Tile floor and walls                    [trade badge: TILE]
+─────────────────────────────────────────────────────────
+  120 sqft  │  Market: $18–$28/sqft installed
+
+  Labor     $ [____1,320____]
+  Material  $ [____1,800____]
+            ─────────────────
+  Task total:    $3,120
+
+  💡 Market Houston: $18–$28/sqft installed
+```
+
+All dollar inputs are directly editable. When the builder edits a number, recalculate totals instantly in real time (no API call needed — pure frontend math).
+
+At the bottom of the page, show a sticky summary bar:
+
+```
+┌──────────────────────────────────────────────────┐
+│  Labor:     $7,430    Material:    $4,870         │
+│  Your cost: $12,300   Markup: [25]%               │
+│                                                   │
+│  CLIENT PRICE:   $15,375        Margin: 20%       │
+│                                                   │
+│                        [Continue to Summary →]    │
+└──────────────────────────────────────────────────┘
+```
+
+The markup field is editable. When changed, recalculate CLIENT PRICE and margin in real time.
+
+---
+
+**STEP 4: Summary & Save**
+
+Page title: "Your quote is ready"
+
+Show a clean summary card:
+
+```
+┌──────────────────────────────────────────┐
+│  Quote title (editable text field)       │
+│  Client name (editable text field)       │
+│  Client email (editable text field)      │
+│  City, State                             │
+├──────────────────────────────────────────┤
+│  Bathroom 1 — Full Remodel   $11,875     │
+│  Bathroom 2 — Floor only      $1,875     │
+│  ────────────────────────────────────    │
+│  CLIENT TOTAL:               $13,750     │
+│  Your estimated margin:          20%     │
+└──────────────────────────────────────────┘
+```
+
+Three action buttons:
+1. **"Save & Create Project"** (primary, orange) → calls `POST /api/quotes` to save, then immediately calls `POST /api/quotes/:id/convert` to create the project, then navigates to the new project page
+2. **"Save Quote Only"** (secondary, outline) → calls `POST /api/quotes` to save as draft, then navigates to `/quotes/:id`
+3. **"Back"** (text link) → goes back to Step 3
+
+---
+
+### 3D — Quote Detail Page (/quotes/:id)
+
+Show the full quote with all areas and tasks. Display the status badge prominently.
+
+Action buttons depending on status:
+- If `draft`: "Send to Client" button (updates status to `sent`, sends email if clientEmail exists) and "Convert to Project" button
+- If `sent`: "Mark as Approved" button and "Convert to Project" button  
+- If `approved` or `converted`: show read-only view with the project link if converted
+
+---
+
+## STEP 4 — TYPESCRIPT COMPILATION
+
+After all changes, confirm zero TypeScript errors by running in this order:
+1. `cd lib/api-zod && npm run build`
+2. `cd lib/api-client-react && npm run build`
+3. `cd artifacts/api-server && npm run build`
+4. `cd artifacts/buildos && npm run build`
+
+Fix any type errors before finishing.
+
+---
+
+## SUMMARY OF FILES TO CREATE OR MODIFY
+
+| File | Action |
+|---|---|
+| `lib/db/schema.ts` | MODIFY — add 4 tables + 2 enums |
+| `artifacts/api-server/routes/quotes.ts` | CREATE |
+| `artifacts/api-server/index.ts` | MODIFY — register route |
+| `artifacts/buildos/src/pages/quotes/new.tsx` | CREATE — 4-step wizard |
+| `artifacts/buildos/src/pages/quotes/index.tsx` | CREATE — quotes list |
+| `artifacts/buildos/src/pages/quotes/[id].tsx` | CREATE — quote detail |
+| `artifacts/buildos/src/pages/dashboard.tsx` | MODIFY — add "Get a Quote" button |
+| `artifacts/buildos/src/components/sidebar.tsx` | MODIFY — add "My Quotes" nav link |
+
+Total: 4 new files, 4 modified files.
