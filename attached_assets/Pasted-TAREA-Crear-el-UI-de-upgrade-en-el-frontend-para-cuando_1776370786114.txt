@@ -1,0 +1,134 @@
+TAREA: Crear el UI de upgrade en el frontend para cuando un usuario 
+toca una función bloqueada por su plan.
+
+ANTES DE TOCAR CUALQUIER ARCHIVO, muéstrame:
+1. Qué archivos crearás y cuáles modificarás
+2. El diff exacto de cada cambio
+3. Espera mi aprobación antes de proceder.
+
+---
+
+CONTEXTO IMPORTANTE:
+- El backend ya devuelve errores 403 con este formato:
+  { error: 'plan_required', feature, currentPlan, requiredPlan, upgradeUrl }
+- TanStack Query es el cliente HTTP — los errores 403 llegan como 
+  errored mutations o queries
+- Stack: React 18, TailwindCSS, Shadcn/UI, Wouter
+
+---
+
+PIEZAS A CONSTRUIR:
+
+PIEZA 1 — Hook usePlanGate
+Crea: artifacts/buildos/src/hooks/usePlanGate.ts
+
+Este hook:
+- Recibe un error de TanStack Query (de un mutation.error o query.error)
+- Detecta si es un error de plan_required (status 403 + body.error === 'plan_required')
+- Devuelve: { isPlanError: boolean, feature: string, currentPlan: string, requiredPlan: string }
+
+PIEZA 2 — Componente UpgradeModal
+Crea: artifacts/buildos/src/components/ui/UpgradeModal.tsx
+
+Props:
+- open: boolean
+- onClose: () => void
+- feature: string         ← nombre del feature bloqueado
+- currentPlan: string
+- requiredPlan: string
+
+Contenido visual:
+- Ícono de candado (Lucide Lock)
+- Título: "Necesitas un plan [requiredPlan]"
+- Descripción: texto según el feature bloqueado (ver mapa abajo)
+- Dos botones:
+  * "Ver planes" → navega a /pricing (usa Wouter useLocation)
+  * "Cerrar" → llama onClose
+
+Mapa de feature → descripción amigable:
+  aiFeatures      → "El log por audio con IA y el OCR de recibos están 
+                     disponibles en el plan Pro."
+  changeOrders    → "Los Change Orders digitales están disponibles 
+                     en el plan Pro."
+  clientPortal    → "El portal del cliente está disponible 
+                     en el plan Pro."
+  maxActiveProjects → "Has alcanzado el límite de proyectos de tu plan. 
+                       Actualiza para crear proyectos ilimitados."
+  (default)       → "Esta función no está disponible en tu plan actual."
+
+Estilo:
+- Usa el componente Dialog de Shadcn/UI si ya existe en el proyecto,
+  si no usa un modal propio con Tailwind
+- Colores de marca: navy #1B3A5C, naranja #F97316
+- Debe verse bien en móvil
+
+PIEZA 3 — Página /pricing
+Crea: artifacts/buildos/src/pages/Pricing.tsx
+
+Contenido:
+- Título "Elige tu plan"
+- 4 tarjetas de planes en grid (2 col en móvil, 4 en desktop):
+
+  FREE — $0/mes
+  Para: Subs, Suppliers, Realtors, Contadores, Homeowners
+  Incluye: Perfil en directorio, RFQs limitados, Network
+  CTA: "Tu plan actual" (disabled si ya están en free)
+
+  STARTER — $39/mes
+  Para: Constructores pequeños
+  Incluye: Hasta 3 proyectos, Documentos + firma
+  Badge: "1 mes gratis"
+  CTA: "Comenzar prueba gratis"
+
+  PRO — $89/mes  ← destacado visualmente
+  Para: Constructores activos
+  Incluye: Todo ilimitado, IA features, Portal del cliente, 
+           Change orders, Activity logs
+  Badge: "Más popular"
+  CTA: "Actualizar a Pro"
+
+  BUSINESS — $179/mes
+  Para: Equipos y empresas grandes
+  Incluye: Todo de Pro + Multi-usuario, Roles avanzados
+  CTA: "Contactar ventas"
+
+- El CTA de cada plan llama a POST /api/billing/checkout con 
+  { plan: 'starter' | 'pro' | 'business' }
+  NOTA: ese endpoint NO existe todavía — el botón debe estar visualmente
+  activo pero al hacer click muestra un toast: 
+  "Pagos disponibles muy pronto. Te notificaremos."
+  (usamos Sonner que ya está instalado)
+
+- El plan actual del usuario debe marcarse visualmente 
+  (borde naranja + "Tu plan actual")
+  Lee el plan desde el JWT decodificado o el auth context
+
+PIEZA 4 — Registro de la ruta /pricing
+Modifica el archivo de rutas del frontend (donde están definidas las 
+rutas de Wouter) para agregar:
+  <Route path="/pricing" component={PricingPage} />
+
+---
+
+INTEGRACIÓN EN COMPONENTES EXISTENTES:
+Identifica en el código actual dónde se usan estas acciones y agrega 
+el UpgradeModal:
+
+A) El botón de "Log por audio" en el tab de Daily Logs
+B) El botón de "Crear Change Order"
+
+Para cada uno:
+- Agrega estado: const [upgradeError, setUpgradeError] = useState(null)
+- En el onError de la mutation: if (isPlanError) setUpgradeError(error)
+- Renderiza <UpgradeModal> condicionalmente
+
+Muéstrame el nombre exacto de los archivos donde están esos botones 
+antes de modificarlos.
+
+---
+
+RESTRICCIONES:
+- No toques el backend
+- No cambies componentes que no están en la lista
+- tsc --noEmit en buildos al final
+- Reporta si Dialog de Shadcn ya existe o no en el proyecto

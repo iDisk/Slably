@@ -67,7 +67,7 @@ catalogs:
       specifier: ^7.3.0
       version: 7.3.1
     zod:
-      specifier: ^3.25.76
+      specifier: 3.25.76
       version: 3.25.76
 
 overrides:
@@ -207,13 +207,16 @@ importers:
         version: 2.1.1
       openai:
         specifier: ^6.33.0
-        version: 6.33.0(zod@4.3.6)
+        version: 6.33.0(zod@3.25.76)
       resend:
         specifier: ^6.10.0
         version: 6.10.0
       stripe:
         specifier: ^22.0.1
         version: 22.0.1(@types/node@25.3.5)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@types/bcryptjs':
         specifier: ^3.0.0
@@ -6497,9 +6500,9 @@ snapshots:
     dependencies:
       wrappy: 1.0.2
 
-  openai@6.33.0(zod@4.3.6):
+  openai@6.33.0(zod@3.25.76):
     optionalDependencies:
-      zod: 4.3.6
+      zod: 3.25.76
 
   orval@8.5.3(prettier@3.8.1)(typescript@5.9.3):
     dependencies:

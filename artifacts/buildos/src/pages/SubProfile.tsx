@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DirectoryLayout } from "@/components/layout/DirectoryLayout";
 import { BackButton } from "@/components/BackButton";
+import SEO from "@/components/SEO";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const TRADE_LABELS: Record<string, string> = {
@@ -91,6 +92,23 @@ export default function SubProfile() {
 
   return (
     <DirectoryLayout>
+      <SEO
+        title={`${sub.name} - ${sub.category ? (TRADE_LABELS[sub.category] ?? sub.category) : "Specialist"}${sub.serviceCity ? ` in ${sub.serviceCity}` : ""} | Slably`}
+        description={`${sub.name} offers ${sub.category ? (TRADE_LABELS[sub.category] ?? sub.category) : "construction"} services${sub.serviceCity ? ` in ${sub.serviceCity}` : ""}. Verified on Slably with real ratings.`}
+        canonical={`https://slably.app/sub/${subId}`}
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "name": sub.name,
+          "description": `${sub.category ? (TRADE_LABELS[sub.category] ?? sub.category) : "Specialist"} verified on Slably`,
+          "url": `https://slably.app/sub/${subId}`,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": sub.serviceCity ?? "",
+            "addressCountry": "US",
+          },
+        }}
+      />
       <div className="max-w-2xl mx-auto px-4 space-y-6">
         <BackButton />
         {/* ── Profile header card ── */}
@@ -187,9 +205,15 @@ export default function SubProfile() {
           Request quote <ArrowRight className="w-5 h-5" />
         </Button>
 
-        <p className="text-center text-xs text-muted-foreground pb-4">
-          Powered by Slably · Construction management
-        </p>
+        <footer className="text-center text-xs text-muted-foreground py-8 border-t mt-12">
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <span>·</span>
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <span>·</span>
+            <span>© 2026 Slably · Slably, Inc.</span>
+          </div>
+        </footer>
       </div>
     </DirectoryLayout>
   );

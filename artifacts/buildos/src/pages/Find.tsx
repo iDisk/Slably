@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DirectoryLayout } from "@/components/layout/DirectoryLayout";
+import SEO from "@/components/SEO";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const SUPPLIER_LABELS: Record<string, string> = {
@@ -48,6 +49,11 @@ export default function Find() {
 
   return (
     <DirectoryLayout>
+      <SEO
+        title="Find Contractors & Specialists | Slably"
+        description="Browse verified builders, remodelers, plumbers, electricians and specialists. Read real ratings from completed projects. Free to browse."
+        canonical="https://slably.app/find"
+      />
       <div className="max-w-5xl mx-auto px-4 space-y-6">
         {/* Heading */}
         <div className="space-y-1">
@@ -230,9 +236,15 @@ export default function Find() {
           </>
         )}
 
-        <p className="text-center text-xs text-muted-foreground pb-4">
-          Powered by Slably · Construction management
-        </p>
+        <footer className="text-center text-xs text-muted-foreground py-8 border-t mt-12">
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <span>·</span>
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <span>·</span>
+            <span>© 2026 Slably · Slably, Inc.</span>
+          </div>
+        </footer>
       </div>
     </DirectoryLayout>
   );

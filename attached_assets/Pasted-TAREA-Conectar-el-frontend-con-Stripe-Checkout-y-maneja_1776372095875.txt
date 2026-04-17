@@ -1,0 +1,121 @@
+TAREA: Conectar el frontend con Stripe Checkout y manejar el 
+resultado del pago.
+
+ANTES DE TOCAR CUALQUIER ARCHIVO, muéstrame:
+1. Qué archivos crearás y cuáles modificarás
+2. El diff exacto de cada cambio
+3. Espera mi aprobación antes de proceder.
+
+---
+
+CONTEXTO:
+- POST /api/billing/checkout ya existe y devuelve { url: string }
+- La página /pricing ya existe en src/pages/Pricing.tsx
+  con CTAs que muestran un toast "muy pronto" — hay que reemplazarlos
+- Stack: React 18, TanStack Query, Wouter, Sonner, Shadcn/UI
+- El JWT en localStorage ('slably_token') contiene organizationPlan
+- getJwtPlan() ya existe en src/hooks/usePlanGate.ts
+
+---
+
+PIEZA 1 — Conectar CTAs de /pricing al endpoint real
+Modifica: artifacts/buildos/src/pages/Pricing.tsx
+
+Reemplaza la función handleCta actual:
+- Elimina el toast de "muy pronto"
+- Agrega un useMutation de TanStack Query que llame a 
+  POST /api/billing/checkout con { plan }
+- Mientras carga: deshabilita el botón y muestra spinner
+- En onSuccess: redirige a session.url con window.location.href = url
+  (Stripe Checkout es una página externa, no una ruta interna)
+- En onError: muestra toast.error("No se pudo iniciar el pago. 
+  Intenta de nuevo.")
+- El plan 'free' y 'business' no llaman al endpoint:
+  * free: botón siempre disabled
+  * business: toast.info("Contáctanos en hola@slably.app")
+
+---
+
+PIEZA 2 — Página /billing/success
+Crea: artifacts/buildos/src/pages/BillingSuccess.tsx
+
+Contenido:
+- Lee el parámetro ?session_id de la URL (useSearch de Wouter o 
+  URLSearchParams)
+- Muestra una pantalla de confirmación:
+  * Ícono check grande (Lucide CheckCircle2, color verde #16A34A)
+  * Título: "¡Suscripción activada!"
+  * Subtítulo: "Tu plan ya está activo. 
+    Cierra sesión y vuelve a entrar para ver los cambios."
+  * Botón primario "Ir al dashboard" → navega a /dashboard
+  * Botón secundario "Cerrar sesión" → limpia localStorage y navega a /login
+- Fondo blanco, centrado verticalmente, colores de marca
+- No hace ninguna llamada al API — Stripe ya notificó al backend 
+  via webhook
+
+IMPORTANTE sobre el JWT:
+El plan nuevo NO está en el JWT actual del usuario porque el JWT
+se generó antes del pago. La solución más simple es pedirle al 
+usuario que cierre sesión y vuelva a entrar (el nuevo login 
+generará un JWT con el plan actualizado). Por eso el subtítulo 
+y el botón de "Cerrar sesión".
+
+---
+
+PIEZA 3 — Página /billing/cancel
+Crea: artifacts/buildos/src/pages/BillingCancel.tsx
+
+Contenido:
+- Pantalla simple:
+  * Ícono XCircle (Lucide, color gris)
+  * Título: "Pago cancelado"
+  * Subtítulo: "No se realizó ningún cargo. 
+    Puedes intentarlo de nuevo cuando quieras."
+  * Botón "Ver planes" → navega a /pricing
+- Mismo estilo que BillingSuccess pero sin drama
+
+---
+
+PIEZA 4 — Banner de past_due
+Crea: artifacts/buildos/src/components/ui/PastDueBanner.tsx
+
+Componente:
+- Lee stripeSubscriptionStatus del JWT 
+  (agrega getJwtStatus() en usePlanGate.ts junto a getJwtPlan())
+- Si el status es 'past_due', muestra un banner sticky en la parte 
+  superior:
+  * Fondo rojo suave (#FEE2E2), texto rojo oscuro
+  * Texto: "Tu pago falló. Actualiza tu método de pago para 
+    mantener el acceso."
+  * Botón "Actualizar pago" → navega a /pricing
+  * No tiene botón de cerrar — debe ser imposible de ignorar
+
+Modifica: artifacts/buildos/src/App.tsx o el layout principal
+- Importa PastDueBanner
+- Colócalo DENTRO de las rutas protegidas (solo usuarios logueados 
+  lo ven), FUERA del contenido principal para que aparezca en todas 
+  las páginas autenticadas
+
+---
+
+PIEZA 5 — Registrar las rutas nuevas
+Modifica: artifacts/buildos/src/App.tsx
+
+Agrega:
+  <Route path="/billing/success" component={BillingSuccessPage} />
+  <Route path="/billing/cancel"  component={BillingCancelPage}  />
+
+Ambas rutas van sin ProtectedRoute — el usuario puede llegar 
+desde Stripe sin sesión activa en edge cases.
+
+---
+
+RESTRICCIONES:
+- No toques el backend
+- No instales dependencias nuevas
+- tsc --noEmit en buildos al final
+- Reporta si hay un layout wrapper o sidebar que envuelve las 
+  páginas autenticadas — necesito saber dónde colocar el 
+  PastDueBanner correctamente
+- Muéstrame cómo está la llamada al API en Pricing.tsx 
+  actualmente (el apiClient o fetch) para usar el mismo patrón

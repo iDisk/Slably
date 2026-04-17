@@ -15,6 +15,7 @@ import {
 } from "@workspace/api-zod";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { checkProjectAccess } from "../lib/project-access.js";
+import { featureGate } from "../lib/gate-helpers.js";
 import { r2Client, getPublicUrl } from "../lib/r2.js";
 import { transcribeAudio, structureDailyLog } from "../lib/openai.js";
 
@@ -237,7 +238,7 @@ router.post("/projects/:id/daily-logs", requireAuth, async (req: AuthRequest, re
 });
 
 // POST /api/projects/:id/daily-logs/from-audio
-router.post("/projects/:id/daily-logs/from-audio", requireAuth, upload.single("audio"), async (req: AuthRequest, res): Promise<void> => {
+router.post("/projects/:id/daily-logs/from-audio", requireAuth, featureGate('aiFeatures'), upload.single("audio"), async (req: AuthRequest, res): Promise<void> => {
   const params = DailyLogParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

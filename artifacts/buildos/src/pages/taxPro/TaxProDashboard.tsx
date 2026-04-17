@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -118,7 +118,9 @@ export default function TaxProDashboard() {
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1B3A5C] to-[#2d5a8e] px-6 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src="/slably-logo-dark.png" alt="Slably" style={{ height: 32 }} />
+          <Link href="/dashboard" className="cursor-pointer">
+            <img src="/slably-logo-dark.png" alt="Slably" style={{ height: 32 }} />
+          </Link>
           <div>
             <h1 className="text-white font-bold text-lg leading-none">Tax Pro Dashboard</h1>
             <p className="text-white/70 text-xs mt-0.5">{user?.name}</p>
@@ -151,7 +153,9 @@ export default function TaxProDashboard() {
 
             {/* Hero Banner */}
             <div className="rounded-2xl bg-gradient-to-r from-[#1B3A5C] to-[#2d5a8e] py-8 px-8 text-center">
-              <img src="/slably-logo-dark.png" alt="Slably" className="mx-auto mb-4" style={{ height: 44 }} />
+              <Link href="/dashboard" className="cursor-pointer inline-block">
+                <img src="/slably-logo-dark.png" alt="Slably" className="mx-auto mb-4" style={{ height: 44 }} />
+              </Link>
               <h2 className="text-white text-2xl font-bold">Welcome, {firstName}!</h2>
               <p className="text-white/70 text-sm mt-1">Your financial hub for contractor clients</p>
             </div>

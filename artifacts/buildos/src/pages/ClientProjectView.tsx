@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, Link } from "wouter";
 import { format, parseISO } from "date-fns";
 import {
   MapPin, Loader2, AlertCircle, Building2,
@@ -267,7 +267,9 @@ export default function ClientProjectView() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
       <div className="bg-[#1B3A5C] px-6 py-4">
-        <img src="/slably-logo.png" alt="Slably" className="h-8" />
+        <Link href="/" className="cursor-pointer">
+          <img src="/slably-logo.png" alt="Slably" className="h-8" />
+        </Link>
       </div>
 
       <div className="flex-1 max-w-2xl mx-auto w-full px-4 py-8 space-y-5">

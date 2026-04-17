@@ -8,6 +8,7 @@ import {
   expensesTable,
   invoicesTable,
   projectVendorsTable,
+  organizationsTable,
 } from "@workspace/db";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { Resend } from "resend";
@@ -527,6 +528,48 @@ router.post("/api/tax-pro/vendors/:vendorId/request-w9", requireAuth, async (req
   }
 
   res.json({ success: true, message: `W-9 request sent to ${vendor.name}` });
+});
+
+// ─── GET /api/tax-pro/public-profile/:userId (público, sin auth) ─────────────
+router.get("/api/tax-pro/public-profile/:userId", async (req, res): Promise<void> => {
+  const userId = parseInt(req.params.userId as string);
+  if (isNaN(userId)) { res.status(400).json({ error: "Invalid id" }); return; }
+
+  const [user] = await db
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+      phone: usersTable.phone,
+      serviceCity: usersTable.serviceCity,
+      profilePhoto: usersTable.profilePhoto,
+      organizationId: usersTable.organizationId,
+    })
+    .from(usersTable)
+    .where(and(eq(usersTable.id, userId), eq(usersTable.role, "accountant"), eq(usersTable.isActive, true)))
+    .limit(1);
+
+  if (!user) { res.status(404).json({ error: "Not found" }); return; }
+
+  let firmName: string | null = null;
+  if (user.organizationId) {
+    const [org] = await db
+      .select({ name: organizationsTable.name })
+      .from(organizationsTable)
+      .where(eq(organizationsTable.id, user.organizationId))
+      .limit(1);
+    firmName = org?.name ?? null;
+  }
+
+  res.json({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    serviceCity: user.serviceCity,
+    profilePhoto: user.profilePhoto,
+    firmName,
+  });
 });
 
 export default router;

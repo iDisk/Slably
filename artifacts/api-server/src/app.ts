@@ -2,6 +2,8 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import cors from "cors";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
+import stripeWebhookRouter from './routes/stripe-webhook.js';
+import billingRouter from './routes/billing.js';
 
 const app: Express = express();
 app.use(helmet());
@@ -43,6 +45,9 @@ app.use(
   })
 );
 
+// Stripe webhook — raw body MUST come before express.json()
+app.use('/api/webhooks', stripeWebhookRouter);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -68,6 +73,7 @@ app.use(globalLimiter);
 
 import router from "./routes/index.js";
 app.use("/api", router);
+app.use('/api/billing', billingRouter);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

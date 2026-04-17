@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { BuilderLayout } from "@/components/layout/BuilderLayout";
 
 interface MarketCard {
@@ -94,7 +94,9 @@ export default function Marketplace() {
     <BuilderLayout>
       {/* Header */}
       <div className="rounded-2xl bg-gradient-to-r from-[#1B3A5C] to-[#2d5a8e] py-8 px-8 mb-8 flex items-center gap-6">
-        <img src="/slably-logo-dark.png" alt="Slably" style={{ height: 44 }} />
+        <Link href="/dashboard" className="cursor-pointer">
+          <img src="/slably-logo-dark.png" alt="Slably" style={{ height: 44 }} />
+        </Link>
         <div>
           <h1 className="text-white text-2xl font-display font-bold leading-tight">Marketplace</h1>
           <p className="text-white/70 text-sm mt-0.5">Everything your business needs in one place</p>

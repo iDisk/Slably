@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { usePlanGate } from "@/hooks/usePlanGate";
+import { UpgradeModal } from "@/components/ui/UpgradeModal";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Loader2, Mic, ArrowLeft, CheckCircle2 } from "lucide-react";
@@ -72,6 +74,8 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
   const [view,          setView]          = useState<View>("list");
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
   const [createdLogId,  setCreatedLogId]  = useState<number | null>(null);
+  const [upgradeError,  setUpgradeError]  = useState<unknown>(null);
+  const gate = usePlanGate(upgradeError);
 
   // ── queries ──
   const { data: logs = [], isLoading } = useListDailyLogs(projectId);
@@ -488,6 +492,13 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
                 setRecState("done");
               },
               onError: (err: unknown) => {
+                const apiErr = err as { status?: number; data?: unknown };
+                const errData = apiErr?.data as Record<string, string> | null;
+                if (apiErr?.status === 403 && errData?.error === 'plan_required') {
+                  setUpgradeError(err);
+                  setRecState("idle");
+                  return;
+                }
                 const status = (err as { response?: { status?: number } })?.response?.status;
                 if (status === 409) {
                   invalidateList();
@@ -517,6 +528,7 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
     }[recState];
 
     return (
+      <>
       <div className="space-y-6 py-4">
         <button
           onClick={() => { stopRecording(); setView("create"); }}
@@ -562,6 +574,14 @@ export function DailyLogTab({ projectId }: { projectId: number }) {
           )}
         </div>
       </div>
+      <UpgradeModal
+        open={gate.isPlanError}
+        onClose={() => setUpgradeError(null)}
+        feature={gate.feature}
+        currentPlan={gate.currentPlan}
+        requiredPlan={gate.requiredPlan}
+      />
+      </>
     );
   }
 

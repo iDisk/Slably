@@ -12,6 +12,7 @@ import {
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { checkProjectAccess } from "../lib/project-access.js";
 import { sendDocumentSigningRequest } from "../lib/email.js";
+import { PLAN_LIMITS, FEATURE_PLAN_REQUIREMENTS, type PlanTier } from '../lib/plan-gates.js';
 
 const router: IRouter = Router();
 
@@ -143,6 +144,25 @@ router.get("/projects/:id/documents/client", requireAuth, async (req: AuthReques
 
   const project = await checkProjectAccess(params.data.id, req.user!);
   if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+
+  // clientPortal gate: cuando lo solicita un cliente, verificar el plan del builder
+  if (req.user!.role === "client") {
+    const [org] = await db
+      .select({ subscriptionPlan: organizationsTable.subscriptionPlan })
+      .from(organizationsTable)
+      .where(eq(organizationsTable.id, project.organizationId));
+    const builderPlan = ((org?.subscriptionPlan) ?? 'free') as PlanTier;
+    if (!PLAN_LIMITS[builderPlan]?.clientPortal) {
+      res.status(403).json({
+        error: 'plan_required',
+        feature: 'clientPortal',
+        currentPlan: builderPlan,
+        requiredPlan: FEATURE_PLAN_REQUIREMENTS['clientPortal'] ?? 'pro',
+        upgradeUrl: '/pricing',
+      });
+      return;
+    }
+  }
 
   const docs = await db
     .select({

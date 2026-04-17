@@ -1,0 +1,149 @@
+TAREA: Implementar el backend de Stripe Checkout para activar suscripciones.
+
+ANTES DE TOCAR CUALQUIER ARCHIVO, muéstrame:
+1. Qué archivos crearás y cuáles modificarás
+2. El diff exacto de cada cambio
+3. Espera mi aprobación antes de proceder.
+
+---
+
+CONTEXTO:
+- organizations.subscription_plan ya existe con valores: 
+  'free' | 'starter' | 'pro' | 'business'
+- organizations.stripe_customer_id ya existe
+- organizations.stripe_subscription_id ya existe
+- organizations.stripe_subscription_status ya existe
+- Stack backend: Express 5, Drizzle ORM, TypeScript estricto
+- Stripe ya está en el proyecto (verifica si @stripe/stripe-js o 
+  stripe está en package.json antes de instalar)
+
+---
+
+PIEZA 1 — Configuración de Stripe
+Crea: artifacts/api-server/src/lib/stripe.ts
+
+Contenido:
+- Importa 'stripe' (el SDK de Node.js, no el frontend)
+- Inicializa con STRIPE_SECRET_KEY desde process.env
+- Exporta la instancia como default
+- Si STRIPE_SECRET_KEY no está definido, lanza error en startup
+- Incluye este mapa de planes a Price IDs:
+
+export const PLAN_PRICE_IDS: Record<string, string> = {
+  starter:  process.env.STRIPE_PRICE_STARTER  ?? '',
+  pro:      process.env.STRIPE_PRICE_PRO      ?? '',
+  business: process.env.STRIPE_PRICE_BUSINESS ?? '',
+};
+
+Los Price IDs los configuramos en variables de entorno, no hardcodeados.
+
+---
+
+PIEZA 2 — Endpoint de Checkout
+Crea: artifacts/api-server/src/routes/billing.ts
+
+POST /api/billing/checkout
+- requireAuth — solo builders autenticados
+- Body: { plan: 'starter' | 'pro' | 'business' }
+- Valida con Zod que plan sea uno de los tres valores válidos
+- Lógica:
+  1. Obtiene la organización del usuario desde DB
+  2. Si org.stripeCustomerId existe, lo usa
+     Si no existe, crea un Customer en Stripe con email y name del usuario,
+     guarda el ID en DB (UPDATE organizations SET stripe_customer_id)
+  3. Crea una Stripe Checkout Session con:
+     - mode: 'subscription'
+     - customer: stripeCustomerId
+     - line_items: [{ price: PLAN_PRICE_IDS[plan], quantity: 1 }]
+     - success_url: process.env.APP_URL + '/billing/success?session_id={CHECKOUT_SESSION_ID}'
+     - cancel_url: process.env.APP_URL + '/pricing'
+     - metadata: { organizationId, plan }
+     - subscription_data.trial_period_days: 30 (solo si plan === 'starter')
+  4. Devuelve: { url: checkoutSession.url }
+- Error si PLAN_PRICE_IDS[plan] está vacío: 
+  500 con { error: 'stripe_not_configured', message: 'Stripe price IDs not configured' }
+
+---
+
+PIEZA 3 — Webhook de Stripe
+Crea: artifacts/api-server/src/routes/stripe-webhook.ts
+
+POST /api/webhooks/stripe
+- SIN requireAuth — es llamado por Stripe directamente
+- CRÍTICO: necesita el body RAW (Buffer), no parseado como JSON
+  Usa express.raw({ type: 'application/json' }) como middleware de esta ruta
+  ANTES de que el body parser global lo intercepte
+- Verifica la firma con stripe.webhooks.constructEvent(
+    req.body, req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET
+  )
+- Si la firma falla: 400 con { error: 'invalid_signature' }
+
+Maneja estos 4 eventos:
+
+1. checkout.session.completed
+   - session.metadata.organizationId + session.metadata.plan
+   - UPDATE organizations SET 
+       subscription_plan = plan,
+       stripe_subscription_id = session.subscription,
+       stripe_subscription_status = 'active'
+     WHERE id = organizationId
+
+2. customer.subscription.updated
+   - Busca la org por stripe_subscription_id = subscription.id
+   - Mapea subscription.items.data[0].price.id → plan name usando PLAN_PRICE_IDS
+   - UPDATE subscription_plan + stripe_subscription_status = subscription.status
+
+3. customer.subscription.deleted
+   - Busca la org por stripe_subscription_id
+   - UPDATE subscription_plan = 'free', stripe_subscription_status = 'canceled'
+
+4. invoice.payment_failed
+   - Busca la org por stripe_customer_id = invoice.customer
+   - UPDATE stripe_subscription_status = 'past_due'
+
+Cualquier otro evento: responde 200 sin hacer nada (no falles en eventos desconocidos).
+
+---
+
+PIEZA 4 — Registrar las rutas en el servidor principal
+Modifica: artifacts/api-server/src/index.ts (o donde se registran las rutas)
+
+IMPORTANTE — orden crítico:
+El webhook DEBE registrarse ANTES del body parser global de JSON,
+porque necesita el body como Buffer.
+
+Agregar en este orden:
+1. ANTES de app.use(express.json()):
+   import stripeWebhookRouter from './routes/stripe-webhook.js';
+   app.use('/api/webhooks', stripeWebhookRouter);
+
+2. DESPUÉS de app.use(express.json()):
+   import billingRouter from './routes/billing.js';
+   app.use('/api/billing', billingRouter);
+
+Muéstrame el archivo index.ts actual antes de modificarlo para 
+confirmar el orden exacto.
+
+---
+
+PIEZA 5 — Variables de entorno
+Muéstrame qué variables hay que agregar al .env.example:
+
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_STARTER=price_...
+STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_BUSINESS=price_...
+APP_URL=https://tu-dominio.com
+
+NO las agregues al .env real — solo al .env.example como referencia.
+
+---
+
+RESTRICCIONES:
+- No toques el frontend
+- No toques rutas existentes
+- tsc --noEmit en api-server al final
+- Reiniciar el servidor al final
+- Si stripe no está en package.json, muéstramelo antes de instalar
+- Reporta si express.raw ya se usa en algún lugar del proyecto

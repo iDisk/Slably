@@ -1,5 +1,11 @@
 import Stripe from "stripe";
 
+export const PLAN_PRICE_IDS: Record<string, string> = {
+  starter:  process.env.STRIPE_PRICE_STARTER  ?? '',
+  pro:      process.env.STRIPE_PRICE_PRO      ?? '',
+  business: process.env.STRIPE_PRICE_BUSINESS ?? '',
+};
+
 let _stripe: Stripe | null = null;
 
 export function getStripe(): Stripe {

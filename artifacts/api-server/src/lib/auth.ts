@@ -13,6 +13,8 @@ export interface TokenPayload {
   role: string;
   organizationId: number | null;
   organizationSlug: string | null;
+  organizationPlan: string | null;
+  stripeSubscriptionStatus: string | null;
 }
 
 export function signToken(payload: TokenPayload): string {

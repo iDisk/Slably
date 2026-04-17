@@ -1,0 +1,141 @@
+Implement a complete, production-ready legal consent system for a SaaS application (Slably).
+
+This must include frontend, backend, and database changes.
+
+-------------------------------------
+1. SIGNUP FLOW — EXPLICIT CONSENT (CRITICAL)
+-------------------------------------
+
+Modify the Register.tsx page:
+
+- Add a required checkbox:
+
+☐ I agree to the Terms of Service and Privacy Policy
+
+- Requirements:
+  - Checkbox must be REQUIRED to enable the "Create Account" button
+  - Terms and Privacy must be clickable links:
+    /terms
+    /privacy
+  - Show validation error if user tries to submit without checking it
+
+- Remove or replace the passive text:
+  "By creating an account you agree..."
+
+-------------------------------------
+2. DATABASE — STORE LEGAL ACCEPTANCE
+-------------------------------------
+
+Update the users table schema:
+
+Add fields:
+
+- termsAcceptedAt (timestamp, nullable initially)
+- termsVersion (string, e.g., "v1.0")
+
+If needed, create a migration.
+
+-------------------------------------
+3. BACKEND — SAVE CONSENT DATA
+-------------------------------------
+
+In the registration endpoint (auth.ts or equivalent):
+
+- Require a boolean field:
+  termsAccepted: true
+
+- If not true:
+  - Reject request with validation error
+
+- If true:
+  - Save:
+    termsAcceptedAt = current timestamp
+    termsVersion = "v1.0"
+
+-------------------------------------
+4. VERSIONING SYSTEM (FOUNDATION)
+-------------------------------------
+
+- Define a constant in backend:
+  CURRENT_TERMS_VERSION = "v1.0"
+
+- Use this when saving new users
+
+- Make it easy to change in the future
+
+-------------------------------------
+5. UI — LEGAL LINKS EVERYWHERE
+-------------------------------------
+
+Ensure Terms and Privacy links exist in:
+
+A) Public pages (verify all):
+- /find
+- /builder/:id
+- /sub/:id
+- /contractors/:city
+- /tax-pro/:id
+- /realtor/:id
+
+Fix any broken links (replace href="#" with real routes)
+
+B) Authenticated app:
+- Add links in sidebar footer OR user settings:
+  - Terms of Service
+  - Privacy Policy
+
+-------------------------------------
+6. FOOTER COMPONENT (REUSABLE)
+-------------------------------------
+
+Create a reusable Footer component:
+
+- Include:
+  - Terms link (/terms)
+  - Privacy link (/privacy)
+  - Copyright
+
+- Use it across public pages and optionally dashboard
+
+-------------------------------------
+7. OPTIONAL (BUT RECOMMENDED)
+-------------------------------------
+
+Prepare system for future:
+
+- Add optional field:
+  termsAcceptedIP (string)
+  (capture from request if available)
+
+- This helps for legal audits later
+
+-------------------------------------
+8. VALIDATION & TESTING
+-------------------------------------
+
+Verify:
+
+- Cannot register without checking checkbox
+- Successful registration stores:
+  - timestamp
+  - version
+- Links work in all pages
+- No broken routes
+- No console errors
+
+-------------------------------------
+9. OUTPUT FORMAT
+-------------------------------------
+
+Explain clearly:
+
+- Files modified
+- Database changes
+- Backend logic added
+- UI changes
+- Any migrations created
+
+-------------------------------------
+
+Goal:
+This should meet best practices used by real SaaS platforms for legal compliance and user consent tracking.

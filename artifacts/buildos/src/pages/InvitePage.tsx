@@ -1,4 +1,4 @@
-import { useRoute } from "wouter";
+import { useRoute, Link } from "wouter";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useGetInvitationInfo, useAccessInvitation, getInvitationInfoQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,9 @@ export default function InvitePage() {
       <div className="w-full max-w-[480px]">
         <Card className="overflow-hidden shadow-lg border-0">
           <div className="bg-[#1B3A5C] px-8 py-7 flex items-center">
-            <img src="/slably-logo.png" alt="Slably" className="h-8" />
+            <Link href="/" className="cursor-pointer">
+              <img src="/slably-logo.png" alt="Slably" className="h-8" />
+            </Link>
           </div>
 
           <CardContent className="p-8">

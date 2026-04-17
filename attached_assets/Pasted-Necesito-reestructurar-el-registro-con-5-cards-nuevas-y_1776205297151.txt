@@ -1,0 +1,189 @@
+Necesito reestructurar el registro 
+con 5 cards nuevas y lógica de 
+planes gratis/pago.
+
+PASO 1 — Agregar "realtor" al enum 
+de roles en lib/db/src/schema/users.ts:
+
+DE: ["builder", "client", "subcontractor", 
+     "supplier", "accountant"]
+A:  ["builder", "client", "subcontractor", 
+     "supplier", "accountant", "realtor"]
+
+Actualiza también lib/api-zod/src/index.ts
+con el mismo cambio.
+
+Haz db push.
+
+PASO 2 — Reestructurar Register.tsx
+
+Las 5 nuevas cards en grid 1x5 
+(una columna, cards horizontales 
+más grandes):
+
+CARD 1 — I'm a Pro
+  ícono: Briefcase (naranja)
+  título: "I'm a Pro"
+  descripción: "Contractor, specialist, 
+  cleaner, technician or any 
+  service provider"
+  badge: "From $29/mo" (gris)
+  role: "builder" (default hasta que 
+  seleccione especialidad)
+
+CARD 2 — I'm a Home Owner  
+  ícono: Home (azul)
+  título: "I'm a Home Owner"
+  descripción: "I have a project or 
+  need a service"
+  badge: "Always Free" (verde)
+  role: "client"
+
+CARD 3 — I'm a Tax Pro
+  ícono: Calculator (morado)
+  título: "I'm a Tax Pro"
+  descripción: "Accountant, CPA or 
+  tax preparer"
+  badge: "Always Free" (verde)
+  role: "accountant"
+
+CARD 4 — I'm a Supplier
+  ícono: Store (naranja)
+  título: "I'm a Supplier"
+  descripción: "I sell materials, 
+  products or equipment"
+  badge: "From $29/mo" (gris)
+  role: "supplier"
+
+CARD 5 — I'm a Realtor
+  ícono: Building2 (azul marino)
+  título: "I'm a Realtor"
+  descripción: "Real estate agent 
+  or broker"
+  badge: "Always Free" (verde)
+  role: "realtor"
+
+DISEÑO de cada card:
+  Layout horizontal (flex row):
+  - Izquierda: ícono en círculo (48px)
+  - Centro: título bold + descripción
+  - Derecha: badge de precio
+  - Al seleccionar: borde naranja + 
+    fondo naranja/5
+  height: auto, padding: p-4
+  border rounded-xl cursor-pointer
+
+PASO 3 — Flujo de especialidades para "Pro"
+
+Cuando se selecciona "I'm a Pro"
+aparece un segundo paso ANTES del 
+formulario de registro:
+
+Título: "What's your specialty?"
+Subtítulo: "Select the option that 
+best describes your work"
+
+Grid 3 columnas de cards pequeñas:
+
+🏗️ General Contractor
+🔨 Remodeling
+🏠 New Construction  
+🏡 House Flipper
+🔧 Handyman
+🚿 Plumbing
+⚡ Electrical
+🎨 Painting
+🪟 Windows & Doors
+🏗️ Framing
+🪵 Carpentry
+🧱 Masonry
+❄️ HVAC
+🌿 Landscaping
+🧹 Cleaning Services
+🔩 General Maintenance
+📋 Other
+
+Al seleccionar una especialidad:
+→ Se guarda como category
+→ Asigna role correcto:
+  General Contractor → role: "builder"
+  Remodeling → role: "builder"
+  New Construction → role: "builder"
+  House Flipper → role: "builder", 
+    category: "flipper"
+  Handyman → role: "subcontractor", 
+    category: "handyman"
+  Plumbing → role: "subcontractor", 
+    category: "plumbing"
+  Electrical → role: "subcontractor", 
+    category: "electrical"
+  Painting → role: "subcontractor", 
+    category: "painting"
+  Windows & Doors → role: "subcontractor"
+  Framing → role: "subcontractor"
+  Carpentry → role: "subcontractor"
+  Masonry → role: "subcontractor"
+  HVAC → role: "subcontractor"
+  Landscaping → role: "subcontractor"
+  Cleaning Services → role: "subcontractor",
+    category: "cleaning"
+  General Maintenance → role: "subcontractor"
+  Other → role: "subcontractor"
+
+→ Continúa al formulario de registro
+
+PASO 4 — Campos por rol
+
+Cuando role = "client" (Home Owner):
+  Mostrar: name, email, password, 
+  phone (opcional)
+  Ocultar: companyName, state, 
+  serviceCity, category
+
+Cuando role = "accountant" (Tax Pro):
+  Mostrar: name, email, password,
+  firmName (opcional), phone (opcional)
+  Ocultar: companyName, state, serviceCity
+
+Cuando role = "realtor":
+  Mostrar: name, email, password,
+  brokerageName (opcional) 
+    placeholder: "RE/MAX, Keller Williams..."
+  licenseNumber (opcional)
+    placeholder: "License # (optional)"
+  city, state
+  Ocultar: serviceCity, category
+
+Cuando role = "supplier":
+  Mostrar: name, email, password,
+  companyName, state, phone
+  Ocultar: serviceCity, category
+
+Cuando role = "builder" o "subcontractor" (Pro):
+  Mostrar: name, email, password,
+  companyName (opcional), 
+  serviceCity (required), state, phone
+  
+PASO 5 — Lógica de plan al registrar
+
+En artifacts/api-server/src/routes/auth.ts
+en POST /api/auth/register:
+
+Agrega esta lógica al crear la organización:
+
+const isPaidRole = 
+  role === "builder" || 
+  role === "subcontractor" || 
+  role === "supplier";
+
+const plan = isPaidRole ? "trial" : "free";
+
+Al insertar la organización agrega:
+plan: plan
+
+Los roles client, accountant, realtor
+quedan con plan: "free" permanentemente.
+Los roles builder, subcontractor, supplier
+quedan con plan: "trial" inicialmente.
+
+PA

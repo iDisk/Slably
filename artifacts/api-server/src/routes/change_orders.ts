@@ -18,6 +18,7 @@ import {
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { checkProjectAccess } from "../lib/project-access.js";
 import { logActivity } from "../lib/activity.js";
+import { featureGate } from "../lib/gate-helpers.js";
 
 const router: IRouter = Router();
 
@@ -60,7 +61,7 @@ router.get("/projects/:projectId/change-orders", requireAuth, async (req: AuthRe
   res.json(ListChangeOrdersResponse.parse(changeOrders.map(serializeCO)));
 });
 
-router.post("/projects/:projectId/change-orders", requireAuth, async (req: AuthRequest, res): Promise<void> => {
+router.post("/projects/:projectId/change-orders", requireAuth, featureGate('changeOrders'), async (req: AuthRequest, res): Promise<void> => {
   const params = CreateChangeOrderParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

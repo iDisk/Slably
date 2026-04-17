@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { LayoutDashboard, LogOut, UserCircle, Users, Search, Briefcase, FileText, CalendarDays, Store } from "lucide-react";
 import { formatInitials } from "@/lib/utils";
+import { LegalFooter } from "@/components/layout/LegalFooter";
 
 export function BuilderLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
@@ -10,6 +11,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/dashboard",     label: "Projects",      icon: LayoutDashboard, roles: undefined },
     { href: "/quotes",        label: "Quotes",         icon: FileText,        roles: ["builder"] as string[] },
+    { href: "/crm",           label: "CRM",            icon: Users,           roles: ["builder"] as string[] },
     { href: "/sub-dashboard", label: "My Work",        icon: Briefcase,       roles: ["subcontractor", "supplier"] as string[] },
     { href: "/calendar",      label: "Calendar",       icon: CalendarDays,    roles: ["builder"] as string[] },
     { href: "/network",       label: "Work Network",   icon: Users,           roles: undefined },
@@ -24,7 +26,9 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex w-64 flex-col bg-sidebar border-r border-sidebar-border shadow-xl z-10 sticky top-0 h-screen">
         <div className="h-20 flex items-center px-6 border-b border-sidebar-border">
           <div className="flex items-center">
-            <img src="/slably-logo-dark.png" alt="Slably" style={{ height: '42px', width: 'auto' }} />
+            <Link href="/dashboard" className="cursor-pointer">
+              <img src="/slably-logo-dark.png" alt="Slably" style={{ height: '42px', width: 'auto' }} />
+            </Link>
           </div>
         </div>
 
@@ -48,6 +52,7 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
+          <LegalFooter variant="sidebar" className="mb-2" />
           <div className="flex items-center gap-3 px-4 py-3 bg-sidebar-accent/50 rounded-xl mb-3">
             <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
               {formatInitials(user?.name || "B")}
@@ -67,7 +72,9 @@ export function BuilderLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile Nav */}
       <header className="md:hidden flex items-center justify-between p-4 bg-sidebar border-b border-sidebar-border sticky top-0 z-10">
         <div className="flex items-center">
-          <img src="/slably-logo-dark.png" alt="Slably" style={{ height: '42px', width: 'auto' }} />
+          <Link href="/dashboard" className="cursor-pointer">
+            <img src="/slably-logo-dark.png" alt="Slably" style={{ height: '42px', width: 'auto' }} />
+          </Link>
         </div>
         <button onClick={logout} className="p-2 text-sidebar-foreground/70 hover:text-sidebar-foreground">
           <LogOut className="h-5 w-5" />

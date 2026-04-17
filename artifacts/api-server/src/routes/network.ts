@@ -826,19 +826,49 @@ router.get("/subs/:subId", async (req, res): Promise<void> => {
 // ─── GET /sitemap.xml (público, sin auth) ────────────────────────────────────
 router.get("/sitemap.xml", async (req, res): Promise<void> => {
   const users = await db
-    .select({ id: usersTable.id, role: usersTable.role })
+    .select({ id: usersTable.id, role: usersTable.role, updatedAt: usersTable.updatedAt })
     .from(usersTable)
-    .where(or(eq(usersTable.role, "builder"), eq(usersTable.role, "subcontractor")));
+    .where(
+      and(
+        eq(usersTable.isActive, true),
+        or(
+          eq(usersTable.role, "builder"),
+          eq(usersTable.role, "subcontractor"),
+          eq(usersTable.role, "realtor"),
+          eq(usersTable.role, "accountant"),
+        )
+      )
+    );
 
   const base = "https://slably.app";
 
-  const urls = [
-    `  <url>\n    <loc>${base}/find</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>`,
-    ...users.map(u => {
-      const path = u.role === "builder" ? `builder/${u.id}` : `sub/${u.id}`;
-      return `  <url>\n    <loc>${base}/${path}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>`;
-    }),
+  const cities = [
+    "houston-tx", "dallas-tx", "austin-tx",
+    "san-antonio-tx", "miami-fl", "orlando-fl", "tampa-fl",
   ];
+
+  const staticUrls = [
+    `  <url>\n    <loc>${base}/</loc>\n    <changefreq>weekly</changefreq>\n    <priority>1.0</priority>\n  </url>`,
+    `  <url>\n    <loc>${base}/find</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>`,
+    `  <url>\n    <loc>${base}/register</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>`,
+    `  <url>\n    <loc>${base}/login</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.5</priority>\n  </url>`,
+    `  <url>\n    <loc>${base}/terms</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.3</priority>\n  </url>`,
+    `  <url>\n    <loc>${base}/privacy</loc>\n    <changefreq>monthly</changefreq>\n    <priority>0.3</priority>\n  </url>`,
+    ...cities.map(c =>
+      `  <url>\n    <loc>${base}/contractors/${c}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>`
+    ),
+  ];
+
+  const profileUrls = users.map(u => {
+    let path: string;
+    if (u.role === "builder") path = `builder/${u.id}`;
+    else if (u.role === "subcontractor") path = `sub/${u.id}`;
+    else if (u.role === "realtor") path = `realtor/${u.id}`;
+    else path = `tax-pro/${u.id}`;
+    return `  <url>\n    <loc>${base}/${path}</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>`;
+  });
+
+  const urls = [...staticUrls, ...profileUrls];
 
   res.setHeader("Content-Type", "application/xml");
   res.send(

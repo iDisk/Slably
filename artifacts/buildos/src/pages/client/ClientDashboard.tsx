@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import {
@@ -34,12 +34,14 @@ export default function ClientDashboard() {
 
           {/* Hero banner */}
           <div className="w-full bg-gradient-to-r from-[#1B3A5C] to-[#2d5a8e] py-8 px-6 flex flex-col items-center justify-center mb-12 rounded-2xl">
-            <img
-              src="/slably-logo-dark.png"
-              alt="Slably"
-              style={{ height: "48px", width: "auto" }}
-              className="mb-6"
-            />
+            <Link href="/" className="cursor-pointer">
+              <img
+                src="/slably-logo-dark.png"
+                alt="Slably"
+                style={{ height: "48px", width: "auto" }}
+                className="mb-6"
+              />
+            </Link>
             <h1 className="text-3xl font-bold text-white mb-3">Your Home, Your Project.</h1>
             <p className="text-white/80 max-w-lg text-base leading-relaxed">
               Connect with verified contractors, track your renovation in real time, and sign documents digitally — all in one place.

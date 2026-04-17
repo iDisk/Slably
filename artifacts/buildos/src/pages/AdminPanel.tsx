@@ -98,7 +98,9 @@ function AdminLogin({ onSuccess }: { onSuccess: (secret: string, users: AdminUse
       <Card className="w-full max-w-sm border-none shadow-lg">
         <div className="bg-[#1B3A5C] px-8 py-6 flex items-center gap-3 rounded-t-xl">
           <Shield className="w-5 h-5 text-white/70" />
-          <img src="/slably-logo-dark.png" alt="Slably" style={{ height: '48px', width: 'auto' }} />
+          <a href="/dashboard" className="cursor-pointer">
+            <img src="/slably-logo-dark.png" alt="Slably" style={{ height: '48px', width: 'auto' }} />
+          </a>
         </div>
         <CardContent className="p-8">
           <h1 className="text-xl font-bold text-foreground mb-6">Admin Panel</h1>
@@ -199,7 +201,9 @@ function AdminPanelView({ secret, initialUsers }: { secret: string; initialUsers
       {/* Header */}
       <div className="bg-[#1B3A5C] px-6 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <img src="/slably-logo-dark.png" alt="Slably" style={{ height: '48px', width: 'auto' }} />
+          <a href="/dashboard" className="cursor-pointer">
+            <img src="/slably-logo-dark.png" alt="Slably" style={{ height: '48px', width: 'auto' }} />
+          </a>
           <span className="text-white/60 text-sm font-medium">Admin</span>
           <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/20 text-white flex items-center gap-1">
             <Users className="w-3 h-3" />{users.length} users

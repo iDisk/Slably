@@ -1,0 +1,225 @@
+Necesito agregar Terms of Service 
+y Privacy Policy a Slably.
+
+PASO 1 — Crea 2 páginas legales:
+
+src/pages/legal/TermsOfService.tsx
+src/pages/legal/PrivacyPolicy.tsx
+
+Ambas páginas tienen este layout:
+- Header navbar con logo /slably-logo.png
+  height: 44px que al tocarlo 
+  navega a /
+- Contenido centrado max-w-3xl mx-auto
+  py-12 px-6
+- Footer: "© 2026 Slably · 
+  Black Diamond Rehab LLC"
+
+CONTENIDO TermsOfService.tsx:
+
+Título h1: "Terms of Service"
+Subtítulo: "Effective Date: April 13, 2026"
+HRFlowable separador
+
+Secciones con h2 + párrafos:
+
+1. Acceptance of Terms
+"By creating an account or using Slably, 
+you agree to be bound by these Terms. 
+Slably is operated by Black Diamond 
+Rehab LLC, registered in Texas, USA."
+
+2. Description of Service
+"Slably is a cloud-based platform 
+providing project management, contracts, 
+digital signatures, expense tracking, 
+invoicing, and related services for 
+construction professionals and 
+property owners."
+
+3. Eligibility
+"You must be at least 18 years old 
+to use Slably."
+
+4. User Accounts
+"You must provide accurate information 
+when registering. You are responsible 
+for all activity under your account. 
+We may suspend accounts for violations."
+
+5. Acceptable Use
+You agree NOT to:
+- Use the Platform for unlawful purposes
+- Upload false or fraudulent information
+- Impersonate any person or entity
+- Attempt unauthorized access
+- Upload malicious code
+- Violate applicable laws
+
+6. Digital Signatures
+"Electronic signatures created through 
+Slably are legally binding under the 
+ESIGN Act. Slably records IP address, 
+timestamp and device information for 
+each signature. Slably is not a law 
+firm and does not provide legal advice."
+
+7. Payments and Subscriptions
+"Paid plans are billed monthly or 
+annually. Payments processed by Stripe. 
+Cancel anytime — takes effect end of 
+billing period. No refunds for partial 
+periods. Price changes with 30 days notice."
+
+8. AI-Generated Content
+"AI features are for informational 
+purposes only. Review all AI-generated 
+content before use. AI contracts are 
+not a substitute for legal advice."
+
+9. Disclaimer of Warranties
+"THE PLATFORM IS PROVIDED AS IS. 
+SLABLY DOES NOT WARRANT UNINTERRUPTED 
+OR ERROR-FREE SERVICE."
+
+10. Limitation of Liability
+"SLABLY SHALL NOT BE LIABLE FOR 
+INDIRECT OR CONSEQUENTIAL DAMAGES. 
+TOTAL LIABILITY LIMITED TO AMOUNTS 
+PAID IN THE PRIOR 12 MONTHS."
+
+11. Governing Law
+"Governed by Texas law. Disputes 
+resolved by arbitration in Houston, TX."
+
+12. Contact
+"Black Diamond Rehab LLC
+The Woodlands, Texas
+hello@slably.app · slably.app"
+
+---
+
+CONTENIDO PrivacyPolicy.tsx:
+
+Título h1: "Privacy Policy"
+Subtítulo: "Effective Date: April 13, 2026"
+
+1. Introduction
+"Black Diamond Rehab LLC operates Slably. 
+This policy explains how we collect, 
+use and protect your information."
+
+2. Information We Collect
+- Account info: name, email, phone, 
+  company, license number
+- Project data: contracts, invoices, 
+  expenses, photos
+- Usage data: IP address, device info, 
+  pages visited
+- Audio recordings from daily logs
+
+3. How We Use Your Information
+- Provide platform features
+- AI processing (OCR, contracts, 
+  transcription via OpenAI)
+- Send transactional emails
+- Detect fraud and ensure security
+- Meet legal obligations
+
+4. How We Share Your Information
+"We do not sell your data. We share 
+only with service providers: OpenAI 
+(AI), Stripe (payments), Cloudflare R2 
+(storage), Resend (email). Public 
+profiles are visible to other users."
+
+5. Data Security
+"TLS/HTTPS encryption in transit. 
+AES-256 for sensitive data at rest. 
+Role-based access controls. 
+JWT authentication."
+
+6. Data Retention
+"Account data: until deletion + 30 days.
+Signed contracts: 7 years.
+Audio recordings: 90 days.
+Financial records: 7 years."
+
+7. Your Rights
+"Access, correct or delete your data 
+anytime. California residents have 
+CCPA rights. Contact hello@slably.app. 
+We respond within 30 days."
+
+8. Cookies
+"Essential cookies only for session 
+management. No advertising cookies."
+
+9. Children's Privacy
+"Slably is not for users under 18."
+
+10. Contact
+"Black Diamond Rehab LLC
+The Woodlands, Texas
+hello@slably.app · slably.app"
+
+---
+
+PASO 2 — Rutas públicas en App.tsx
+(sin ProtectedRoute):
+
+import TermsOfService from 
+  "@/pages/legal/TermsOfService";
+import PrivacyPolicy from 
+  "@/pages/legal/PrivacyPolicy";
+
+<Route path="/terms" 
+  component={TermsOfService} />
+<Route path="/privacy" 
+  component={PrivacyPolicy} />
+
+PASO 3 — Link en Register.tsx
+Debajo del botón "Create Account":
+
+<p className="text-xs text-center 
+  text-muted-foreground mt-3">
+  By creating an account you agree to our{" "}
+  <a href="/terms" target="_blank" 
+    className="underline 
+    hover:text-primary">
+    Terms of Service
+  </a>
+  {" "}and{" "}
+  <a href="/privacy" target="_blank"
+    className="underline 
+    hover:text-primary">
+    Privacy Policy
+  </a>
+</p>
+
+PASO 4 — Footer en páginas públicas
+En Find.tsx, BuilderProfile.tsx, 
+SubProfile.tsx agrega al fondo:
+
+<footer className="text-center 
+  text-xs text-muted-foreground 
+  py-8 border-t mt-12">
+  <div className="flex items-center 
+    justify-center gap-4 flex-wrap">
+    <a href="/terms" 
+      className="hover:underline">
+      Terms of Service
+    </a>
+    <span>·</span>
+    <a href="/privacy" 
+      className="hover:underline">
+      Privacy Policy
+    </a>
+    <span>·</span>
+    <span>© 2026 Slably · 
+      Black Diamond Rehab LLC</span>
+  </div>
+</footer>
+
+Aplica todo directamente.
+Compila artifacts/buildos (tsc --noEmit).

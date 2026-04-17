@@ -1,0 +1,93 @@
+Necesito construir el portal completo 
+del Realtor. Implementa en orden:
+
+PASO 1 — DB Schema
+En lib/db/src/schema/users.ts
+agrega 2 columnas nuevas:
+
+brokerage: text('brokerage')
+licenseNumber: text('license_number')
+
+Crea nueva tabla en 
+lib/db/src/schema/realtorPros.ts:
+
+export const realtorTrustedPros = pgTable(
+  'realtor_trusted_pros', {
+  id: serial('id').primaryKey(),
+  realtorId: integer('realtor_id')
+    .notNull().references(() => users.id),
+  proId: integer('pro_id')
+    .notNull().references(() => users.id),
+  note: text('note'),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at')
+    .defaultNow().notNull(),
+});
+
+Exporta desde lib/db/src/schema/index.ts
+Haz db push.
+
+PASO 2 — Backend
+Crea artifacts/api-server/src/routes/realtor.ts
+
+Endpoints:
+
+GET /api/realtor/profile
+  → Perfil del realtor autenticado
+  → Devuelve: id, name, email, phone,
+    brokerage, licenseNumber, 
+    profilePhoto, serviceCity, 
+    createdAt
+
+PATCH /api/realtor/profile
+  → Actualizar perfil del realtor
+  → Body: { brokerage?, licenseNumber?,
+    phone?, serviceCity?, bio? }
+
+GET /api/realtor/trusted-pros
+  → Lista de pros recomendados
+  → Devuelve: proId, name, category,
+    serviceCity, profilePhoto,
+    rating promedio, note
+
+POST /api/realtor/trusted-pros
+  → Agregar un pro a la lista
+  → Body: { proId: number, note?: string }
+
+DELETE /api/realtor/trusted-pros/:proId
+  → Quitar un pro de la lista
+
+GET /api/realtor/public/:realtorId
+  → Perfil público del realtor
+  → Sin autenticación requerida
+  → Devuelve: perfil completo + 
+    lista de trusted pros
+
+Registra en routes/index.ts:
+import realtorRouter from "./realtor";
+router.use(realtorRouter);
+
+PASO 3 — Frontend
+
+3A. Crea src/pages/realtor/RealtorDashboard.tsx
+
+Layout con sidebar navy igual que 
+BuilderLayout pero con estos links:
+  🏠 My Card → /realtor/card
+  👥 My Pros → /realtor/pros
+  🔍 Find Pros → /find
+  👤 Profile → /realtor/profile
+
+Header: logo Slably dark + nombre
+
+CONTENIDO del dashboard:
+
+HERO CARD (fondo gradiente navy):
+  Foto circular del realtor (o initials)
+  Nombre + brokerage
+  Ciudad
+  
+  Botón naranja: "📤 Share My Card"
+  → copia al clipboard:
+    slably.app/realtor/[id]
+  → Toast: "Link copied!

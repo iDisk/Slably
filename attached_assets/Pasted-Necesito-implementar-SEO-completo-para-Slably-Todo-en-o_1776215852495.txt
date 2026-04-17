@@ -1,0 +1,358 @@
+Necesito implementar SEO completo 
+para Slably. Todo en orden:
+
+PASO 1 — Componente SEO reutilizable
+Crea src/components/SEO.tsx:
+
+import { useEffect } from "react";
+
+interface SEOProps {
+  title: string;
+  description: string;
+  canonical?: string;
+  schema?: object;
+  ogImage?: string;
+}
+
+export default function SEO({ 
+  title, description, canonical, 
+  schema, ogImage 
+}: SEOProps) {
+  useEffect(() => {
+    // Title
+    document.title = title;
+    
+    // Meta description
+    let desc = document.querySelector(
+      'meta[name="description"]'
+    );
+    if (!desc) {
+      desc = document.createElement('meta');
+      (desc as HTMLMetaElement).name = 'description';
+      document.head.appendChild(desc);
+    }
+    (desc as HTMLMetaElement).content = description;
+    
+    // OG tags
+    const setOG = (property: string, content: string) => {
+      let el = document.querySelector(
+        `meta[property="${property}"]`
+      );
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute('property', property);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+    
+    setOG('og:title', title);
+    setOG('og:description', description);
+    setOG('og:type', 'website');
+    if (ogImage) setOG('og:image', ogImage);
+    if (canonical) {
+      setOG('og:url', canonical);
+    }
+    
+    // Canonical
+    if (canonical) {
+      let link = document.querySelector(
+        'link[rel="canonical"]'
+      ) as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'canonical';
+        document.head.appendChild(link);
+      }
+      link.href = canonical;
+    }
+    
+    // Schema.org JSON-LD
+    if (schema) {
+      let existing = document.querySelector(
+        '#schema-jsonld'
+      );
+      if (existing) existing.remove();
+      const script = document.createElement('script');
+      script.id = 'schema-jsonld';
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify(schema);
+      document.head.appendChild(script);
+    }
+  }, [title, description, canonical, 
+      schema, ogImage]);
+  
+  return null;
+}
+
+PASO 2 — Meta tags en páginas públicas
+
+En src/pages/Find.tsx agrega al inicio
+del return:
+<SEO
+  title="Find Contractors & Specialists | Slably"
+  description="Browse verified builders, remodelers, plumbers, electricians and specialists. Read real ratings from completed projects. Free to browse."
+  canonical="https://slably.app/find"
+/>
+
+En src/pages/BuilderProfile.tsx
+agrega SEO dinámico (después de 
+cargar el builder):
+
+<SEO
+  title={`${builder.name} - Contractor in ${builder.serviceCity || 'USA'} | Slably`}
+  description={`${builder.name} is a verified contractor${builder.serviceCity ? ` in ${builder.serviceCity}` : ''}. View portfolio, ratings and contact information on Slably.`}
+  canonical={`https://slably.app/builder/${builder.id}`}
+  ogImage={builder.profilePhoto || undefined}
+  schema={{
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": builder.name,
+    "description": `Verified contractor on Slably`,
+    "url": `https://slably.app/builder/${builder.id}`,
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": builder.serviceCity || "",
+      "addressCountry": "US"
+    },
+    "aggregateRating": builder.ratingAvg ? {
+      "@type": "AggregateRating",
+      "ratingValue": builder.ratingAvg,
+      "reviewCount": builder.ratingCount || 1
+    } : undefined
+  }}
+/>
+
+En src/pages/SubProfile.tsx
+agrega SEO dinámico similar:
+
+<SEO
+  title={`${sub.name} - ${sub.category || 'Specialist'} in ${sub.serviceCity || 'USA'} | Slably`}
+  description={`${sub.name} offers ${sub.category || 'construction'} services${sub.serviceCity ? ` in ${sub.serviceCity}` : ''}. Verified on Slably with real ratings.`}
+  canonical={`https://slably.app/sub/${sub.id}`}
+  ogImage={sub.profilePhoto || undefined}
+  schema={{
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": sub.name,
+    "description": `${sub.category || 'Specialist'} verified on Slably`,
+    "url": `https://slably.app/sub/${sub.id}`,
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": sub.serviceCity || "",
+      "addressCountry": "US"
+    },
+    "aggregateRating": sub.ratingAvg ? {
+      "@type": "AggregateRating",
+      "ratingValue": sub.ratingAvg,
+      "reviewCount": sub.ratingCount || 1
+    } : undefined
+  }}
+/>
+
+En src/pages/realtor/RealtorPublicCard.tsx:
+<SEO
+  title={`${realtor.name} - Licensed Realtor${realtor.serviceCity ? ` in ${realtor.serviceCity}` : ''} | Slably`}
+  description={`${realtor.name}${realtor.brokerage ? ` at ${realtor.brokerage}` : ''}. Connects buyers with trusted contractors and specialists.`}
+  canonical={`https://slably.app/realtor/${realtor.id}`}
+  ogImage={realtor.profilePhoto || undefined}
+  schema={{
+    "@context": "https://schema.org",
+    "@type": "RealEstateAgent",
+    "name": realtor.name,
+    "url": `https://slably.app/realtor/${realtor.id}`,
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": realtor.serviceCity || "",
+      "addressCountry": "US"
+    }
+  }}
+/>
+
+PASO 3 — Perfil público Tax Pro
+Crea src/pages/TaxProPublicProfile.tsx
+
+Página pública similar a SubProfile
+pero para Tax Pros:
+
+Header navy con logo
+Foto + Nombre + Firma/Agency
+Ciudad + Especialidad: 
+"Tax Preparation for Contractors"
+Rating si tiene
+Bio si tiene
+
+Botones de contacto:
+[📧 Email] [📱 Phone]
+
+Botón CTA:
+"Connect with [nombre] on Slably"
+→ navega a /register
+
+SEO dinámico:
+<SEO
+  title={`${taxPro.name} - Tax Pro for Contractors${taxPro.serviceCity ? ` in ${taxPro.serviceCity}` : ''} | Slably`}
+  description={`${taxPro.name} specializes in tax preparation for contractors and construction businesses${taxPro.serviceCity ? ` in ${taxPro.serviceCity}` : ''}. Connect on Slably.`}
+  canonical={`https://slably.app/tax-pro/${taxPro.id}`}
+  schema={{
+    "@context": "https://schema.org",
+    "@type": "AccountingService",
+    "name": taxPro.name,
+    "description": "Tax preparation for contractors",
+    "url": `https://slably.app/tax-pro/${taxPro.id}`
+  }}
+/>
+
+Backend endpoint necesario:
+En artifacts/api-server/src/routes/taxPro.ts
+agrega:
+
+GET /api/tax-pro/public-profile/:userId
+  Sin autenticación
+  Devuelve: id, name, email, 
+  serviceCity, profilePhoto, 
+  firmName (de organizations)
+
+Ruta en App.tsx:
+<Route path="/tax-pro/:taxProId"
+  component={TaxProPublicProfile} />
+
+PASO 4 — Páginas de ciudad
+Crea src/pages/seo/CityPage.tsx
+
+Página pública que muestra pros 
+en una ciudad específica:
+URL: /contractors/:city-:state
+Ejemplo: /contractors/houston-tx
+
+Componente:
+
+import { useParams } from "wouter";
+
+export default function CityPage() {
+  const { cityState } = useParams();
+  // cityState = "houston-tx"
+  const parts = cityState?.split('-') || [];
+  const state = parts.pop()?.toUpperCase();
+  const city = parts.map(p => 
+    p.charAt(0).toUpperCase() + p.slice(1)
+  ).join(' ');
+  
+  // Fetch pros de esa ciudad
+  // GET /api/find?city=[city]&state=[state]
+  
+  return con SEO:
+  <SEO
+    title={`Contractors in ${city}, ${state} | Slably`}
+    description={`Find verified contractors, builders and specialists in ${city}, ${state}. Browse real ratings and contact pros directly on Slably.`}
+    canonical={`https://slably.app/contractors/${cityState}`}
+    schema={{
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": `Contractors in ${city}, ${state}`,
+      "description": `Find verified contractors in ${city}, ${state} on Slably`
+    }}
+  />
+  
+  Contenido:
+  Header: "Contractors in [City], [State]"
+  Subtítulo: "Verified professionals 
+  available in your area"
+  
+  Grid de pros (mismo componente 
+  que /find pero filtrado por ciudad)
+  
+  Si no hay pros:
+  "No contractors listed yet in 
+  [City]. Be the first!"
+  Botón: "Join as a Pro" → /register
+
+Ciudades predefinidas en App.tsx 
+(agrega estas rutas):
+/contractors/houston-tx
+/contractors/dallas-tx
+/contractors/austin-tx
+/contractors/san-antonio-tx
+/contractors/miami-fl
+/contractors/orlando-fl
+/contractors/tampa-fl
+
+O mejor con una ruta dinámica:
+<Route path="/contractors/:cityState"
+  component={CityPage} />
+
+PASO 5 — Sitemap mejorado
+En artifacts/api-server/src/routes/
+actualiza el endpoint GET /api/sitemap.xml
+
+Incluye:
+- / (homepage)
+- /find
+- /register
+- /login
+- /terms
+- /privacy
+- Todos los perfiles: 
+  /builder/:id, /sub/:id, 
+  /realtor/:id, /tax-pro/:id
+- Páginas de ciudades:
+  /contractors/houston-tx
+  /contractors/dallas-tx
+  /contractors/austin-tx
+  /contractors/san-antonio-tx
+  /contractors/miami-fl
+  /contractors/orlando-fl
+  /contractors/tampa-fl
+
+Query para obtener todos los perfiles:
+SELECT id, role, updated_at 
+FROM users 
+WHERE is_active = true
+AND role IN ('builder', 'subcontractor', 
+  'supplier', 'accountant', 'realtor')
+ORDER BY updated_at DESC;
+
+Formato XML:
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://slably.app/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <!-- etc -->
+</urlset>
+
+PASO 6 — robots.txt mejorado
+En artifacts/buildos/public/robots.txt
+actualiza:
+
+User-agent: *
+Allow: /
+Allow: /find
+Allow: /builder/
+Allow: /sub/
+Allow: /realtor/
+Allow: /tax-pro/
+Allow: /contractors/
+Allow: /terms
+Allow: /privacy
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /crm
+Disallow: /quotes
+Disallow: /network
+Disallow: /calendar
+Disallow: /realtor/clients
+Disallow: /realtor/pros
+Disallow: /tax-pro/clients
+Disallow: /realtor/profile
+Disallow: /profile
+
+Sitemap: https://slably.app/sitemap.xml
+
+Compila en orden al final:
+1. artifacts/api-server (tsc --noEmit)
+2. artifacts/buildos (tsc --noEmit)
+
+Confirma cero errores.

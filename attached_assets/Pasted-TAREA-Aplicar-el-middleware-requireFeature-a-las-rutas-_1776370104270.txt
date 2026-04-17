@@ -1,0 +1,87 @@
+TAREA: Aplicar el middleware requireFeature a las rutas existentes según el plan del usuario.
+Ya existe lib/plan-gates.ts con PLAN_LIMITS y requireFeature. No lo modifiques.
+
+ANTES DE TOCAR CUALQUIER ARCHIVO, muéstrame:
+1. El inventario de rutas que vamos a proteger
+2. El diff exacto de cada archivo
+3. Espera mi aprobación antes de proceder.
+
+---
+
+REGLAS DE NEGOCIO A IMPLEMENTAR:
+
+FREE (subs, suppliers, realtors, homeowners):
+- Pueden acceder al network/directorio sin restricción
+- NO pueden crear proyectos
+- NO pueden usar AI features
+- Máximo 5 RFQs publicados por mes (solo aplica a builders)
+
+STARTER ($39/mes — builders pequeños):
+- Máximo 3 proyectos activos simultáneos
+- NO pueden usar AI features (daily log por audio, OCR)
+- SÍ pueden firmar documentos
+- Máximo 10 RFQs por mes
+
+PRO ($89/mes):
+- Todo ilimitado
+- AI features habilitadas
+- Client portal habilitado
+- Change orders habilitados
+
+BUSINESS ($179/mes):
+- Igual que PRO + multi-user (para más adelante)
+
+---
+
+RUTAS A PROTEGER (revisa el archivo de rutas y confirma los paths exactos):
+
+1. POST /api/projects — crear proyecto
+   Gate: verificar que el builder no exceda maxActiveProjects para su plan
+   (free = 0 proyectos, starter = 3, pro/business = ilimitado)
+   Nota: esta NO es requireFeature, es una verificación de count en DB
+
+2. POST /api/projects/:id/daily-logs/from-audio — log por audio con IA
+   Gate: requireFeature('aiFeatures')
+
+3. POST /api/projects/:projectId/expenses/from-receipt — OCR con IA
+   Gate: requireFeature('aiFeatures')
+
+4. POST /api/projects/:id/change-orders — crear change order
+   Gate: requireFeature('changeOrders')
+
+5. GET /api/projects/:id/documents — portal del cliente
+   Gate: requireFeature('clientPortal')
+   Nota: solo aplica cuando lo solicita un cliente vía magic link,
+   no cuando lo solicita el builder dueño del proyecto
+
+---
+
+IMPLEMENTACIÓN DE LA VERIFICACIÓN DE PROYECTOS (ruta #1):
+En lugar de requireFeature, crea una función checkProjectLimit que:
+- Obtiene el plan del usuario desde req.user.organizationPlan
+- Hace un COUNT de proyectos activos del builder en la DB
+  WHERE builder_id = req.user.userId AND status != 'completed' AND status != 'cancelled'
+- Si count >= PLAN_LIMITS[plan].maxActiveProjects → 403 con error 'project_limit_reached'
+- Si plan === 'free' → 403 inmediato con error 'plan_required'
+- Si limit es Infinity → pasa directo
+
+---
+
+RESPUESTA EN EL ERROR 403:
+Todos los errors de plan deben devolver este formato:
+{
+  "error": "plan_required",
+  "feature": "<nombre del feature bloqueado>",
+  "currentPlan": "<plan actual del usuario>",
+  "requiredPlan": "<plan mínimo necesario>",
+  "upgradeUrl": "/pricing"
+}
+
+---
+
+RESTRICCIONES:
+- No modifiques plan-gates.ts
+- No toques rutas que no están en la lista de arriba
+- No cambies nada del frontend todavía
+- Después de los cambios: tsc --noEmit en api-server y reiniciar servidor
+- Reporta cualquier ruta que no encuentres o cuyo path sea diferente

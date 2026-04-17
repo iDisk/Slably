@@ -1,0 +1,92 @@
+TAREA: Crear el middleware de feature gating por plan de suscripción.
+
+ANTES DE TOCAR CUALQUIER ARCHIVO, muéstrame:
+1. Qué archivos vas a crear/modificar
+2. El diff o contenido completo de cada uno
+3. Espera mi aprobación antes de proceder.
+
+---
+
+CONTEXTO:
+- El schema ya tiene subscription_plan en organizations con valores:
+  'free' | 'starter' | 'pro' | 'business'
+- El JWT actual ya incluye userId, role, organizationId — confirma qué
+  campos exactos tiene el payload antes de modificarlo
+- Localiza el archivo donde se genera el JWT (probablemente auth.ts)
+  y donde se verifica (middleware requireAuth o similar)
+
+---
+
+PASO A — Agregar subscriptionPlan al JWT
+
+En el endpoint de login y registro, incluye organizationPlan en el
+payload del JWT al momento de firmarlo:
+
+{
+  userId: user.id,
+  role: user.role,
+  organizationId: org.id,
+  organizationPlan: org.subscriptionPlan,   // ← nuevo
+}
+
+Muéstrame el payload actual del JWT antes de modificarlo.
+
+---
+
+PASO B — Crear archivo de límites por plan
+
+Crea este archivo nuevo:
+artifacts/api-server/src/lib/plan-gates.ts
+
+Con este contenido exacto:
+
+export type PlanTier = 'free' | 'starter' | 'pro' | 'business';
+
+export const PLAN_LIMITS: Record<PlanTier, {
+  maxActiveProjects: number;
+  aiFeatures: boolean;
+  clientPortal: boolean;
+  digitalSignatures: boolean;
+  changeOrders: boolean;
+  rfqsPerMonth: number;
+  maxTeamMembers: number;
+}> = {
+  free: {
+    maxActiveProjects: 0,
+    aiFeatures: false,
+    clientPortal: false,
+    digitalSignatures: false,
+    changeOrders: false,
+    rfqsPerMonth: 5,
+    maxTeamMembers: 1,
+  },
+  starter: {
+    maxActiveProjects: 3,
+    aiFeatures: false,
+    clientPortal: false,
+    digitalSignatures: true,
+    changeOrders: false,
+    rfqsPerMonth: 10,
+    maxTeamMembers: 2,
+  },
+  pro: {
+    maxActiveProjects: Infinity,
+    aiFeatures: true,
+    clientPortal: true,
+    digitalSignatures: true,
+    changeOrders: true,
+    rfqsPerMonth: Infinity,
+    maxTeamMembers: 5,
+  },
+  business: {
+    maxActiveProjects: Infinity,
+    aiFeatures: true,
+    clientPortal: true,
+    digitalSignatures: true,
+    changeOrders: true,
+    rfqsPerMonth: Infinity,
+    maxTeamMembers: Infinity,
+  },
+};
+
+// Qué plan mínimo necesita cada feature

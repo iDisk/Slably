@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DirectoryLayout } from "@/components/layout/DirectoryLayout";
 import { BackButton } from "@/components/BackButton";
+import SEO from "@/components/SEO";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function initials(name: string) {
@@ -79,6 +80,31 @@ export default function BuilderProfile() {
 
   return (
     <DirectoryLayout>
+      <SEO
+        title={`${builder.companyName ?? builder.name} - Contractor${builder.state ? ` in ${builder.state}` : ""} | Slably`}
+        description={`${builder.companyName ?? builder.name} is a verified contractor${builder.state ? ` in ${builder.state}` : ""}. View portfolio, ratings and contact information on Slably.`}
+        canonical={`https://slably.app/builder/${builderId}`}
+        ogImage={builder.companyLogo ?? undefined}
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "LocalBusiness",
+          "name": builder.companyName ?? builder.name,
+          "description": "Verified contractor on Slably",
+          "url": `https://slably.app/builder/${builderId}`,
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": builder.state ?? "",
+            "addressCountry": "US",
+          },
+          ...(builder.stats.averageRating > 0 ? {
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": builder.stats.averageRating,
+              "reviewCount": builder.stats.totalRatings || 1,
+            },
+          } : {}),
+        }}
+      />
       <div className="max-w-2xl mx-auto px-4 space-y-6">
         <BackButton />
         {/* ── Profile header card ── */}
@@ -218,9 +244,15 @@ export default function BuilderProfile() {
           Publicar solicitud de trabajo <ArrowRight className="w-5 h-5" />
         </Button>
 
-        <p className="text-center text-xs text-muted-foreground pb-4">
-          Powered by Slably · Construction management
-        </p>
+        <footer className="text-center text-xs text-muted-foreground py-8 border-t mt-12">
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <a href="/terms" className="hover:underline">Terms of Service</a>
+            <span>·</span>
+            <a href="/privacy" className="hover:underline">Privacy Policy</a>
+            <span>·</span>
+            <span>© 2026 Slably · Slably, Inc.</span>
+          </div>
+        </footer>
       </div>
     </DirectoryLayout>
   );

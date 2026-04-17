@@ -136,7 +136,7 @@ router.post("/invitations/:token/access", async (req, res): Promise<void> => {
 
   if (!userRow) { res.status(500).json({ error: "User lookup failed" }); return; }
 
-  const jwt = signToken({ id: userRow.id, email: userRow.email, role: userRow.role, organizationId: null, organizationSlug: null });
+  const jwt = signToken({ id: userRow.id, email: userRow.email, role: userRow.role, organizationId: null, organizationSlug: null, organizationPlan: null, stripeSubscriptionStatus: null });
 
   res.json({ token: jwt, user: { id: userRow.id, name: userRow.name, email: userRow.email, role: userRow.role }, project_id: inv.projectId });
 });

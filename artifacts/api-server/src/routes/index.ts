@@ -22,6 +22,8 @@ import invoicesRouter from "./invoices";
 import quotesRouter from "./quotes";
 import taxProRouter from "./taxPro";
 import eventsRouter from "./events";
+import realtorRouter from "./realtor";
+import crmRouter from "./crm";
 
 const router: IRouter = Router();
 
@@ -48,5 +50,7 @@ router.use(invoicesRouter);
 router.use(quotesRouter);
 router.use(taxProRouter);
 router.use(eventsRouter);
+router.use(realtorRouter);
+router.use('/crm/leads', crmRouter);
 
 export default router;

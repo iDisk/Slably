@@ -3,9 +3,21 @@ Allow: /
 Allow: /find
 Allow: /builder/
 Allow: /sub/
+Allow: /realtor/
+Allow: /tax-pro/
+Allow: /contractors/
+Allow: /terms
+Allow: /privacy
 Disallow: /dashboard
-Disallow: /projects
+Disallow: /admin
+Disallow: /crm
+Disallow: /quotes
 Disallow: /network
+Disallow: /calendar
+Disallow: /realtor/clients
+Disallow: /realtor/pros
+Disallow: /tax-pro/clients
+Disallow: /realtor/profile
 Disallow: /profile
 
 Sitemap: https://slably.app/sitemap.xml

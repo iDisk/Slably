@@ -3,7 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { organizationsTable } from "./organizations";
 
-export const userRoleEnum = pgEnum("user_role", ["builder", "client", "subcontractor", "supplier", "accountant"]);
+export const userRoleEnum = pgEnum("user_role", ["builder", "client", "subcontractor", "supplier", "accountant", "realtor", "supervisor"]);
 
 export const usersTable = pgTable(
   "users",
@@ -17,12 +17,18 @@ export const usersTable = pgTable(
     category:       text("category"),
     serviceCity:    text("service_city"),
     serviceRadius:  integer("service_radius"),
+    phone:          text("phone"),
+    brokerage:      text("brokerage"),
+    licenseNumber:  text("license_number"),
     profilePhoto:   text("profile_photo"),
     companyLogo:    text("company_logo"),
     isActive:       boolean("is_active").notNull().default(true),
     createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-    lastActiveAt:   timestamp("last_active_at", { withTimezone: true }),
+    lastActiveAt:      timestamp("last_active_at", { withTimezone: true }),
+    termsAcceptedAt:   timestamp("terms_accepted_at", { withTimezone: true }),
+    termsVersion:      text("terms_version"),
+    termsAcceptedIp:   text("terms_accepted_ip"),
   },
   (table) => [
     index("users_email_idx").on(table.email),

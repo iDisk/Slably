@@ -25,6 +25,7 @@ export const UserRole = {
   subcontractor: "subcontractor",
   supplier:      "supplier",
   accountant:    "accountant",
+  realtor:       "realtor",
 } as const;
 
 export interface User {
@@ -44,6 +45,7 @@ export const RegisterBodyRole = {
   subcontractor: "subcontractor",
   supplier:      "supplier",
   accountant:    "accountant",
+  realtor:       "realtor",
 } as const;
 
 export interface RegisterBody {
@@ -57,6 +59,10 @@ export interface RegisterBody {
   category?: string;
   serviceCity?: string;
   serviceRadius?: number;
+  firmName?: string;
+  brokerage?: string;
+  licenseNumber?: string;
+  termsAccepted: boolean;
 }
 
 export interface LoginBody {

@@ -1,0 +1,85 @@
+Necesito corregir 2 bugs en el 
+portal del Realtor:
+
+BUG 1 — "Find Pros" muestra Marketplace
+En src/components/layout/RealtorLayout.tsx
+verifica el link de "Find Pros".
+Si apunta a /marketplace cámbialo a /find.
+
+También verifica que la ruta /find 
+no redirige a /marketplace para 
+usuarios con role="realtor".
+
+En App.tsx busca si hay algún redirect
+que mande a realtors a /marketplace
+en lugar de /find.
+
+BUG 2 — Link de la tarjeta no funciona
+El botón "Share My Card" copia al 
+clipboard algo como:
+slably.app/realtor/[id]
+
+Pero la ruta pública en App.tsx 
+puede estar mal configurada.
+
+Verifica en App.tsx:
+1. ¿Existe la ruta /realtor/:realtorId
+   como ruta PÚBLICA (sin ProtectedRoute)?
+2. ¿La ruta /realtor/:realtorId no 
+   está siendo interceptada por 
+   /realtor que es la ruta del dashboard?
+
+En Wouter, las rutas más específicas
+deben ir ANTES que las genéricas.
+Asegúrate que este orden en App.tsx:
+
+// Primero la ruta pública específica:
+<Route path="/realtor/card">
+  <ProtectedRoute component={RealtorMyCard}
+    roleRequired="realtor" />
+</Route>
+
+<Route path="/realtor/clients/:clientId">
+  <ProtectedRoute component={RealtorClientDetail}
+    roleRequired="realtor" />
+</Route>
+
+<Route path="/realtor/clients">
+  <ProtectedRoute component={RealtorClients}
+    roleRequired="realtor" />
+</Route>
+
+<Route path="/realtor/pros">
+  <ProtectedRoute component={RealtorPros}
+    roleRequired="realtor" />
+</Route>
+
+<Route path="/realtor/profile">
+  <ProtectedRoute component={RealtorProfile}
+    roleRequired="realtor" />
+</Route>
+
+// Ruta pública del perfil:
+<Route path="/realtor/:realtorId"
+  component={RealtorPublicCard} />
+
+// Dashboard al final (más genérico):
+<Route path="/realtor">
+  <ProtectedRoute component={RealtorDashboard}
+    roleRequired="realtor" />
+</Route>
+
+También verifica el link que se copia
+en RealtorDashboard.tsx y RealtorMyCard.tsx:
+
+Debe ser:
+const cardUrl = `${window.location.origin}/realtor/${user?.id}`;
+
+NO:
+`slably.app/realtor/${user?.id}`
+
+Porque en desarrollo la URL base 
+es el dominio de Replit, no slably.app.
+
+Aplica todos los fixes.
+Compila artifacts/buildos (tsc --noEmit).

@@ -1,0 +1,266 @@
+Reescribe completamente 
+artifacts/buildos/src/pages/auth/Register.tsx
+
+El nuevo registro tiene un flujo de 
+3 pasos ANTES del formulario cuando 
+se selecciona "I'm a Pro":
+
+PASO A — 5 cards de tipo de usuario
+PASO B — Categoría principal (solo para Pro)
+PASO C — Especialidad específica (solo para Pro)
+PASO D — Formulario según el rol
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASO A — 5 CARDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Grid 1 columna en móvil, 5 en desktop.
+Cada card: ícono + título + subtítulo
+
+Card 1 — Briefcase:
+  role: "subcontractor"
+  label: "I'm a Pro"
+  subtitle: "Contractor, specialist or 
+  any service provider"
+
+Card 2 — Home:
+  role: "client"
+  label: "I'm a Home Owner"
+  subtitle: "I have a project or need 
+  a service"
+
+Card 3 — Calculator:
+  role: "accountant"
+  label: "I'm a Tax Pro"
+  subtitle: "Accountant, CPA or 
+  tax preparer"
+
+Card 4 — Store:
+  role: "supplier"
+  label: "I'm a Supplier"
+  subtitle: "I sell materials, products 
+  or equipment"
+
+Card 5 — Building2:
+  role: "realtor"
+  label: "I'm a Realtor"
+  subtitle: "Real estate agent or broker"
+
+Al seleccionar:
+- Home Owner, Tax Pro, Supplier, Realtor
+  → va directo al formulario (PASO D)
+- I'm a Pro → va a PASO B
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASO B — CATEGORÍA PRINCIPAL (solo Pro)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Título: "What type of work do you do?"
+Subtítulo: "Select your main category"
+
+6 cards en grid 2x3:
+
+🔨 Construction
+   "Building, remodeling and trades"
+
+🌿 Outdoor & Landscaping
+   "Pools, gardens and outdoor spaces"
+
+🧹 Cleaning & Site Services
+   "Post-construction and maintenance"
+
+💻 Technology & Digital
+   "BIM, smart systems and construction tech"
+
+🔩 Advanced Specialists
+   "Energy, environmental and complex systems"
+
+📋 Other
+   "My specialty is not listed above"
+
+Botón "← Back" regresa al PASO A
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASO C — ESPECIALIDAD (solo Pro)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Título: "What's your specialty?"
+Subtítulo: "Select the option that 
+best describes your work"
+
+Grid 2 columnas, opciones según categoría:
+
+SI categoría = "Construction":
+  Concrete Contractor
+  Foundation Specialist
+  Framer
+  Mason (Brick, Block, Stone)
+  Demolition Contractor
+  Excavation Contractor
+  Electrician
+  Plumber
+  HVAC Technician
+  Fire Sprinkler Installer
+  Finish Carpenter
+  Cabinet Maker
+  Door Installer
+  Drywall Installer
+  Painter (Interior / Exterior)
+  Tile Installer
+  Hardwood Floor Installer
+  Vinyl / LVP Installer
+  Carpet Installer
+  Countertop Installer
+  Roofer
+  Waterproofing Contractor
+  Siding Contractor
+  Window Installer
+  Gutter Installer
+  General Contractor
+  Remodeling Contractor
+  Other Construction
+
+SI categoría = "Outdoor & Landscaping":
+  Pool Builder
+  Pool Remodeling Specialist
+  Spa / Jacuzzi Builder
+  Landscape Contractor
+  Irrigation Specialist
+  Drainage Specialist
+  Tree Service
+  Masonry / Hardscape
+  Outdoor Fireplace Builder
+  Retaining Wall Specialist
+  Paver Installer
+  Deck Builder
+  Pergola / Patio Cover Builder
+  Outdoor Kitchen Builder
+  Fence Contractor
+  Landscape Lighting Installer
+  Other Outdoor
+
+SI categoría = "Cleaning & Site Services":
+  Post-Construction Cleaning
+  Pressure Washing
+  Window Cleaning
+  Debris Removal
+  Dumpster / Waste Removal
+  Hazardous Material Cleanup
+  Other Cleaning
+
+SI categoría = "Technology & Digital":
+  BIM Modeler
+  CAD Designer / Draftsman
+  3D Rendering Artist
+  Drone Operator
+  Smart Home Integrator
+  Security Systems Installer
+  Construction Software Specialist
+  Other Technology
+
+SI categoría = "Advanced Specialists":
+  Solar Panel Installer
+  EV Charger Installer
+  Energy Efficiency Consultant
+  Elevator / Lift Contractor
+  Environmental Consultant
+  Hazardous Materials Specialist
+  Other Specialist
+
+SI categoría = "Other":
+  Campo de texto libre:
+  placeholder: "Describe your specialty"
+
+Al seleccionar especialidad:
+→ setValue("category", specialty)
+→ Va al PASO D (formulario)
+
+Botón "← Back" regresa al PASO B
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASO D — FORMULARIO POR ROL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Muestra badge con la especialidad 
+seleccionada (si es Pro):
+"[ícono] [Especialidad] · Change"
+→ Click en "Change" regresa al PASO B
+
+Campos según rol:
+
+"I'm a Pro":
+  Full Name * | Email * | Password *
+  Phone (optional)
+  Primary City * | State *
+
+"I'm a Home Owner":
+  Full Name * | Email * | Password *
+  Phone (optional)
+
+"I'm a Tax Pro":
+  Full Name * | Email * | Password *
+  Phone (optional)
+  Firm Name (optional)
+
+"I'm a Supplier":
+  Full Name * | Email * | Password *
+  Phone (optional)
+  Company Name * | City * | State *
+
+"I'm a Realtor":
+  Full Name * | Email * | Password *
+  Phone (optional)
+  Brokerage/Agency (optional)
+  License # (optional)
+
+Botón submit: "Create Account"
+
+Texto debajo del botón:
+"By creating an account you agree to our
+Terms of Service and Privacy Policy"
+(ambos como links a /terms y /privacy)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SCHEMA ZOD ACTUALIZADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+role: enum["builder", "client", 
+  "subcontractor", "supplier", 
+  "accountant", "realtor"]
+
+Agrega campos nuevos:
+  brokerage: z.string().optional()
+  licenseNumber: z.string().optional()
+
+superRefine:
+  "subcontractor": category requerido
+  "supplier": companyName + city requeridos
+  "realtor": sin validaciones extra
+  "client": sin validaciones extra
+  "accountant": sin validaciones extra
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKEND Y RUTAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+En lib/api-zod/src/index.ts:
+Agrega "realtor" al role enum
+
+En artifacts/api-server/src/routes/auth.ts:
+Agrega "realtor" al role enum del servidor
+
+En App.tsx RootRedirect:
+role === "realtor" → "/dashboard"
+(hasta que construyamos el portal)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPILACIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Compila en orden:
+1. lib/api-zod (tsc --build)
+2. artifacts/api-server (tsc --noEmit)
+3. artifacts/buildos (tsc --noEmit)
+
+Reinicia el servidor.
+Confirma cero errores.

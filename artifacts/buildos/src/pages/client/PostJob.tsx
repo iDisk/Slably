@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,9 @@ export default function PostJob() {
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
-        <img src="/slably-logo-dark.png" alt="Slably" className="h-7 w-auto" />
+        <Link href="/" className="cursor-pointer">
+          <img src="/slably-logo-dark.png" alt="Slably" className="h-7 w-auto" />
+        </Link>
       </header>
 
       {/* Content */}

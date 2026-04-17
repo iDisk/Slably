@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { usePlanGate } from "@/hooks/usePlanGate";
+import { UpgradeModal } from "@/components/ui/UpgradeModal";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -115,6 +117,8 @@ export function ChangeOrdersTab({ projectId }: { projectId: number }) {
   const [createOpen,    setCreateOpen]    = useState(false);
   const [editItem,      setEditItem]      = useState<ChangeOrder | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<ChangeOrder | null>(null);
+  const [upgradeError,  setUpgradeError]  = useState<unknown>(null);
+  const gate = usePlanGate(upgradeError);
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: getListChangeOrdersQueryKey(projectId) });
@@ -132,7 +136,16 @@ export function ChangeOrdersTab({ projectId }: { projectId: number }) {
       },
       {
         onSuccess: () => { toast.success("Change order created"); invalidate(); setCreateOpen(false); },
-        onError:   () => toast.error("Failed to create change order"),
+        onError:   (err: unknown) => {
+          const apiErr = err as { status?: number; data?: unknown };
+          const errData = apiErr?.data as Record<string, string> | null;
+          if (apiErr?.status === 403 && errData?.error === 'plan_required') {
+            setUpgradeError(err);
+            setCreateOpen(false);
+          } else {
+            toast.error("Failed to create change order");
+          }
+        },
       }
     );
   };
@@ -337,6 +350,13 @@ export function ChangeOrdersTab({ projectId }: { projectId: number }) {
           </div>
         </DialogContent>
       </Dialog>
+      <UpgradeModal
+        open={gate.isPlanError}
+        onClose={() => setUpgradeError(null)}
+        feature={gate.feature}
+        currentPlan={gate.currentPlan}
+        requiredPlan={gate.requiredPlan}
+      />
     </div>
   );
 }

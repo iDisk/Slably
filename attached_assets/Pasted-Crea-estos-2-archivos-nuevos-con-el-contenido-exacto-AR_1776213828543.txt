@@ -1,0 +1,57 @@
+Crea estos 2 archivos nuevos con 
+el contenido exacto:
+
+ARCHIVO 1: lib/db/src/schema/crm.ts
+
+import {
+  pgTable, serial, varchar, text,
+  decimal, integer, timestamp,
+} from 'drizzle-orm/pg-core';
+
+export const leads = pgTable('leads', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id').notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  company: varchar('company', { length: 255 }),
+  phone: varchar('phone', { length: 50 }),
+  email: varchar('email', { length: 255 }),
+  status: varchar('status', { length: 50 }).notNull().default('new'),
+  lostReason: text('lost_reason'),
+  source: varchar('source', { length: 50 }).notNull().default('manual'),
+  estimatedValue: decimal('estimated_value', { precision: 12, scale: 2 }),
+  notes: text('notes'),
+  vertical: varchar('vertical', { length: 50 }).notNull().default('construction'),
+  assignedTo: integer('assigned_to'),
+  projectId: integer('project_id'),
+  convertedAt: timestamp('converted_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+});
+
+export const leadActivities = pgTable('lead_activities', {
+  id: serial('id').primaryKey(),
+  leadId: integer('lead_id').notNull(),
+  organizationId: integer('organization_id').notNull(),
+  type: varchar('type', { length: 50 }).notNull(),
+  note: text('note'),
+  statusFrom: varchar('status_from', { length: 50 }),
+  statusTo: varchar('status_to', { length: 50 }),
+  createdBy: integer('created_by').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export type Lead = typeof leads.$inferSelect;
+export type NewLead = typeof leads.$inferInsert;
+export type LeadActivity = typeof leadActivities.$inferSelect;
+
+ARCHIVO 2: lib/db/src/schema/index.ts
+Agrega al final del archivo existente:
+export * from './crm';
+
+Luego ejecuta db push para crear 
+las tablas en PostgreSQL.
+
+Confirma que las tablas 
+leads y lead_activities 
+fueron creadas.

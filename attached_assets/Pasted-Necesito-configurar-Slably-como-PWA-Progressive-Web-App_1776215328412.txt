@@ -1,0 +1,99 @@
+Necesito configurar Slably como PWA
+(Progressive Web App) para que los 
+usuarios puedan agregarlo a su 
+pantalla de inicio en iPhone y Android.
+
+PASO 1 — Crear manifest.json
+En artifacts/buildos/public/
+crea manifest.json:
+
+{
+  "name": "Slably",
+  "short_name": "Slably",
+  "description": "Construction management platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1B3A5C",
+  "theme_color": "#1B3A5C",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
+PASO 2 — Actualizar index.html
+En artifacts/buildos/index.html
+agrega dentro del <head>:
+
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#1B3A5C" />
+<meta name="apple-mobile-web-app-capable" 
+  content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" 
+  content="black-translucent" />
+<meta name="apple-mobile-web-app-title" 
+  content="Slably" />
+<link rel="apple-touch-icon" 
+  href="/favicon/favicon.png" />
+
+PASO 3 — Crear Service Worker
+En artifacts/buildos/public/
+crea sw.js:
+
+const CACHE_NAME = 'slably-v1';
+const urlsToCache = [
+  '/',
+  '/manifest.json',
+  '/slably-logo.png',
+  '/slably-logo-dark.png',
+  '/favicon/favicon.png',
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        if (response) return response;
+        return fetch(event.request);
+      })
+  );
+});
+
+PASO 4 — Registrar Service Worker
+En artifacts/buildos/src/main.tsx
+agrega al final del archivo:
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then(reg => console.log(
+        'SW registered:', reg.scope
+      ))
+      .catch(err => console.log(
+        'SW error:', err
+      ));
+  });
+}
+
+Aplica todo directamente.
+Compila artifacts/buildos (tsc --noEmit).
+Confirma cero errores.

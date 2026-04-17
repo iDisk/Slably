@@ -14,6 +14,7 @@ import {
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { checkProjectAccess } from "../lib/project-access.js";
 import { logActivity } from "../lib/activity.js";
+import { checkProjectLimit } from "../lib/gate-helpers.js";
 
 const router: IRouter = Router();
 
@@ -70,6 +71,8 @@ router.post("/projects", requireAuth, async (req: AuthRequest, res): Promise<voi
     res.status(403).json({ error: "Builder must belong to an organization" });
     return;
   }
+
+  if (!await checkProjectLimit(req, res)) return;
 
   const parsed = CreateProjectBody.safeParse(req.body);
   if (!parsed.success) {

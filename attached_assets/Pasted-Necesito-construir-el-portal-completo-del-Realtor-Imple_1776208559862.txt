@@ -1,0 +1,321 @@
+Necesito construir el portal completo 
+del Realtor. Implementa en orden:
+
+PASO 1 — DB Schema
+En lib/db/src/schema/users.ts
+agrega 2 columnas nuevas:
+
+brokerage: text('brokerage')
+licenseNumber: text('license_number')
+
+Crea nueva tabla en 
+lib/db/src/schema/realtorPros.ts:
+
+export const realtorTrustedPros = pgTable(
+  'realtor_trusted_pros', {
+  id: serial('id').primaryKey(),
+  realtorId: integer('realtor_id')
+    .notNull().references(() => users.id),
+  proId: integer('pro_id')
+    .notNull().references(() => users.id),
+  note: text('note'),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at')
+    .defaultNow().notNull(),
+});
+
+Exporta desde lib/db/src/schema/index.ts
+Haz db push.
+
+PASO 2 — Backend
+Crea artifacts/api-server/src/routes/realtor.ts
+
+Endpoints:
+
+GET /api/realtor/profile
+  → Perfil del realtor autenticado
+  → Devuelve: id, name, email, phone,
+    brokerage, licenseNumber, 
+    profilePhoto, serviceCity, 
+    createdAt
+
+PATCH /api/realtor/profile
+  → Actualizar perfil del realtor
+  → Body: { brokerage?, licenseNumber?,
+    phone?, serviceCity?, bio? }
+
+GET /api/realtor/trusted-pros
+  → Lista de pros recomendados
+  → Devuelve: proId, name, category,
+    serviceCity, profilePhoto,
+    rating promedio, note
+
+POST /api/realtor/trusted-pros
+  → Agregar un pro a la lista
+  → Body: { proId: number, note?: string }
+
+DELETE /api/realtor/trusted-pros/:proId
+  → Quitar un pro de la lista
+
+GET /api/realtor/public/:realtorId
+  → Perfil público del realtor
+  → Sin autenticación requerida
+  → Devuelve: perfil completo + 
+    lista de trusted pros
+
+Registra en routes/index.ts:
+import realtorRouter from "./realtor";
+router.use(realtorRouter);
+
+PASO 3 — Frontend
+
+3A. Crea src/pages/realtor/RealtorDashboard.tsx
+
+Layout con sidebar navy igual que 
+BuilderLayout pero con estos links:
+  🏠 My Card → /realtor/card
+  👥 My Pros → /realtor/pros
+  🔍 Find Pros → /find
+  👤 Profile → /realtor/profile
+
+Header: logo Slably dark + nombre
+
+CONTENIDO del dashboard:
+
+HERO CARD (fondo gradiente navy):
+  Foto circular del realtor (o initials)
+  Nombre + brokerage
+  Ciudad
+  
+  Botón naranja: "📤 Share My Card"
+  → copia al clipboard:
+    slably.app/realtor/[id]
+  → Toast: "Link copied! Share it 
+    with your clients."
+  
+  Botón outline blanco: "👁️ Preview Card"
+  → abre /realtor/[id] en nueva pestaña
+
+3 STAT CARDS debajo:
+  Card 1: "My Trusted Pros"
+    número de pros en la lista
+    ícono Users azul
+    
+  Card 2: "Profile Views"
+    "Coming Soon"
+    ícono Eye gris
+    
+  Card 3: "Client Leads"
+    "Coming Soon"
+    ícono TrendingUp gris
+
+GETTING STARTED (si perfil incompleto):
+  Checklist:
+  ✅ Account created
+  ⬜ Add profile photo
+  ⬜ Add your brokerage
+  ⬜ Add trusted pros
+  ⬜ Share your card
+
+3B. Crea src/pages/realtor/RealtorPublicCard.tsx
+Página pública — sin login requerido
+URL: /realtor/:realtorId
+
+DISEÑO PREMIUM:
+
+HERO SECTION (fondo navy gradiente):
+  <img src={realtor.profilePhoto} 
+    className="w-32 h-32 rounded-full 
+    border-4 border-yellow-400 
+    object-cover mx-auto" />
+  
+  Nombre: text-3xl font-bold text-white
+  Brokerage: text-yellow-400 font-medium
+  "Licensed Real Estate Agent"
+  Ciudad: text-white/70
+  
+  3 botones de contacto:
+  [📞 Call] [✉️ Email] [💬 Text]
+  → href="tel:...", "mailto:...", 
+    "sms:..."
+
+PROPUESTA DE VALOR:
+  Fondo blanco
+  Texto centrado:
+  "I help my clients beyond 
+  the closing table"
+  Subtítulo: "Connect with trusted 
+  professionals to make your 
+  property vision a reality."
+
+3 ACTION CARDS:
+  Grid 1 col móvil, 3 desktop
+  
+  Card 1 — navy:
+  ícono Search grande
+  "Find a Contractor"
+  "Browse verified builders and 
+  specialists in your area"
+  Botón: "Browse Professionals →"
+  → navega a /find
+
+  Card 2 — naranja:
+  ícono FileText grande  
+  "Get a Free Estimate"
+  "Describe your project and get 
+  an instant AI-powered estimate"
+  Botón: "Start Free Estimate →"
+  → navega a /quotes/new
+    (o /register si no está logueado)
+
+  Card 3 — verde:
+  ícono Star grande
+  "My Trusted Pros"
+  "Hand-picked professionals 
+  I personally recommend"
+  Botón: "See My Pros ↓"
+  → scroll suave a sección de pros
+
+TRUSTED PROS SECTION:
+  Título: "Professionals I Recommend"
+  Subtítulo: "Hand-picked by [nombre]"
+  
+  Si tiene pros:
+  Grid de cards 1 col móvil, 2 desktop:
+  
+  Por cada pro:
+  [Foto/Avatar] Nombre
+  Especialidad (category)
+  Ciudad
+  ⭐ Rating (si tiene)
+  Nota del realtor (si tiene)
+  Botón: "View Profile →"
+  → navega a /sub/:id o /builder/:id
+  
+  Si no tiene pros:
+  "Coming soon — [nombre] is 
+  curating a list of trusted 
+  professionals for their clients."
+
+STICKY BOTTOM BAR (solo móvil):
+  <div className="fixed bottom-0 
+    left-0 right-0 bg-white 
+    border-t p-3 flex gap-2 
+    md:hidden">
+    
+    Botón navy: "💾 Save Contact"
+    → genera y descarga vCard:
+      BEGIN:VCARD
+      VERSION:3.0
+      FN:[nombre]
+      ORG:[brokerage]
+      TEL:[phone]
+      EMAIL:[email]
+      URL:slably.app/realtor/[id]
+      END:VCARD
+    
+    Botón naranja: "📤 Share"
+    → navigator.share({
+        title: "[nombre] - Realtor",
+        text: "Check out my professional card",
+        url: window.location.href
+      })
+    → Si no soporta share API:
+      copia al clipboard
+  </div>
+
+FOOTER:
+  Logo Slably pequeño
+  "Powered by Slably"
+  Links: Terms · Privacy
+
+3C. Crea src/pages/realtor/RealtorProfile.tsx
+Formulario para editar el perfil:
+
+Campos:
+  Foto de perfil (upload)
+  Full Name
+  Email (readonly)
+  Phone
+  Brokerage / Agency
+  License #
+  City
+  
+  Botón: "Save Changes"
+  → PATCH /api/realtor/profile
+
+3D. Crea src/pages/realtor/RealtorPros.tsx
+Página para gestionar pros recomendados:
+
+Título: "My Trusted Pros"
+Botón: "+ Add a Pro"
+→ abre modal de búsqueda
+
+Lista de pros actuales:
+  Por cada pro:
+  [Foto] Nombre + especialidad + ciudad
+  Campo de nota editable
+  Botón 🗑️ eliminar
+
+Modal "+ Add a Pro":
+  Search input: "Search by name or city"
+  → GET /api/find?search=...
+  Resultados con botón "+ Add"
+  → POST /api/realtor/trusted-pros
+
+3E. Crea layout src/components/layout/RealtorLayout.tsx
+Sidebar navy con links:
+  🏠 Dashboard → /realtor
+  🃏 My Card → /realtor/[id] (preview)
+  👥 My Pros → /realtor/pros
+  🔍 Find Pros → /find
+  👤 Profile → /realtor/profile
+  
+  Logo Slably dark arriba
+  Nombre del realtor abajo
+  Sign Out button
+
+PASO 4 — Rutas en App.tsx
+
+import RealtorDashboard from 
+  "@/pages/realtor/RealtorDashboard";
+import RealtorPublicCard from 
+  "@/pages/realtor/RealtorPublicCard";
+import RealtorProfile from 
+  "@/pages/realtor/RealtorProfile";
+import RealtorPros from 
+  "@/pages/realtor/RealtorPros";
+import RealtorLayout from 
+  "@/components/layout/RealtorLayout";
+
+Rutas protegidas (roleRequired="realtor"):
+<Route path="/realtor">
+  <ProtectedRoute component={RealtorDashboard} 
+    roleRequired="realtor" />
+</Route>
+<Route path="/realtor/pros">
+  <ProtectedRoute component={RealtorPros}
+    roleRequired="realtor" />
+</Route>
+<Route path="/realtor/profile">
+  <ProtectedRoute component={RealtorProfile}
+    roleRequired="realtor" />
+</Route>
+
+Ruta pública:
+<Route path="/realtor/:realtorId" 
+  component={RealtorPublicCard} />
+
+RootRedirect:
+role === "realtor" → "/realtor"
+
+PASO 5 — Compilación
+Compila en orden:
+1. lib/db (tsc --build)
+2. lib/api-zod (tsc --build)
+3. lib/api-client-react (tsc --build)
+4. artifacts/api-server (tsc --noEmit)
+5. artifacts/buildos (tsc --noEmit)
+
+Reinicia el servidor.
+Confirma cero errores.
