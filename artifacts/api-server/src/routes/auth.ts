@@ -9,7 +9,12 @@ import { RegisterBody, LoginBody, LoginResponse, GetMeResponse } from "@workspac
 import { signToken, requireAuth, type AuthRequest } from "../lib/auth.js";
 import { createStripeCustomer } from "../lib/stripe.js";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResendClient(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 const APP_URL = process.env.APP_URL || "https://slably.app";
 
 const CURRENT_TERMS_VERSION = "v1.0";
@@ -251,9 +256,10 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
 
   const resetUrl = `${APP_URL}/reset-password?token=${token}`;
 
-  if (process.env.RESEND_API_KEY) {
+  const resendClient = getResendClient();
+  if (resendClient) {
     try {
-      await resend.emails.send({
+      await resendClient.emails.send({
         from: "hello@slably.app",
         to:   user.email,
         subject: "Reset your Slably password",

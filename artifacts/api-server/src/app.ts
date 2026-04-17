@@ -6,6 +6,7 @@ import stripeWebhookRouter from './routes/stripe-webhook.js';
 import billingRouter from './routes/billing.js';
 
 const app: Express = express();
+app.set('trust proxy', 1);
 app.use(helmet());
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
